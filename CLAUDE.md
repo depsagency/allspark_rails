@@ -1,6 +1,8 @@
-# CLAUDE.md
+# CLAUDE.md - AI Assistant Instructions for allspark_rails
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides comprehensive guidance for Claude Code and other AI assistants when working with the allspark_rails template.
+
+**🚀 AllSpark Rails**: Production-ready Rails 8 template with AI superpowers for creators. Build production apps in hours, not months.
 
 **CRITICAL: This application runs in a Docker development environment. All commands must be executed inside the web or sidekiq container using `docker-compose exec`.**
 
@@ -8,7 +10,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Rails 8.0 starter template with modern tooling and best practices built in.
+allspark_rails is a Rails 8.0 template specifically designed for:
+- **Solo creators** building SaaS applications
+- **Agency creators** delivering client projects faster  
+- **Startup creators** launching MVPs quickly
+- **Enterprise creators** prototyping new ideas
+
+The template is optimized for AI-assisted development (vibe coding) and includes production-ready features from day one.
 
 **Key Technologies:**
 - Rails 8.0 with esbuild
