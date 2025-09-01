@@ -1,0 +1,268 @@
+<div class="container mx-auto px-4 py-8" 
+     data-controller="knowledge-document"
+     data-knowledge-document-id="<%= @knowledge_document.id %>">
+  
+  <!-- Real-time message display -->
+  <div class="hidden mb-4 p-4 rounded-lg" data-knowledge-document-target="message"></div>
+  
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl font-bold"><%= @knowledge_document.title %></h1>
+      <div class="flex items-center gap-4 mt-2">
+        <% if @knowledge_document.assistant %>
+          <div class="badge badge-primary"><%= @knowledge_document.assistant.name %></div>
+        <% else %>
+          <div class="badge badge-ghost">Global</div>
+        <% end %>
+        
+        <% if @knowledge_document.source_type.present? %>
+          <span class="text-sm opacity-70"><%= @knowledge_document.source_type.humanize %></span>
+        <% end %>
+        
+        <span class="text-sm opacity-70">
+          Created <%= time_ago_in_words(@knowledge_document.created_at) %> ago
+        </span>
+      </div>
+    </div>
+    
+    <div class="flex gap-2">
+      <%= link_to "Edit", edit_agents_knowledge_document_path(@knowledge_document), class: "btn btn-ghost" %>
+      <%= link_to "← Back", agents_knowledge_documents_path, class: "btn btn-ghost" %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Main Content -->
+    <div class="lg:col-span-2">
+      <!-- Document Info -->
+      <div class="card bg-base-100 shadow-xl mb-6">
+        <div class="card-body">
+          <h2 class="card-title">Document Information</h2>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <% if @knowledge_document.file.attached? %>
+              <div>
+                <label class="label">
+                  <span class="label-text font-semibold">File</span>
+                </label>
+                <p class="text-sm"><%= @knowledge_document.file.filename %></p>
+                <p class="text-xs opacity-60">
+                  <%= number_to_human_size(@knowledge_document.file.byte_size) %> • 
+                  <%= @knowledge_document.file.content_type %>
+                </p>
+              </div>
+            <% end %>
+            
+            <% if @knowledge_document.source_url.present? %>
+              <div>
+                <label class="label">
+                  <span class="label-text font-semibold">Source URL</span>
+                </label>
+                <%= link_to @knowledge_document.source_url, @knowledge_document.source_url, 
+                    target: "_blank", class: "link link-primary text-sm" %>
+              </div>
+            <% end %>
+            
+            <div>
+              <label class="label">
+                <span class="label-text font-semibold">Processing Status</span>
+              </label>
+              <div class="flex items-center gap-2">
+                <% status = @knowledge_document.processing_status %>
+                <div class="badge <%= status == 'completed' ? 'badge-success' : status == 'error' ? 'badge-error' : 'badge-warning' %>" 
+                     data-knowledge-document-target="status">
+                  <%= status.capitalize %>
+                </div>
+                <span class="loading loading-spinner loading-sm <%= status == 'processing' ? '' : 'hidden' %>" 
+                      data-knowledge-document-target="spinner"></span>
+              </div>
+            </div>
+            
+            <div>
+              <label class="label">
+                <span class="label-text font-semibold">Chunks</span>
+              </label>
+              <p class="text-sm" data-knowledge-document-target="chunksCount"><%= @chunks.count %> chunks</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Content Preview -->
+      <% if @knowledge_document.content.present? %>
+        <div class="card bg-base-100 shadow-xl mb-6">
+          <div class="card-body">
+            <h2 class="card-title">Content Preview</h2>
+            <div class="prose max-w-none">
+              <p class="whitespace-pre-wrap text-sm"><%= truncate(@knowledge_document.content, length: 1000) %></p>
+              <% if @knowledge_document.content.length > 1000 %>
+                <p class="text-sm opacity-60">... (truncated)</p>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- Chunks -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title">Document Chunks</h2>
+          
+          <% if @chunks.any? %>
+            <div class="space-y-4">
+              <% @chunks.first(5).each_with_index do |chunk, index| %>
+                <div class="border-l-4 border-primary pl-4">
+                  <div class="flex justify-between items-start mb-2">
+                    <h3 class="font-semibold">Chunk #<%= chunk.position + 1 %></h3>
+                    <% if chunk.embedding.present? %>
+                      <div class="badge badge-success badge-xs">Embedded</div>
+                    <% else %>
+                      <div class="badge badge-warning badge-xs">No embedding</div>
+                    <% end %>
+                  </div>
+                  <p class="text-sm opacity-80 line-clamp-3">
+                    <%= chunk.content %>
+                  </p>
+                </div>
+              <% end %>
+              
+              <% if @chunks.count > 5 %>
+                <p class="text-sm opacity-60 text-center">
+                  ... and <%= @chunks.count - 5 %> more chunks
+                </p>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="text-center opacity-70">No chunks generated yet</p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+      <!-- Actions -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h3 class="card-title text-lg">Actions</h3>
+          
+          <div class="space-y-2">
+            <% if @knowledge_document.file.attached? && @knowledge_document.content.blank? %>
+              <div data-knowledge-document-target="processButton">
+                <%= button_to "Process Document", 
+                    agents_knowledge_document_path(@knowledge_document),
+                    method: :patch,
+                    params: { knowledge_document: { process: true } },
+                    class: "btn btn-primary btn-block",
+                    data: { turbo: false } %>
+              </div>
+            <% end %>
+            
+            <%= link_to "Test Search", 
+                agents_knowledge_search_index_path(document_id: @knowledge_document.id),
+                class: "btn btn-outline btn-block" %>
+            
+            <%= link_to "Delete Document", 
+                agents_knowledge_document_path(@knowledge_document),
+                method: :delete,
+                data: { 
+                  turbo_method: :delete,
+                  turbo_confirm: "Are you sure? This will permanently delete the document and all its chunks." 
+                },
+                class: "btn btn-error btn-outline btn-block" %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tags & Metadata -->
+      <% if @knowledge_document.tags.any? || @knowledge_document.category.present? || @knowledge_document.project.present? %>
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h3 class="card-title text-lg">Organization & Tags</h3>
+            
+            <div class="space-y-4">
+              <% if @knowledge_document.tags.any? %>
+                <div>
+                  <span class="font-semibold text-sm">Tags:</span>
+                  <div class="flex flex-wrap gap-2 mt-1">
+                    <% @knowledge_document.tags.each do |tag| %>
+                      <%= link_to agents_knowledge_documents_path(tags: tag), 
+                          class: "badge badge-primary" do %>
+                        <%= tag %>
+                      <% end %>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+              
+              <% if @knowledge_document.category.present? %>
+                <div>
+                  <span class="font-semibold text-sm">Category:</span>
+                  <%= link_to @knowledge_document.category, 
+                      agents_knowledge_documents_path(category: @knowledge_document.category),
+                      class: "link link-primary" %>
+                </div>
+              <% end %>
+              
+              <% if @knowledge_document.project.present? %>
+                <div>
+                  <span class="font-semibold text-sm">Project:</span>
+                  <%= link_to @knowledge_document.project, 
+                      agents_knowledge_documents_path(project: @knowledge_document.project),
+                      class: "link link-primary" %>
+                </div>
+              <% end %>
+              
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <span class="font-semibold text-sm">Visibility:</span>
+                  <span class="badge badge-<%= visibility_badge_class(@knowledge_document.visibility) %>">
+                    <%= @knowledge_document.visibility.humanize %>
+                  </span>
+                </div>
+                
+                <div>
+                  <span class="font-semibold text-sm">Priority:</span>
+                  <span class="badge badge-<%= priority_badge_class(@knowledge_document.priority) %>">
+                    <%= @knowledge_document.priority.humanize %>
+                  </span>
+                </div>
+              </div>
+              
+              <% if @knowledge_document.custom_attributes.any? %>
+                <div>
+                  <span class="font-semibold text-sm">Custom Attributes:</span>
+                  <div class="mt-1 space-y-1">
+                    <% @knowledge_document.custom_attributes.each do |key, value| %>
+                      <div class="text-sm">
+                        <span class="opacity-70"><%= key %>:</span> <%= value %>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+      
+      <!-- Raw Metadata (for debugging) -->
+      <% if @knowledge_document.metadata.present? && @knowledge_document.metadata.keys.any? { |k| !%w[tags category project visibility priority custom_attributes related_documents].include?(k) } %>
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h3 class="card-title text-lg">Additional Metadata</h3>
+            
+            <div class="space-y-2">
+              <% @knowledge_document.metadata.except('tags', 'category', 'project', 'visibility', 'priority', 'custom_attributes', 'related_documents').each do |key, value| %>
+                <div>
+                  <span class="font-semibold text-sm"><%= key.humanize %>:</span>
+                  <span class="text-sm"><%= value %></span>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

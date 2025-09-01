@@ -1,0 +1,353 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl font-bold"><%= @configuration.name %></h1>
+      <div class="flex items-center gap-2 mt-2">
+        <% if @configuration.enabled? %>
+          <span class="badge badge-success">Active</span>
+        <% else %>
+          <span class="badge badge-ghost">Disabled</span>
+        <% end %>
+        <span class="badge badge-outline"><%= @configuration.server_type %></span>
+      </div>
+    </div>
+    
+    <div class="flex gap-2">
+      <%= link_to "Edit", edit_mcp_configuration_path(@configuration), class: "btn btn-primary" %>
+      <%= link_to "Back", mcp_configurations_path, class: "btn btn-ghost" %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Configuration Details -->
+    <div class="lg:col-span-1">
+      <div class="card bg-base-100 shadow">
+        <div class="card-body">
+          <h2 class="card-title">Configuration Details</h2>
+          
+          <div class="space-y-4">
+            <div>
+              <label class="font-medium text-sm">Name</label>
+              <p class="text-sm opacity-75"><%= @configuration.name %></p>
+            </div>
+            
+            <div>
+              <label class="font-medium text-sm">Server Type</label>
+              <p class="text-sm opacity-75">
+                <span class="badge badge-outline"><%= @configuration.server_type %></span>
+              </p>
+            </div>
+            
+            <% case @configuration.server_type %>
+            <% when 'stdio' %>
+              <div>
+                <label class="font-medium text-sm">Command</label>
+                <p class="text-sm opacity-75 font-mono bg-base-200 p-2 rounded">
+                  <%= @configuration.server_config['command'] %>
+                  <% if @configuration.server_config['args']&.any? %>
+                    <%= @configuration.server_config['args'].join(' ') %>
+                  <% end %>
+                </p>
+              </div>
+              
+              <% if @configuration.server_config['env']&.any? %>
+                <div>
+                  <label class="font-medium text-sm">Environment Variables</label>
+                  <div class="text-sm opacity-75 space-y-1">
+                    <% @configuration.server_config['env'].each do |key, value| %>
+                      <div class="bg-base-200 p-2 rounded font-mono text-xs">
+                        <span class="font-semibold"><%= key %></span>: 
+                        <% if key.match?(/_TOKEN|_KEY|_SECRET|_PASSWORD/i) %>
+                          <span class="opacity-50">••••••••</span>
+                        <% else %>
+                          <%= value %>
+                        <% end %>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            <% when 'http', 'sse', 'websocket' %>
+              <div>
+                <label class="font-medium text-sm">Endpoint</label>
+                <p class="text-sm opacity-75 font-mono bg-base-200 p-2 rounded">
+                  <%= @configuration.server_config['endpoint'] || @configuration.server_config['url'] %>
+                </p>
+              </div>
+            <% end %>
+            
+            <div>
+              <label class="font-medium text-sm">Status</label>
+              <p class="text-sm opacity-75">
+                <% if @configuration.enabled? %>
+                  <span class="text-success">Enabled</span>
+                <% else %>
+                  <span class="text-warning">Disabled</span>
+                <% end %>
+              </p>
+            </div>
+            
+            <div>
+              <label class="font-medium text-sm">Created</label>
+              <p class="text-sm opacity-75"><%= @configuration.created_at.strftime("%B %d, %Y at %I:%M %p") %></p>
+            </div>
+            
+            <% if @configuration.updated_at != @configuration.created_at %>
+              <div>
+                <label class="font-medium text-sm">Last Updated</label>
+                <p class="text-sm opacity-75"><%= @configuration.updated_at.strftime("%B %d, %Y at %I:%M %p") %></p>
+              </div>
+            <% end %>
+          </div>
+          
+          <div class="card-actions justify-end mt-6">
+            <%= button_to toggle_mcp_configuration_path(@configuration), 
+                method: :patch,
+                class: "btn btn-sm #{@configuration.enabled? ? 'btn-error' : 'btn-success'}" do %>
+              <%= @configuration.enabled? ? 'Disable' : 'Enable' %>
+            <% end %>
+            
+            <button class="btn btn-sm btn-ghost" onclick="testConfiguration('<%= @configuration.id %>')">
+              Test Connection
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <% if @server_status %>
+        <div class="card bg-base-100 shadow mt-4">
+          <div class="card-body">
+            <h3 class="card-title">Server Status</h3>
+            <div class="space-y-2">
+              <div>
+                <label class="font-medium text-sm">Status</label>
+                <p class="text-sm">
+                  <span class="badge <%= @server_status[:status] == 'ready' ? 'badge-success' : 'badge-warning' %>">
+                    <%= @server_status[:status] %>
+                  </span>
+                </p>
+              </div>
+              
+              <% if @server_status[:last_activity] %>
+                <div>
+                  <label class="font-medium text-sm">Last Activity</label>
+                  <p class="text-sm opacity-75"><%= time_ago_in_words(@server_status[:last_activity]) %> ago</p>
+                </div>
+              <% end %>
+              
+              <div>
+                <label class="font-medium text-sm">Tools Available</label>
+                <p class="text-sm opacity-75"><%= @server_status[:tools_count] %></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+    
+    <!-- Tools List -->
+    <div class="lg:col-span-2">
+      <div class="card bg-base-100 shadow">
+        <div class="card-body">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="card-title">Available Tools</h2>
+            <% if @configuration.enabled? && @configuration.server_type_stdio? %>
+              <button class="btn btn-sm btn-ghost" onclick="refreshTools()">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh
+              </button>
+            <% end %>
+          </div>
+          
+          <% if @error_message %>
+            <div class="alert alert-error mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Error loading tools: <%= @error_message %></span>
+            </div>
+          <% elsif !@configuration.enabled? %>
+            <div class="alert alert-warning">
+              <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+              <span>Configuration is disabled. Enable it to see available tools.</span>
+            </div>
+          <% elsif !@configuration.server_type_stdio? %>
+            <div class="alert alert-info">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span>Tool discovery is only available for stdio-type MCP servers.</span>
+            </div>
+          <% elsif @tools.empty? %>
+            <div class="alert alert-info">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span>No tools available from this MCP server.</span>
+            </div>
+          <% else %>
+            <div class="space-y-4" id="tools-list">
+              <% @tools.each_with_index do |tool, index| %>
+                <div class="border border-base-300 rounded-lg p-4 hover:bg-base-50 transition-colors">
+                  <div class="flex justify-between items-start mb-2">
+                    <h3 class="font-semibold text-lg"><%= tool[:name] || tool['name'] %></h3>
+                    <button class="btn btn-xs btn-outline" onclick="showToolDetails('<%= index %>')">
+                      Details
+                    </button>
+                  </div>
+                  
+                  <p class="text-sm opacity-75 mb-3"><%= tool[:description] || tool['description'] %></p>
+                  
+                  <% if tool[:inputSchema] || tool['inputSchema'] %>
+                    <% schema = tool[:inputSchema] || tool['inputSchema'] %>
+                    <div class="collapse">
+                      <input type="checkbox" class="collapse-toggle" id="schema-<%= index %>">
+                      <div class="collapse-title text-xs font-medium cursor-pointer">
+                        <label for="schema-<%= index %>" class="cursor-pointer">
+                          📋 Input Schema 
+                          <% if schema[:required] || schema['required'] %>
+                            <span class="badge badge-xs badge-error"><%= (schema[:required] || schema['required']).size %> required</span>
+                          <% end %>
+                        </label>
+                      </div>
+                      <div class="collapse-content">
+                        <div class="bg-base-200 p-3 rounded mt-2">
+                          <% if schema[:properties] || schema['properties'] %>
+                            <% properties = schema[:properties] || schema['properties'] %>
+                            <div class="space-y-2">
+                              <% properties.each do |param_name, param_info| %>
+                                <div class="text-xs">
+                                  <span class="font-mono font-semibold"><%= param_name %></span>
+                                  <% if (schema[:required] || schema['required'])&.include?(param_name.to_s) %>
+                                    <span class="badge badge-xs badge-error ml-1">required</span>
+                                  <% else %>
+                                    <span class="badge badge-xs badge-ghost ml-1">optional</span>
+                                  <% end %>
+                                  <% if param_info[:type] || param_info['type'] %>
+                                    <span class="badge badge-xs badge-outline ml-1"><%= param_info[:type] || param_info['type'] %></span>
+                                  <% end %>
+                                  <% if param_info[:description] || param_info['description'] %>
+                                    <p class="text-xs opacity-75 mt-1 ml-2"><%= param_info[:description] || param_info['description'] %></p>
+                                  <% end %>
+                                </div>
+                              <% end %>
+                            </div>
+                          <% else %>
+                            <pre class="text-xs"><%= JSON.pretty_generate(schema) %></pre>
+                          <% end %>
+                        </div>
+                      </div>
+                    </div>
+                  <% end %>
+                  
+                  <div class="flex justify-end mt-3">
+                    <button class="btn btn-xs btn-primary" onclick="testTool('<%= tool[:name] || tool['name'] %>')">
+                      Test Tool
+                    </button>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+            
+            <div class="mt-6 text-center">
+              <p class="text-sm opacity-75">
+                Found <%= @tools.size %> tools from <%= @configuration.name %>
+              </p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Test Results Modal -->
+<dialog id="test-modal" class="modal">
+  <div class="modal-box w-11/12 max-w-4xl">
+    <h3 class="font-bold text-lg mb-4" id="test-modal-title">Test Results</h3>
+    <div id="test-modal-content" class="space-y-4">
+      <!-- Content will be populated by JavaScript -->
+    </div>
+    <div class="modal-action">
+      <form method="dialog">
+        <button class="btn">Close</button>
+      </form>
+    </div>
+  </div>
+</dialog>
+
+<script>
+function testConfiguration(configId) {
+  showNotification('info', 'Testing configuration...');
+  
+  fetch(`/mcp_configurations/${configId}/test`, {
+    method: 'POST',
+    headers: {
+      'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content,
+      'Accept': 'application/json'
+    }
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      showNotification('success', `Test successful: ${data.message}`);
+    } else {
+      showNotification('error', `Test failed: ${data.message}`);
+    }
+  })
+  .catch(error => {
+    showNotification('error', 'Test failed: Network error');
+  });
+}
+
+function refreshTools() {
+  showNotification('info', 'Refreshing tools...');
+  window.location.reload();
+}
+
+function testTool(toolName) {
+  document.getElementById('test-modal-title').textContent = `Test Tool: ${toolName}`;
+  document.getElementById('test-modal-content').innerHTML = `
+    <div class="alert alert-info">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <span>Tool testing functionality coming soon. For now, you can test tools via the API or through Claude Code sessions.</span>
+    </div>
+    <div class="bg-base-200 p-4 rounded">
+      <h4 class="font-semibold mb-2">Test via API:</h4>
+      <pre class="text-xs"><code>POST /api/v1/mcp_configurations/<%= @configuration.id %>/tools/${toolName}/execute
+{
+  "arguments": {
+    // Tool-specific arguments
+  }
+}</code></pre>
+    </div>
+  `;
+  document.getElementById('test-modal').showModal();
+}
+
+function showToolDetails(index) {
+  // This could expand to show more detailed information
+  const toolCard = document.querySelector(`#schema-${index}`);
+  if (toolCard) {
+    toolCard.checked = !toolCard.checked;
+  }
+}
+
+function showNotification(type, message) {
+  const notification = document.createElement('div');
+  notification.className = `alert alert-${type} fixed top-4 right-4 z-50 max-w-md shadow-lg`;
+  notification.innerHTML = `
+    <span>${message}</span>
+    <button class="btn btn-sm btn-ghost" onclick="this.parentElement.remove()">✕</button>
+  `;
+  document.body.appendChild(notification);
+  
+  setTimeout(() => notification.remove(), 5000);
+}
+</script>

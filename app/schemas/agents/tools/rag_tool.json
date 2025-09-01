@@ -1,0 +1,21 @@
+{
+  "name": "knowledge_search",
+  "description": "Search the knowledge base for information",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "The search query to find relevant information"
+      },
+      "limit": {
+        "type": "integer",
+        "description": "Maximum number of results to return (default: 5)",
+        "default": 5,
+        "minimum": 1,
+        "maximum": 20
+      }
+    },
+    "required": ["query"]
+  }
+}

@@ -1,0 +1,14 @@
+# frozen_string_literal: true
+
+require 'test_helper'
+
+class <%= class_name %>Test < ActiveSupport::TestCase
+  def setup
+    @service = <%= class_name %>.new
+  end
+
+  test "should work" do
+    # Add your tests here
+    assert true
+  end
+end

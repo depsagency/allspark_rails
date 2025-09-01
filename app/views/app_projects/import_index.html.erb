@@ -1,0 +1,530 @@
+<% content_for :title, "Import App Projects" %>
+
+<div class="container mx-auto px-4 py-8">
+  <div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-base-content">Import App Projects</h1>
+        <p class="text-base-content/70 mt-2">Import app projects from generated documentation folders</p>
+      </div>
+      
+      <%= link_to app_projects_path, class: "btn btn-outline" do %>
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+        </svg>
+        Back to Projects
+      <% end %>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats stats-horizontal lg:stats-horizontal shadow mb-8 w-full">
+      <div class="stat">
+        <div class="stat-figure text-success">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <div class="stat-title">Available for Import</div>
+        <div class="stat-value text-success"><%= @importable_count %></div>
+        <div class="stat-desc">Ready to import</div>
+      </div>
+      
+      <div class="stat">
+        <div class="stat-figure text-error">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>
+          </svg>
+        </div>
+        <div class="stat-title">Errors</div>
+        <div class="stat-value text-error"><%= @error_count %></div>
+        <div class="stat-desc">Cannot import</div>
+      </div>
+      
+      <div class="stat">
+        <div class="stat-figure text-info">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+          </svg>
+        </div>
+        <div class="stat-title">Total Projects</div>
+        <div class="stat-value text-info"><%= @available_projects.count %></div>
+        <div class="stat-desc">In docs/generated</div>
+      </div>
+    </div>
+
+    <!-- Import Instructions -->
+    <% if @available_projects.empty? %>
+      <div class="hero bg-base-200 rounded-lg py-12">
+        <div class="hero-content text-center">
+          <div class="max-w-md">
+            <svg class="w-16 h-16 mx-auto text-base-content/50 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <h3 class="text-2xl font-bold">No Projects Found</h3>
+            <p class="py-4 text-base-content/70">
+              No exportable app projects were found in the <code>/docs/app-projects/generated/</code> directory.
+            </p>
+            <div class="text-sm text-base-content/60">
+              <p class="mb-2">To create importable projects:</p>
+              <ol class="list-decimal list-inside space-y-1">
+                <li>Create projects using the App Builder</li>
+                <li>Generate their outputs (PRD, tasks, etc.)</li>
+                <li>Export them to the docs folder</li>
+                <li>They will appear here for import</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% else %>
+      <!-- Project Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <% @available_projects.each do |project| %>
+          <div class="card bg-base-100 shadow-lg border <%= project[:can_import] ? 'border-success/20' : 'border-error/20' %>">
+            <div class="card-body">
+              <!-- Status Badge -->
+              <div class="flex justify-between items-start mb-3">
+                <% if project[:can_import] %>
+                  <div class="badge badge-success badge-sm">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Ready
+                  </div>
+                <% else %>
+                  <div class="badge badge-error badge-sm">
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                    Error
+                  </div>
+                <% end %>
+                
+                <div class="text-xs text-base-content/50">
+                  <%= project[:completion_percentage] || 0 %>% complete
+                </div>
+              </div>
+              
+              <!-- Project Info -->
+              <h3 class="card-title text-lg"><%= project[:project_name] %></h3>
+              
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-base-content/70">Project ID:</span>
+                  <code class="text-xs bg-base-200 px-2 py-1 rounded"><%= project[:project_id][0..7] %>...</code>
+                </div>
+                
+                <% if project[:slug] %>
+                  <div class="flex justify-between">
+                    <span class="text-base-content/70">Slug:</span>
+                    <span class="font-mono text-xs"><%= project[:slug] %></span>
+                  </div>
+                <% end %>
+                
+                <% if project[:status] %>
+                  <div class="flex justify-between">
+                    <span class="text-base-content/70">Status:</span>
+                    <span class="capitalize"><%= project[:status] %></span>
+                  </div>
+                <% end %>
+                
+                <% if project[:files_count] %>
+                  <div class="flex justify-between">
+                    <span class="text-base-content/70">Files:</span>
+                    <span><%= project[:files_count] %> generated</span>
+                  </div>
+                <% end %>
+                
+                <% if project[:generated_at] %>
+                  <div class="flex justify-between">
+                    <span class="text-base-content/70">Generated:</span>
+                    <span class="text-xs"><%= Time.parse(project[:generated_at]).strftime("%m/%d/%y") rescue 'Unknown' %></span>
+                  </div>
+                <% end %>
+              </div>
+              
+              <!-- Error Message -->
+              <% if !project[:can_import] && project[:error] %>
+                <div class="alert alert-error mt-3 py-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>
+                  </svg>
+                  <span class="text-xs"><%= project[:error] %></span>
+                </div>
+              <% end %>
+              
+              <!-- Actions -->
+              <div class="card-actions justify-end mt-4">
+                <% if project[:can_import] %>
+                  <button 
+                    class="btn btn-primary btn-sm import-project-btn"
+                    data-project-id="<%= project[:project_id] %>"
+                    data-project-name="<%= project[:project_name] %>"
+                  >
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+                    </svg>
+                    Import
+                  </button>
+                  
+                  <button 
+                    class="btn btn-outline btn-sm preview-project-btn"
+                    data-project-id="<%= project[:project_id] %>"
+                  >
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                    Preview
+                  </button>
+                <% else %>
+                  <button class="btn btn-disabled btn-sm">Cannot Import</button>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Import Modal -->
+<dialog id="import-modal" class="modal">
+  <div class="modal-box max-w-2xl">
+    <h3 class="font-bold text-lg mb-4">Import Project</h3>
+    
+    <div id="modal-content">
+      <!-- Content will be loaded here -->
+    </div>
+    
+    <div class="modal-action">
+      <form method="dialog">
+        <button class="btn btn-outline">Cancel</button>
+      </form>
+      <button id="confirm-import" class="btn btn-primary ml-2" disabled>
+        <span class="loading loading-spinner loading-sm hidden" id="import-spinner"></span>
+        Import Project
+      </button>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop">
+    <button>close</button>
+  </form>
+</dialog>
+
+<!-- Preview Modal -->
+<dialog id="preview-modal" class="modal">
+  <div class="modal-box max-w-4xl max-h-[90vh] overflow-y-auto">
+    <h3 class="font-bold text-lg mb-4">Project Preview</h3>
+    
+    <div id="preview-content">
+      <!-- Content will be loaded here -->
+    </div>
+    
+    <div class="modal-action">
+      <form method="dialog">
+        <button class="btn btn-outline">Close</button>
+      </form>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop">
+    <button>close</button>
+  </form>
+</dialog>
+
+<script>
+// Use a function to initialize the import functionality
+function initializeImportPage() {
+  const importModal = document.getElementById('import-modal');
+  const previewModal = document.getElementById('preview-modal');
+  
+  if (!importModal || !previewModal) {
+    console.error('Import modals not found');
+    return;
+  }
+  
+  let currentProjectId = null;
+  let currentProjectName = null;
+  
+  console.log('Import page loaded, found modals:', importModal, previewModal);
+  
+  // Remove existing listeners to prevent duplicates
+  const oldImportButtons = document.querySelectorAll('.import-project-btn');
+  oldImportButtons.forEach(btn => {
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+  });
+  
+  const oldPreviewButtons = document.querySelectorAll('.preview-project-btn');
+  oldPreviewButtons.forEach(btn => {
+    const newBtn = btn.cloneNode(true);
+    btn.parentNode.replaceChild(newBtn, btn);
+  });
+  
+  // Import button handlers
+  const importButtons = document.querySelectorAll('.import-project-btn');
+  console.log('Found import buttons:', importButtons.length);
+  
+  importButtons.forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('Import button clicked');
+      currentProjectId = this.dataset.projectId;
+      currentProjectName = this.dataset.projectName;
+      
+      showImportModal();
+    });
+  });
+  
+  // Preview button handlers
+  const previewButtons = document.querySelectorAll('.preview-project-btn');
+  console.log('Found preview buttons:', previewButtons.length);
+  
+  previewButtons.forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log('Preview button clicked');
+      const projectId = this.dataset.projectId;
+      showPreviewModal(projectId);
+    });
+  });
+  
+  // Confirm import handler - remove old listener first
+  const confirmBtn = document.getElementById('confirm-import');
+  const newConfirmBtn = confirmBtn.cloneNode(true);
+  confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+  
+  newConfirmBtn.addEventListener('click', function() {
+    if (currentProjectId) {
+      performImport(currentProjectId);
+    }
+  });
+  
+  function showImportModal() {
+    document.getElementById('modal-content').innerHTML = `
+      <div class="space-y-4">
+        <div class="alert alert-info">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <div>
+            <h4 class="font-bold">Import "${currentProjectName}"</h4>
+            <p class="text-sm">This will create a new app project from the exported documentation.</p>
+          </div>
+        </div>
+        
+        <div class="form-control">
+          <label class="label cursor-pointer">
+            <span class="label-text">Overwrite existing project if it exists</span>
+            <input type="checkbox" id="overwrite-existing" class="checkbox checkbox-warning" />
+          </label>
+        </div>
+        
+        <div class="text-sm text-base-content/70">
+          <p><strong>What will be imported:</strong></p>
+          <ul class="list-disc list-inside mt-2 space-y-1">
+            <li>Project configuration and user responses</li>
+            <li>Generated PRD, tasks, and prompts</li>
+            <li>Logo and marketing materials (if available)</li>
+            <li>All metadata and generation history</li>
+          </ul>
+        </div>
+      </div>
+    `;
+    
+    document.getElementById('confirm-import').disabled = false;
+    importModal.showModal();
+  }
+  
+  function showPreviewModal(projectId) {
+    document.getElementById('preview-content').innerHTML = `
+      <div class="flex justify-center items-center py-8">
+        <span class="loading loading-spinner loading-lg"></span>
+      </div>
+    `;
+    
+    previewModal.showModal();
+    
+    // Fetch preview data
+    fetch(`/app_projects/import/${projectId}/preview`)
+      .then(response => response.json())
+      .then(data => {
+        displayPreviewData(data);
+      })
+      .catch(error => {
+        document.getElementById('preview-content').innerHTML = `
+          <div class="alert alert-error">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+            <span>Failed to load preview: ${error.message}</span>
+          </div>
+        `;
+      });
+  }
+  
+  function displayPreviewData(data) {
+    if (!data.can_import) {
+      document.getElementById('preview-content').innerHTML = `
+        <div class="alert alert-error">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>
+          </svg>
+          <span>${data.error}</span>
+        </div>
+      `;
+      return;
+    }
+    
+    const warnings = data.warnings || [];
+    
+    document.getElementById('preview-content').innerHTML = `
+      <div class="space-y-6">
+        <!-- Project Info -->
+        <div class="card bg-base-200">
+          <div class="card-body">
+            <h4 class="card-title">${data.project_name}</h4>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+              <div><strong>Project ID:</strong> ${data.project_id}</div>
+              <div><strong>Slug:</strong> ${data.slug || 'N/A'}</div>
+              <div><strong>Status:</strong> ${data.status || 'N/A'}</div>
+              <div><strong>Completion:</strong> ${data.completion_percentage || 0}%</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Warnings -->
+        ${warnings.length > 0 ? `
+          <div class="alert alert-warning">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+            <div>
+              <h5 class="font-bold">Warnings:</h5>
+              <ul class="list-disc list-inside text-sm">
+                ${warnings.map(w => `<li>${w}</li>`).join('')}
+              </ul>
+            </div>
+          </div>
+        ` : ''}
+        
+        <!-- Files Available -->
+        <div>
+          <h5 class="font-bold mb-2">Available Files:</h5>
+          <div class="grid grid-cols-1 gap-2">
+            ${data.files_available.map(file => `
+              <div class="flex justify-between items-center bg-base-200 px-3 py-2 rounded">
+                <span class="font-mono text-sm">${file.name}</span>
+                <span class="text-xs text-base-content/70">${formatFileSize(file.size)}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        
+        <!-- Artifacts Available -->
+        ${data.artifacts_available.length > 0 ? `
+          <div>
+            <h5 class="font-bold mb-2">Available Artifacts:</h5>
+            <div class="grid grid-cols-1 gap-2">
+              ${data.artifacts_available.map(artifact => `
+                <div class="flex justify-between items-center bg-base-200 px-3 py-2 rounded">
+                  <span class="font-mono text-sm">${artifact.name}</span>
+                  <span class="text-xs text-base-content/70">${formatFileSize(artifact.size)}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
+        
+        <!-- Existing Project -->
+        ${data.existing_project ? `
+          <div class="alert alert-warning">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+            <div>
+              <h5 class="font-bold">Existing Project Found</h5>
+              <p class="text-sm">A project with this name already exists: "${data.existing_project.name}"</p>
+            </div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+  
+  function performImport(projectId) {
+    const confirmBtn = document.getElementById('confirm-import');
+    const spinner = document.getElementById('import-spinner');
+    const overwriteExisting = document.getElementById('overwrite-existing').checked;
+    
+    confirmBtn.disabled = true;
+    spinner.classList.remove('hidden');
+    
+    fetch(`/app_projects/import/${projectId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+      },
+      body: JSON.stringify({
+        overwrite_existing: overwriteExisting
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        // Success - redirect to the imported project
+        window.location.href = data.project.url;
+      } else {
+        // Error
+        document.getElementById('modal-content').innerHTML = `
+          <div class="alert alert-error">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+            <span>${data.message}</span>
+          </div>
+        `;
+        
+        confirmBtn.disabled = false;
+        spinner.classList.add('hidden');
+      }
+    })
+    .catch(error => {
+      document.getElementById('modal-content').innerHTML = `
+        <div class="alert alert-error">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z"></path>
+          </svg>
+          <span>Import failed: ${error.message}</span>
+        </div>
+      `;
+      
+      confirmBtn.disabled = false;
+      spinner.classList.add('hidden');
+    });
+  }
+  
+  function formatFileSize(bytes) {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+}
+
+// Initialize on both DOMContentLoaded and turbo:load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializeImportPage);
+} else {
+  initializeImportPage();
+}
+
+// Re-initialize on Turbo navigation
+document.addEventListener('turbo:load', initializeImportPage);
+</script>

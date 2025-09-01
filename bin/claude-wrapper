@@ -1,0 +1,2 @@
+#!/bin/bash
+exec /usr/bin/node /usr/lib/node_modules/@anthropic-ai/claude-code/cli.js "$@"

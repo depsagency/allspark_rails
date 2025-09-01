@@ -1,0 +1,70 @@
+<div class="card bg-base-100 shadow-xl hover:shadow-2xl transition-shadow">
+  <figure class="px-10 pt-10">
+    <div class="w-full h-32 bg-base-200 rounded-lg flex items-center justify-center">
+      <span class="text-4xl">
+        <%= workflow.status == 'active' ? '▶️' : workflow.status == 'draft' ? '📝' : '📦' %>
+      </span>
+    </div>
+  </figure>
+  
+  <div class="card-body">
+    <h2 class="card-title">
+      <%= workflow.name %>
+      <div class="badge badge-<%= workflow.status == 'active' ? 'success' : workflow.status == 'draft' ? 'warning' : 'ghost' %> badge-sm">
+        <%= workflow.status %>
+      </div>
+    </h2>
+    
+    <% if workflow.description.present? %>
+      <p class="text-sm opacity-70"><%= truncate(workflow.description, length: 100) %></p>
+    <% end %>
+    
+    <div class="text-xs opacity-60 mt-2">
+      <div>Version <%= workflow.version %></div>
+      <div>Updated <%= time_ago_in_words(workflow.updated_at) %> ago</div>
+      <% last_execution = workflow.workflow_executions.order(created_at: :desc).first %>
+      <% if last_execution %>
+        <div>
+          Last run: <%= time_ago_in_words(last_execution.created_at) %> ago
+          <span class="badge badge-<%= last_execution.completed? ? 'success' : last_execution.failed? ? 'error' : 'warning' %> badge-xs">
+            <%= last_execution.status %>
+          </span>
+        </div>
+      <% end %>
+    </div>
+    
+    <div class="card-actions justify-end mt-4">
+      <div class="dropdown dropdown-end">
+        <label tabIndex={0} class="btn btn-ghost btn-xs">
+          •••
+        </label>
+        <ul tabIndex={0} class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
+          <li><%= link_to "View", agents_team_workflow_path(@team, workflow) %></li>
+          <li><%= link_to "Edit", edit_agents_team_workflow_path(@team, workflow) %></li>
+          <li><%= link_to "Duplicate", duplicate_agents_team_workflow_path(@team, workflow), method: :post %></li>
+          <li><%= link_to "Export", export_agents_team_workflow_path(@team, workflow, format: :json) %></li>
+          <li class="text-error">
+            <%= link_to "Archive", agents_team_workflow_path(@team, workflow), 
+                method: :delete,
+                data: { 
+                  turbo_method: :delete,
+                  turbo_confirm: "Are you sure you want to archive this workflow?" 
+                } %>
+          </li>
+        </ul>
+      </div>
+      
+      <%= link_to "Edit", edit_agents_team_workflow_path(@team, workflow), 
+          class: "btn btn-ghost btn-sm" %>
+      
+      <% if workflow.status == 'active' %>
+        <%= button_to "Run", execute_agents_team_workflow_path(@team, workflow), 
+            method: :post,
+            class: "btn btn-primary btn-sm",
+            form: { class: "inline" } %>
+      <% else %>
+        <button class="btn btn-sm btn-disabled" disabled>Run</button>
+      <% end %>
+    </div>
+  </div>
+</div>

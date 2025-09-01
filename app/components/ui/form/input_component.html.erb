@@ -1,0 +1,46 @@
+<div class="<%= container_classes %>">
+  <% if has_label? %>
+    <label for="<%= input_id %>" class="<%= label_classes %>">
+      <span class="label-text">
+        <%= label %>
+        <% if required %>
+          <span class="text-error">*</span>
+        <% end %>
+      </span>
+    </label>
+  <% end %>
+  
+  <div class="<%= input_wrapper_classes %>">
+    <% if textarea? %>
+      <textarea class="<%= input_classes %>" <%= html_attributes(input_attributes) %>><%= value if value.present? %></textarea>
+    <% else %>
+      <input type="<%= input_type %>" class="<%= input_classes %>" <%= html_attributes(input_attributes) %>>
+    <% end %>
+    
+    <% if icon_left.present? %>
+      <span class="<%= icon_classes(:left) %>">
+        <%= icon_left %>
+      </span>
+    <% end %>
+    
+    <% if icon_right.present? %>
+      <span class="<%= icon_classes(:right) %>">
+        <%= icon_right %>
+      </span>
+    <% end %>
+  </div>
+  
+  <% if has_help_text? || has_error? %>
+    <label class="label">
+      <% if has_error? %>
+        <span class="label-text-alt text-error" id="<%= error_text_id %>">
+          <%= error %>
+        </span>
+      <% elsif has_help_text? %>
+        <span class="label-text-alt text-base-content/60" id="<%= help_text_id %>">
+          <%= help_text %>
+        </span>
+      <% end %>
+    </label>
+  <% end %>
+</div>

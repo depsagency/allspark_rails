@@ -1,0 +1,71 @@
+# Example Dockerfile for Rails application
+# Copy this to Dockerfile and customize as needed
+
+# Use Ruby 3.2 as base image
+FROM ruby:3.2-slim
+
+# Install system dependencies
+RUN apt-get update -qq && \
+    apt-get install -y \
+    build-essential \
+    libpq-dev \
+    libyaml-dev \
+    git \
+    curl \
+    # Chromium and dependencies for browser testing
+    chromium \
+    chromium-driver \
+    # Additional dependencies for headless Chrome
+    libnss3 \
+    libxss1 \
+    libasound2 \
+    libxtst6 \
+    xdg-utils \
+    libgbm1 \
+    libxshmfence1 && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install Node.js 18 with Corepack for Yarn 4+ support
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs && \
+    corepack enable
+
+# Set working directory
+WORKDIR /app
+
+# Set Chrome/Chromium environment variables for browser testing
+ENV CHROME_BIN=/usr/bin/chromium
+ENV CHROMIUM_BIN=/usr/bin/chromium
+ENV DOCKER_CONTAINER=true
+
+# Install Ruby dependencies
+COPY Gemfile Gemfile.lock ./
+RUN gem install bundler:2.6.3 && \
+    bundle config set --local deployment 'true' && \
+    bundle config set --local path '/usr/local/bundle' && \
+    bundle config set --local without 'development test' && \
+    bundle install --jobs 4 --retry 3 && \
+    bundle clean --force
+
+# Install JavaScript dependencies  
+COPY package.json yarn.lock* ./
+RUN yarn install --frozen-lockfile
+
+# Copy application code
+COPY . .
+
+# Precompile assets for production
+RUN RAILS_ENV=production SECRET_KEY_BASE=precompile_dummy_key bundle exec rails assets:precompile
+
+# Create workspace directory
+RUN mkdir -p /app/workspace
+
+# Copy entrypoint script
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Expose port
+EXPOSE 3000
+
+# Use entrypoint script for role-based configuration
+ENTRYPOINT ["/entrypoint.sh"]

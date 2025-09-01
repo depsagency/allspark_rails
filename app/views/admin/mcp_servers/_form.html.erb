@@ -1,0 +1,480 @@
+<%= form_with model: [:admin, @mcp_server], 
+    local: true, 
+    class: "space-y-6",
+    data: { controller: "mcp-server-form" } do |form| %>
+  
+  <% if @mcp_server.errors.any? %>
+    <div class="alert alert-error">
+      <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <div>
+        <h4 class="font-bold">Please fix the following errors:</h4>
+        <ul class="list-disc list-inside">
+          <% @mcp_server.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Basic Information -->
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+      <h2 class="card-title mb-4">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        Basic Information
+      </h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="form-control">
+          <%= form.label :name, class: "label" do %>
+            <span class="label-text font-semibold">Server Name *</span>
+          <% end %>
+          <%= form.text_field :name, 
+              placeholder: "My MCP Server",
+              class: "input input-bordered w-full #{'input-error' if @mcp_server.errors[:name].any?}",
+              required: true,
+              data: { 
+                target: "mcp-server-form.nameInput",
+                action: "input->mcp-server-form#inputChanged"
+              } %>
+          <% if @mcp_server.errors[:name].any? %>
+            <div class="label">
+              <span class="label-text-alt text-error"><%= @mcp_server.errors[:name].first %></span>
+            </div>
+          <% end %>
+        </div>
+        
+        <div class="form-control">
+          <%= form.label :status, class: "label" do %>
+            <span class="label-text font-semibold">Status</span>
+          <% end %>
+          <%= form.select :status, 
+              options_for_select([
+                ['Active', 'active'],
+                ['Inactive', 'inactive']
+              ], @mcp_server.status),
+              {},
+              { class: "select select-bordered w-full" } %>
+        </div>
+      </div>
+      
+      <div class="form-control">
+        <%= form.label :endpoint, class: "label" do %>
+          <span class="label-text font-semibold">Endpoint URL *</span>
+        <% end %>
+        <%= form.url_field :endpoint, 
+            placeholder: "https://api.example.com/mcp/v1",
+            class: "input input-bordered w-full #{'input-error' if @mcp_server.errors[:endpoint].any?}",
+            required: true,
+            data: { 
+              target: "mcp-server-form.endpointInput",
+              action: "input->mcp-server-form#inputChanged"
+            } %>
+        <% if @mcp_server.errors[:endpoint].any? %>
+          <div class="label">
+            <span class="label-text-alt text-error"><%= @mcp_server.errors[:endpoint].first %></span>
+          </div>
+        <% end %>
+        <div class="label">
+          <span class="label-text-alt">The base URL for the MCP server API</span>
+        </div>
+      </div>
+      
+      <div class="form-control">
+        <%= form.label :protocol_version, class: "label" do %>
+          <span class="label-text font-semibold">Protocol Version</span>
+        <% end %>
+        <%= form.select :protocol_version, 
+            options_for_select([
+              ['1.0', '1.0'],
+              ['1.1', '1.1'],
+              ['2.0', '2.0']
+            ], @mcp_server.protocol_version || '1.0'),
+            {},
+            { class: "select select-bordered w-full" } %>
+        <div class="label">
+          <span class="label-text-alt">MCP protocol version supported by the server</span>
+        </div>
+      </div>
+      
+      <div class="form-control">
+        <%= form.label :transport_type, class: "label" do %>
+          <span class="label-text font-semibold">Transport Type</span>
+        <% end %>
+        <%= form.select :transport_type, 
+            options_for_select([
+              ['HTTP (Standard)', 'http'],
+              ['WebSocket', 'websocket'],
+              ['SSE (Server-Sent Events)', 'sse']
+            ], @mcp_server.transport_type || 'http'),
+            {},
+            { class: "select select-bordered w-full",
+              data: { action: "change->mcp-server-form#updateTransportOptions" } } %>
+        <div class="label">
+          <span class="label-text-alt">Connection protocol for communicating with the server</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Authentication Configuration -->
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+      <h2 class="card-title mb-4">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+        </svg>
+        Authentication
+      </h2>
+      
+      <div class="form-control">
+        <%= form.label :auth_type, class: "label" do %>
+          <span class="label-text font-semibold">Authentication Type</span>
+        <% end %>
+        <%= form.select :auth_type, 
+            options_for_select([
+              ['No Authentication', 'no_auth'],
+              ['API Key', 'api_key'],
+              ['Bearer Token', 'bearer_token'],
+              ['OAuth 2.0', 'oauth']
+            ], @mcp_server.auth_type),
+            {},
+            { 
+              class: "select select-bordered w-full",
+              data: { 
+                action: "change->mcp-server-form#toggleAuthFields",
+                target: "mcp-server-form.authTypeSelect"
+              }
+            } %>
+      </div>
+      
+      <!-- API Key Fields -->
+      <div data-mcp-server-form-target="apiKeyFields" 
+           class="space-y-4 mt-4" 
+           style="<%= 'display: none;' unless @mcp_server.auth_type == 'api_key' %>">
+        <div class="form-control">
+          <%= form.label :api_key, "API Key", class: "label" do %>
+            <span class="label-text font-semibold">API Key *</span>
+          <% end %>
+          <div class="input-group">
+            <%= text_field_tag "mcp_server[credentials][api_key]", 
+                @mcp_server.credentials&.dig('api_key'),
+                placeholder: "Enter your API key",
+                class: "input input-bordered flex-1",
+                data: { target: "mcp-server-form.apiKeyInput" } %>
+            <button type="button" 
+                    class="btn btn-square btn-outline"
+                    data-action="click->mcp-server-form#togglePasswordVisibility"
+                    data-target-input="api_key">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+        
+        <div class="form-control">
+          <%= form.label :api_key_header, "Header Name", class: "label" do %>
+            <span class="label-text font-semibold">Header Name</span>
+          <% end %>
+          <%= text_field_tag "mcp_server[credentials][api_key_header]", 
+              @mcp_server.credentials&.dig('api_key_header') || 'X-API-Key',
+              placeholder: "X-API-Key",
+              class: "input input-bordered w-full" %>
+          <div class="label">
+            <span class="label-text-alt">The HTTP header name for the API key</span>
+          </div>
+        </div>
+        
+        <!-- Linear-specific help -->
+        <div class="alert alert-info" data-mcp-server-form-target="linearHelp" style="display: none;">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <div>
+            <h4 class="font-bold">Linear API Setup</h4>
+            <p class="text-sm">1. Get your API key from <a href="https://linear.app/settings/api" target="_blank" class="link">Linear Settings → API</a></p>
+            <p class="text-sm">2. Enter the key in the API Key field above</p>
+            <p class="text-sm">3. Linear uses Bearer authentication automatically</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Bearer Token Fields -->
+      <div data-mcp-server-form-target="bearerTokenFields" 
+           class="space-y-4 mt-4" 
+           style="<%= 'display: none;' unless @mcp_server.auth_type == 'bearer_token' %>">
+        <div class="form-control">
+          <%= form.label :bearer_token, "Bearer Token", class: "label" do %>
+            <span class="label-text font-semibold">Bearer Token *</span>
+          <% end %>
+          <div class="input-group">
+            <%= text_field_tag "mcp_server[credentials][bearer_token]", 
+                @mcp_server.credentials&.dig('bearer_token'),
+                placeholder: "Enter your bearer token",
+                class: "input input-bordered flex-1",
+                data: { target: "mcp-server-form.bearerTokenInput" } %>
+            <button type="button" 
+                    class="btn btn-square btn-outline"
+                    data-action="click->mcp-server-form#togglePasswordVisibility"
+                    data-target-input="bearer_token">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- OAuth Fields -->
+      <div data-mcp-server-form-target="oauthFields" 
+           class="space-y-4 mt-4" 
+           style="<%= 'display: none;' unless @mcp_server.auth_type == 'oauth' %>">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="form-control">
+            <%= form.label :client_id, "Client ID", class: "label" do %>
+              <span class="label-text font-semibold">Client ID *</span>
+            <% end %>
+            <%= text_field_tag "mcp_server[config][oauth][client_id]", 
+                @mcp_server.config&.dig('oauth', 'client_id'),
+                placeholder: "OAuth client ID",
+                class: "input input-bordered w-full" %>
+          </div>
+          
+          <div class="form-control">
+            <%= form.label :client_secret, "Client Secret", class: "label" do %>
+              <span class="label-text font-semibold">Client Secret</span>
+            <% end %>
+            <div class="input-group">
+              <%= password_field_tag "mcp_server[config][oauth][client_secret]", 
+                  @mcp_server.config&.dig('oauth', 'client_secret'),
+                  placeholder: "OAuth client secret (optional for PKCE)",
+                  class: "input input-bordered flex-1",
+                  data: { target: "mcp-server-form.clientSecretInput" } %>
+              <button type="button" 
+                      class="btn btn-square btn-outline"
+                      data-action="click->mcp-server-form#togglePasswordVisibility"
+                      data-target-input="client_secret">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-control">
+          <%= form.label :authorization_endpoint, "Authorization URL", class: "label" do %>
+            <span class="label-text font-semibold">Authorization URL *</span>
+          <% end %>
+          <%= text_field_tag "mcp_server[config][oauth][authorization_endpoint]", 
+              @mcp_server.config&.dig('oauth', 'authorization_endpoint'),
+              placeholder: "https://api.example.com/oauth/authorize",
+              class: "input input-bordered w-full" %>
+          <div class="label">
+            <span class="label-text-alt">OAuth authorization endpoint</span>
+          </div>
+        </div>
+        
+        <div class="form-control">
+          <%= form.label :token_endpoint, "Token URL", class: "label" do %>
+            <span class="label-text font-semibold">Token URL *</span>
+          <% end %>
+          <%= text_field_tag "mcp_server[config][oauth][token_endpoint]", 
+              @mcp_server.config&.dig('oauth', 'token_endpoint'),
+              placeholder: "https://api.example.com/oauth/token",
+              class: "input input-bordered w-full" %>
+          <div class="label">
+            <span class="label-text-alt">OAuth token endpoint</span>
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="form-control">
+            <%= form.label :scope, "OAuth Scope", class: "label" do %>
+              <span class="label-text font-semibold">Scope</span>
+            <% end %>
+            <%= text_field_tag "mcp_server[config][oauth][scope]", 
+                @mcp_server.config&.dig('oauth', 'scope'),
+                placeholder: "read write",
+                class: "input input-bordered w-full" %>
+            <div class="label">
+              <span class="label-text-alt">Space-separated OAuth scopes</span>
+            </div>
+          </div>
+          
+          <div class="form-control">
+            <%= form.label :revocation_endpoint, "Revocation URL", class: "label" do %>
+              <span class="label-text font-semibold">Revocation URL</span>
+            <% end %>
+            <%= text_field_tag "mcp_server[config][oauth][revocation_endpoint]", 
+                @mcp_server.config&.dig('oauth', 'revocation_endpoint'),
+                placeholder: "https://api.example.com/oauth/revoke",
+                class: "input input-bordered w-full" %>
+            <div class="label">
+              <span class="label-text-alt">Token revocation endpoint (optional)</span>
+            </div>
+          </div>
+        </div>
+        
+        <% if @mcp_server.persisted? && @mcp_server.credentials&.dig('access_token') %>
+          <div class="alert alert-success">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div>
+              <h3 class="font-bold">OAuth Connected</h3>
+              <div class="text-sm">
+                Access token expires: <%= @mcp_server.credentials.dig('expires_at') ? Time.parse(@mcp_server.credentials.dig('expires_at')).strftime("%B %d, %Y at %I:%M %p") : "Never" %>
+              </div>
+            </div>
+            <div class="flex-none">
+              <%= link_to "Disconnect", mcp_oauth_path(@mcp_server), 
+                  method: :delete, 
+                  class: "btn btn-sm btn-error",
+                  data: { confirm: "Disconnect OAuth authentication for this server?" } %>
+            </div>
+          </div>
+        <% elsif @mcp_server.persisted? %>
+          <div class="alert alert-warning">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+            </svg>
+            <div>
+              <h3 class="font-bold">OAuth Authorization Required</h3>
+              <div class="text-sm">
+                Complete OAuth authorization to connect this server.
+              </div>
+            </div>
+            <div class="flex-none">
+              <%= link_to "Start OAuth", authorize_mcp_oauth_path(@mcp_server), 
+                  class: "btn btn-sm btn-primary" %>
+            </div>
+          </div>
+        <% else %>
+          <div class="alert alert-info">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span>Save the server first, then complete OAuth authorization.</span>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Advanced Configuration -->
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+      <h2 class="card-title mb-4">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg>
+        Advanced Configuration
+      </h2>
+      
+      <div class="collapse collapse-arrow border border-base-300">
+        <input type="checkbox" />
+        <div class="collapse-title text-xl font-medium">
+          Server Configuration (JSON)
+        </div>
+        <div class="collapse-content">
+          <div class="form-control">
+            <%= form.label :config, class: "label" do %>
+              <span class="label-text font-semibold">Custom Configuration</span>
+            <% end %>
+            <%= form.text_area :config, 
+                value: @mcp_server.config.present? ? JSON.pretty_generate(@mcp_server.config) : "{}",
+                placeholder: '{\n  "timeout": 30000,\n  "retries": 3,\n  "custom_headers": {\n    "User-Agent": "AllSpark-MCP/1.0"\n  }\n}',
+                class: "textarea textarea-bordered font-mono text-sm",
+                rows: 8 %>
+            <div class="label">
+              <span class="label-text-alt">Additional server-specific configuration in JSON format</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Actions -->
+  <div class="flex justify-end gap-4">
+    <%= link_to "Cancel", 
+        @mcp_server.persisted? ? admin_mcp_server_path(@mcp_server) : admin_mcp_servers_path, 
+        class: "btn btn-ghost" %>
+    
+    <% if @mcp_server.persisted? %>
+      <%= form.submit "Update Server", 
+          class: "btn btn-primary",
+          data: { disable_with: "Updating..." } %>
+    <% else %>
+      <%= form.submit "Create Server", 
+          class: "btn btn-primary",
+          data: { disable_with: "Creating..." } %>
+    <% end %>
+  </div>
+<% end %>
+
+<!-- JavaScript for form interactions -->
+<script>
+// Stimulus controller inline (can be moved to a proper controller file later)
+document.addEventListener('DOMContentLoaded', function() {
+  const authTypeSelect = document.querySelector('[data-target="mcp-server-form.authTypeSelect"]');
+  const apiKeyFields = document.querySelector('[data-mcp-server-form-target="apiKeyFields"]');
+  const bearerTokenFields = document.querySelector('[data-mcp-server-form-target="bearerTokenFields"]');
+  const oauthFields = document.querySelector('[data-mcp-server-form-target="oauthFields"]');
+  
+  function toggleAuthFields() {
+    const authType = authTypeSelect?.value;
+    
+    // Hide all fields first
+    [apiKeyFields, bearerTokenFields, oauthFields].forEach(field => {
+      if (field) field.style.display = 'none';
+    });
+    
+    // Show relevant fields
+    switch (authType) {
+      case 'api_key':
+        if (apiKeyFields) apiKeyFields.style.display = 'block';
+        break;
+      case 'bearer_token':
+        if (bearerTokenFields) bearerTokenFields.style.display = 'block';
+        break;
+      case 'oauth':
+        if (oauthFields) oauthFields.style.display = 'block';
+        break;
+    }
+  }
+  
+  // Set up event listener
+  authTypeSelect?.addEventListener('change', toggleAuthFields);
+  
+  // Password visibility toggle
+  function togglePasswordVisibility(inputName) {
+    const input = document.querySelector(`[name*="${inputName}"]`);
+    if (input) {
+      input.type = input.type === 'password' ? 'text' : 'password';
+    }
+  }
+  
+  // Set up password toggle buttons
+  document.querySelectorAll('[data-target-input]').forEach(button => {
+    button.addEventListener('click', function() {
+      const inputName = this.getAttribute('data-target-input');
+      togglePasswordVisibility(inputName);
+    });
+  });
+  
+  // Initial state
+  toggleAuthFields();
+});
+</script>

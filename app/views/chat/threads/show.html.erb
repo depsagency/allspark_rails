@@ -1,0 +1,40 @@
+<div class="min-h-screen bg-base-100">
+  <div class="container mx-auto px-4 py-8">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-3xl font-bold"><%= @thread.name %></h1>
+      
+      <div class="flex gap-2">
+        <% if @thread.metadata&.dig('agent_enabled') %>
+          <%= form_with url: chat_thread_agent_path(@thread), method: :post, local: true do |f| %>
+            <%= hidden_field_tag :_method, 'post' %>
+            <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+            <%= button_to "Disable AI Assistant", 
+                disable_chat_thread_agent_path(@thread), 
+                method: :post,
+                class: "btn btn-warning btn-sm" %>
+          <% end %>
+        <% else %>
+          <%= button_to "Enable AI Assistant", 
+              enable_chat_thread_agent_path(@thread), 
+              method: :post,
+              class: "btn btn-primary btn-sm" %>
+        <% end %>
+        
+        <%= link_to "Back to Threads", chat_threads_path, class: "btn btn-ghost btn-sm" %>
+      </div>
+    </div>
+
+    <% if @thread.metadata&.dig('agent_enabled') %>
+      <div class="alert alert-info mb-4">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <span>AI Assistant is active in this thread</span>
+      </div>
+    <% end %>
+
+    <div class="card bg-base-200">
+      <div class="card-body">
+        <%= render 'chat/thread_component', thread: @thread, current_user: current_user %>
+      </div>
+    </div>
+  </div>
+</div>

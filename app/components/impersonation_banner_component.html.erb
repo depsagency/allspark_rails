@@ -1,0 +1,41 @@
+<%# Only render if we should display the banner %>
+<% if should_render? %>
+  <div class="bg-warning text-warning-content p-3 shadow-md border-b border-warning-content/20">
+    <div class="container mx-auto flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <!-- Warning Icon -->
+        <div class="flex-shrink-0">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+          </svg>
+        </div>
+        
+        <!-- Impersonation Message -->
+        <div class="flex-1">
+          <p class="font-semibold text-sm">
+            🎭 You are impersonating <span class="font-bold"><%= impersonated_user_name %></span>
+          </p>
+          <p class="text-xs opacity-90">
+            Logged in as <span class="font-medium"><%= original_user_name %></span>
+          </p>
+        </div>
+      </div>
+      
+      <!-- Stop Impersonation Button -->
+      <div class="flex-shrink-0">
+        <%= link_to stop_admin_impersonation_index_path, 
+            method: :delete, 
+            class: "btn btn-sm btn-error",
+            data: { 
+              confirm: "Are you sure you want to stop impersonating #{impersonated_user_name}?",
+              turbo_method: :delete
+            } do %>
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+          Stop Impersonation
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>

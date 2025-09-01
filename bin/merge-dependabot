@@ -1,0 +1,236 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'optparse'
+require 'json'
+require 'open3'
+
+class DependabotMerger
+  def initialize
+    @options = parse_options
+  end
+
+  def run
+    check_requirements
+    fetch_latest
+    
+    prs = fetch_dependabot_prs
+    
+    if prs.empty?
+      puts "✅ No Dependabot PRs found"
+      return
+    end
+    
+    puts "\n📋 Found #{prs.length} Dependabot PRs:"
+    display_prs(prs)
+    
+    if @options[:list_only]
+      return
+    end
+    
+    if @options[:interactive]
+      process_interactively(prs)
+    else
+      process_all(prs)
+    end
+  end
+  
+  private
+  
+  def parse_options
+    options = {
+      interactive: true,
+      test: true,
+      list_only: false
+    }
+    
+    OptionParser.new do |opts|
+      opts.banner = "Usage: bin/merge-dependabot [options]"
+      
+      opts.on("-a", "--all", "Process all PRs without prompting") do
+        options[:interactive] = false
+      end
+      
+      opts.on("-l", "--list", "List PRs only, don't process") do
+        options[:list_only] = true
+      end
+      
+      opts.on("--skip-tests", "Skip running tests") do
+        options[:test] = false
+      end
+      
+      opts.on("-h", "--help", "Show this help message") do
+        puts opts
+        exit
+      end
+    end.parse!
+    
+    options
+  end
+  
+  def check_requirements
+    unless system("which gh > /dev/null 2>&1")
+      puts "❌ GitHub CLI (gh) is required but not installed."
+      puts "   Install it with: brew install gh"
+      puts "   Then authenticate: gh auth login"
+      exit 1
+    end
+    
+    # Check if authenticated
+    unless system("gh auth status > /dev/null 2>&1")
+      puts "❌ Not authenticated with GitHub CLI"
+      puts "   Run: gh auth login"
+      exit 1
+    end
+  end
+  
+  def fetch_latest
+    puts "🔄 Fetching latest changes..."
+    system("git fetch origin")
+  end
+  
+  def fetch_dependabot_prs
+    puts "🔍 Fetching Dependabot PRs..."
+    
+    cmd = "gh pr list --author 'app/dependabot' --json number,title,headRefName,mergeable,statusCheckRollup --limit 50"
+    stdout, stderr, status = Open3.capture3(cmd)
+    
+    unless status.success?
+      puts "❌ Failed to fetch PRs: #{stderr}"
+      exit 1
+    end
+    
+    JSON.parse(stdout)
+  end
+  
+  def display_prs(prs)
+    prs.each_with_index do |pr, index|
+      status = pr_status_emoji(pr)
+      puts "#{index + 1}. #{status} PR ##{pr['number']}: #{pr['title']}"
+    end
+  end
+  
+  def pr_status_emoji(pr)
+    return "❓" if pr['statusCheckRollup'].nil? || pr['statusCheckRollup'].empty?
+    
+    # Check all status checks
+    all_success = pr['statusCheckRollup'].all? { |check| check['conclusion'] == 'SUCCESS' }
+    any_failure = pr['statusCheckRollup'].any? { |check| check['conclusion'] == 'FAILURE' }
+    
+    if all_success
+      "✅"
+    elsif any_failure
+      "❌"
+    else
+      "⏳"
+    end
+  end
+  
+  def process_interactively(prs)
+    prs.each_with_index do |pr, index|
+      puts "\n" + "="*60
+      puts "Processing #{index + 1}/#{prs.length}: PR ##{pr['number']} - #{pr['title']}"
+      
+      show_pr_details(pr)
+      
+      print "\nMerge this PR? (y/n/s[kip]/q[uit]): "
+      response = STDIN.gets.chomp.downcase
+      
+      case response
+      when 'y'
+        process_pr(pr)
+      when 's', 'n'
+        puts "⏭️  Skipping PR ##{pr['number']}"
+      when 'q'
+        puts "👋 Exiting..."
+        exit 0
+      end
+    end
+  end
+  
+  def process_all(prs)
+    puts "\n🚀 Processing all #{prs.length} PRs..."
+    
+    prs.each_with_index do |pr, index|
+      puts "\n" + "-"*40
+      puts "Processing #{index + 1}/#{prs.length}: PR ##{pr['number']}"
+      process_pr(pr)
+    end
+  end
+  
+  def show_pr_details(pr)
+    # Show PR diff stats
+    cmd = "gh pr view #{pr['number']} --json additions,deletions,files"
+    stdout, _, _ = Open3.capture3(cmd)
+    
+    if stdout && !stdout.empty?
+      data = JSON.parse(stdout)
+      puts "📊 Changes: +#{data['additions']} -#{data['deletions']} in #{data['files'].length} files"
+    end
+    
+    # Show status checks
+    if pr['statusCheckRollup'] && !pr['statusCheckRollup'].empty?
+      puts "🔍 Status checks:"
+      pr['statusCheckRollup'].each do |check|
+        emoji = check['conclusion'] == 'SUCCESS' ? '✅' : '❌'
+        puts "   #{emoji} #{check['name']}"
+      end
+    end
+  end
+  
+  def process_pr(pr)
+    puts "🔄 Checking out PR ##{pr['number']}..."
+    
+    # Checkout the PR branch
+    unless system("git checkout #{pr['headRefName']}")
+      puts "❌ Failed to checkout branch #{pr['headRefName']}"
+      return
+    end
+    
+    # Pull latest changes
+    unless system("git pull origin #{pr['headRefName']}")
+      puts "❌ Failed to pull latest changes"
+      return
+    end
+    
+    if @options[:test]
+      puts "🧪 Running tests..."
+      unless run_tests
+        puts "❌ Tests failed! Skipping PR ##{pr['number']}"
+        system("git checkout main")
+        return
+      end
+    end
+    
+    # Merge the PR
+    puts "🔀 Merging PR ##{pr['number']}..."
+    merge_cmd = "gh pr merge #{pr['number']} --merge --delete-branch"
+    
+    unless system(merge_cmd)
+      puts "❌ Failed to merge PR ##{pr['number']}"
+      system("git checkout main")
+      return
+    end
+    
+    puts "✅ Successfully merged PR ##{pr['number']}"
+    
+    # Return to main branch
+    system("git checkout main")
+    system("git pull origin main")
+  end
+  
+  def run_tests
+    # First try Rails test
+    if File.exist?("bin/rails")
+      system("bin/rails test")
+    elsif File.exist?("Rakefile")
+      system("bundle exec rake test")
+    else
+      puts "⚠️  No test command found, skipping tests"
+      true
+    end
+  end
+end
+
+# Run the script
+DependabotMerger.new.run

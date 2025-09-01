@@ -1,0 +1,259 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl font-bold">Agent Run Details</h1>
+      <p class="text-base-content/70 mt-2">
+        Run ID: <span class="font-mono"><%= @run.run_id %></span>
+      </p>
+    </div>
+    
+    <div class="flex gap-2">
+      <%= link_to "← Back to Monitoring", agents_monitoring_index_path, class: "btn btn-ghost" %>
+      <%= link_to "View Assistant", agents_assistant_path(@assistant), class: "btn btn-ghost" %>
+    </div>
+  </div>
+
+  <!-- Run Summary -->
+  <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+    <div class="stats shadow">
+      <div class="stat">
+        <div class="stat-title">Status</div>
+        <div class="stat-value text-lg">
+          <span class="badge badge-<%= @run.completed? ? 'success' : @run.failed? ? 'error' : @run.cancelled? ? 'ghost' : 'warning' %> badge-lg">
+            <%= @run.status.capitalize %>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats shadow">
+      <div class="stat">
+        <div class="stat-title">Duration</div>
+        <div class="stat-value text-lg">
+          <%= @duration ? "#{@duration.round(2)}s" : "N/A" %>
+        </div>
+        <% if @run.duration_ms %>
+          <div class="stat-desc"><%= @run.duration_ms %>ms</div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="stats shadow">
+      <div class="stat">
+        <div class="stat-title">Messages</div>
+        <div class="stat-value text-lg"><%= @messages.count %></div>
+        <div class="stat-desc">Total exchanges</div>
+      </div>
+    </div>
+
+    <div class="stats shadow">
+      <div class="stat">
+        <div class="stat-title">Tools Used</div>
+        <div class="stat-value text-lg"><%= @tools_used.size %></div>
+        <% if @run.tokens_used %>
+          <div class="stat-desc"><%= @run.tokens_used %> tokens</div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Details (if failed) -->
+  <% if @run.failed? && @error_details %>
+    <div class="alert alert-error mb-8">
+      <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <div>
+        <h3 class="font-bold">Run Failed</h3>
+        <div class="text-sm"><%= @error_details[:message] %></div>
+        <div class="text-xs opacity-70 mt-1">
+          Failed at: <%= @error_details[:timestamp].strftime("%Y-%m-%d %H:%M:%S") %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Main Content: Messages -->
+    <div class="lg:col-span-2 space-y-6">
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title mb-4">Conversation Flow</h2>
+          
+          <% if @messages.any? %>
+            <div class="space-y-4">
+              <% @messages.each_with_index do |message, index| %>
+                <div class="chat <%= message.role == 'user' ? 'chat-end' : 'chat-start' %>">
+                  <div class="chat-image avatar">
+                    <div class="w-10 rounded-full bg-base-300 flex items-center justify-center">
+                      <% if message.role == 'user' %>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      <% elsif message.role == 'tool' %>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      <% else %>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                      <% end %>
+                    </div>
+                  </div>
+                  <div class="chat-header">
+                    <%= message.role.capitalize %>
+                    <time class="text-xs opacity-50"><%= message.created_at.strftime("%H:%M:%S") %></time>
+                  </div>
+                  <div class="chat-bubble <%= message.role == 'user' ? 'chat-bubble-primary' : message.role == 'tool' ? 'chat-bubble-accent' : 'chat-bubble-secondary' %> max-w-xl">
+                    <% if message.content.present? %>
+                      <% if message.role == 'assistant' %>
+                        <div class="prose prose-sm max-w-none">
+                          <%= simple_format(message.content) %>
+                        </div>
+                      <% else %>
+                        <%= simple_format(message.content) %>
+                      <% end %>
+                    <% end %>
+                    
+                    <% if message.tool_calls.present? && message.tool_calls.any? %>
+                      <div class="mt-2 space-y-2">
+                        <div class="text-xs font-semibold opacity-70">Tool Calls:</div>
+                        <% message.tool_calls.each do |tool_call| %>
+                          <div class="bg-base-300 p-2 rounded text-xs">
+                            <div class="font-semibold"><%= tool_call['function']['name'] %></div>
+                            <% if tool_call['function']['arguments'].present? %>
+                              <div class="mt-1 font-mono">
+                                <pre class="whitespace-pre-wrap"><%= JSON.pretty_generate(JSON.parse(tool_call['function']['arguments'])) rescue tool_call['function']['arguments'] %></pre>
+                              </div>
+                            <% end %>
+                          </div>
+                        <% end %>
+                      </div>
+                    <% end %>
+                  </div>
+                  <% if message.role == 'tool' && message.tool_call_id %>
+                    <div class="chat-footer opacity-50 text-xs">
+                      Tool Response ID: <%= message.tool_call_id %>
+                    </div>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="text-center py-8 opacity-70">No messages recorded for this run</p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+      <!-- Assistant Info -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h3 class="card-title text-lg">Assistant Details</h3>
+          
+          <div class="space-y-3">
+            <div>
+              <label class="label">
+                <span class="label-text font-semibold">Name</span>
+              </label>
+              <div><%= @assistant.name %></div>
+            </div>
+            
+            <div>
+              <label class="label">
+                <span class="label-text font-semibold">Model</span>
+              </label>
+              <div class="text-sm">
+                <%= @assistant.llm_model_name || 'Default' %>
+                <% if @assistant.model_provider %>
+                  <span class="opacity-70">(<%= @assistant.model_provider %>)</span>
+                <% end %>
+              </div>
+            </div>
+            
+            <div>
+              <label class="label">
+                <span class="label-text font-semibold">Tool Choice</span>
+              </label>
+              <div class="badge badge-ghost"><%= @assistant.tool_choice %></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Execution Timeline -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h3 class="card-title text-lg">Execution Timeline</h3>
+          
+          <div class="space-y-3">
+            <div class="flex justify-between text-sm">
+              <span class="font-semibold">Created</span>
+              <span><%= @run.created_at.strftime("%Y-%m-%d %H:%M:%S") %></span>
+            </div>
+            
+            <% if @run.started_at %>
+              <div class="flex justify-between text-sm">
+                <span class="font-semibold">Started</span>
+                <span><%= @run.started_at.strftime("%Y-%m-%d %H:%M:%S") %></span>
+              </div>
+            <% end %>
+            
+            <% if @run.completed_at %>
+              <div class="flex justify-between text-sm">
+                <span class="font-semibold">Completed</span>
+                <span><%= @run.completed_at.strftime("%Y-%m-%d %H:%M:%S") %></span>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tools Used -->
+      <% if @tools_used.any? %>
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h3 class="card-title text-lg">Tools Used</h3>
+            
+            <div class="space-y-2">
+              <% @tools_used.uniq.each do |tool| %>
+                <div class="badge badge-primary badge-lg w-full">
+                  <%= tool %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- Metadata -->
+      <% if @run.metadata.present? && @run.metadata.any? %>
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h3 class="card-title text-lg">Additional Metadata</h3>
+            
+            <div class="text-sm">
+              <pre class="whitespace-pre-wrap overflow-x-auto"><%= JSON.pretty_generate(@run.metadata) %></pre>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Raw Data (for debugging) -->
+  <div class="card bg-base-100 shadow-xl mt-8">
+    <div class="card-body">
+      <details>
+        <summary class="cursor-pointer font-semibold">View Raw Run Data</summary>
+        <div class="mt-4 mockup-code">
+          <pre><code><%= JSON.pretty_generate(@run.as_json(include: :assistant)) %></code></pre>
+        </div>
+      </details>
+    </div>
+  </div>
+</div>

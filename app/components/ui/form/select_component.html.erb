@@ -1,0 +1,50 @@
+<div class="<%= container_classes %>">
+  <% if has_label? %>
+    <label for="<%= select_id %>" class="<%= label_classes %>">
+      <span class="label-text">
+        <%= label %>
+        <% if required %>
+          <span class="text-error">*</span>
+        <% end %>
+      </span>
+    </label>
+  <% end %>
+  
+  <select class="<%= select_classes %>" <%= html_attributes(select_attributes) %>>
+    <% if prompt.present? && !multiple %>
+      <option value=""><%= prompt %></option>
+    <% end %>
+    
+    <% processed_options.each do |group| %>
+      <% if group[:group].present? %>
+        <optgroup label="<%= group[:group] %>">
+          <% group[:options].each do |option| %>
+            <option <%= html_attributes(option_attributes(option)) %>>
+              <%= option[:label] %>
+            </option>
+          <% end %>
+        </optgroup>
+      <% else %>
+        <% group[:options].each do |option| %>
+          <option <%= html_attributes(option_attributes(option)) %>>
+            <%= option[:label] %>
+          </option>
+        <% end %>
+      <% end %>
+    <% end %>
+  </select>
+  
+  <% if has_help_text? || has_error? %>
+    <label class="label">
+      <% if has_error? %>
+        <span class="label-text-alt text-error" id="<%= error_text_id %>">
+          <%= error %>
+        </span>
+      <% elsif has_help_text? %>
+        <span class="label-text-alt text-base-content/60" id="<%= help_text_id %>">
+          <%= help_text %>
+        </span>
+      <% end %>
+    </label>
+  <% end %>
+</div>

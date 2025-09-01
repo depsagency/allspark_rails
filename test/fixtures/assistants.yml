@@ -1,0 +1,20 @@
+# Test fixtures for assistants
+one:
+  id: a47ac10b-58cc-4372-a567-0e02b2c3d479
+  name: Test Assistant
+  instructions: You are a helpful test assistant
+  tool_choice: auto
+  active: true
+  user: one
+  created_at: <%= 1.week.ago %>
+  updated_at: <%= 1.week.ago %>
+
+two:
+  id: b47ac10b-58cc-4372-a567-0e02b2c3d479
+  name: Another Assistant
+  instructions: You are another test assistant
+  tool_choice: none
+  active: false
+  user: two
+  created_at: <%= 2.weeks.ago %>
+  updated_at: <%= 2.weeks.ago %>

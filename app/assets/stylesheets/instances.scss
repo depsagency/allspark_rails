@@ -1,0 +1,17 @@
+// Instance-specific styles
+
+// Tab pane visibility
+.tab-pane {
+  &.active {
+    display: block !important;
+  }
+  
+  &.hidden {
+    display: none !important;
+  }
+}
+
+// Ensure tab content is visible
+.tab-content {
+  min-height: 200px;
+}

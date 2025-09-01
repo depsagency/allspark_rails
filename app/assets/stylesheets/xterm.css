@@ -1,0 +1,196 @@
+/* XTerm.js Terminal Styles - Essential styles included directly */
+
+/* Base xterm styles */
+.xterm {
+    cursor: text;
+    position: relative;
+    user-select: none;
+    -ms-user-select: none;
+    -webkit-user-select: none;
+    height: 100% !important;
+    width: 100% !important;
+    overflow: hidden !important;
+    max-height: 100% !important;
+    contain: layout size !important;
+    color: #ffffff !important;
+    background-color: #000000 !important;
+}
+
+.xterm.focus,
+.xterm:focus {
+    outline: none;
+}
+
+.xterm .xterm-helpers {
+    position: absolute;
+    top: 0;
+    /**
+     * The z-index of the helpers must be higher than the canvases in order for
+     * IMEs to appear on top.
+     */
+    z-index: 5;
+}
+
+.xterm .xterm-helper-textarea {
+    padding: 0;
+    border: 0;
+    margin: 0;
+    /* Move textarea out of the screen to the far left, so that the cursor is not visible */
+    position: absolute;
+    opacity: 0;
+    left: -9999em;
+    top: 0;
+    width: 0;
+    height: 0;
+    z-index: -5;
+    /** Prevent wrapping so the IME appears against the textarea at the correct position */
+    white-space: nowrap;
+    overflow: hidden;
+    resize: none;
+}
+
+.xterm .composition-view {
+    /* TODO: Composition position got messed up somewhere */
+    background: #000;
+    color: #FFF;
+    display: none;
+    position: absolute;
+    white-space: nowrap;
+    z-index: 1;
+}
+
+.xterm .composition-view.active {
+    display: block;
+}
+
+.xterm .xterm-viewport {
+    /* On OS X this is required in order for the scroll bar to appear fully opaque */
+    background-color: #000000 !important;
+    overflow-y: auto !important;
+    cursor: default;
+    position: relative !important;
+    width: 100% !important;
+    height: 100% !important;
+    scrollbar-width: thin;
+}
+
+.xterm .xterm-screen {
+    position: relative;
+    background-color: #000000 !important;
+}
+
+.xterm .xterm-screen canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 1;
+}
+
+/* Force all terminal text to be visible */
+.xterm .xterm-rows {
+    color: #ffffff !important;
+    font-family: 'Courier New', monospace !important;
+    font-size: 14px !important;
+}
+
+.xterm .xterm-row {
+    color: #ffffff !important;
+}
+
+.xterm .xterm-row span {
+    color: #ffffff !important;
+    background-color: transparent !important;
+}
+
+.xterm .xterm-char-measure-element {
+    color: #ffffff !important;
+}
+
+/* Force DOM renderer text visibility */
+.xterm-dom-renderer-owner-1 * {
+    color: #ffffff !important;
+}
+
+.xterm-dom-renderer-owner-1 .xterm-rows {
+    color: #ffffff !important;
+}
+
+.xterm-dom-renderer-owner-1 .xterm-row {
+    color: #ffffff !important;
+}
+
+.xterm-dom-renderer-owner-1 span {
+    color: #ffffff !important;
+}
+
+.xterm .xterm-scroll-area {
+    visibility: hidden;
+}
+
+.xterm-char-measure-element {
+    display: inline-block;
+    visibility: hidden;
+    position: absolute;
+    top: 0;
+    left: -9999em;
+    line-height: normal;
+}
+
+.xterm.enable-mouse-events {
+    /* When mouse events are enabled (eg. tmux), revert to the standard pointer cursor */
+    cursor: default;
+}
+
+.xterm .xterm-cursor-pointer,
+.xterm .xterm-cursor-pointer * {
+    cursor: pointer;
+}
+
+.xterm .xterm-cursor-crosshair,
+.xterm .xterm-cursor-crosshair * {
+    cursor: crosshair;
+}
+
+.xterm .xterm-cursor-bar,
+.xterm .xterm-cursor-bar * {
+    cursor: text;
+}
+
+.xterm .xterm-cursor-underline,
+.xterm .xterm-cursor-underline * {
+    cursor: text;
+}
+
+/* Better text rendering */
+.xterm-rows {
+    line-height: 1.2 !important;
+}
+
+/* Ensure terminal cursor is visible */
+.xterm-cursor-layer .xterm-cursor {
+    background-color: #ffffff !important;
+}
+
+/* Terminal selection styling */
+.xterm-selection {
+    background-color: #3b82f6 !important;
+    opacity: 0.3;
+}
+
+/* Scrollbar styling for terminal */
+.xterm .xterm-viewport::-webkit-scrollbar {
+    width: 8px;
+}
+
+.xterm .xterm-viewport::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+.xterm .xterm-viewport::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+}
+
+.xterm .xterm-viewport::-webkit-scrollbar-thumb:hover {
+    background: #777;
+}

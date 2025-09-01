@@ -1,0 +1,10 @@
+# Test fixtures for agent_runs
+one:
+  id: g47ac10b-58cc-4372-a567-0e02b2c3d479
+  assistant: one
+  run_id: run-123-test
+  status: 2
+  started_at: <%= 1.hour.ago %>
+  completed_at: <%= 30.minutes.ago %>
+  created_at: <%= 1.hour.ago %>
+  updated_at: <%= 30.minutes.ago %>

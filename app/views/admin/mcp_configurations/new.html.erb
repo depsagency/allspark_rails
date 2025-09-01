@@ -1,0 +1,160 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl font-bold">New MCP Configuration</h1>
+      <p class="text-base-content/70 mt-2">
+        Create a new Model Context Protocol server configuration
+      </p>
+    </div>
+    
+    <div class="flex gap-2">
+      <%= link_to "← Back to Configurations", admin_mcp_configurations_path, class: "btn btn-ghost" %>
+    </div>
+  </div>
+
+  <!-- Configuration Form -->
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+      <%= form_with model: [:admin, @mcp_configuration], local: true, class: "space-y-6" do |form| %>
+        <% if @mcp_configuration.errors.any? %>
+          <div class="alert alert-error">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <h3 class="font-bold">Please fix the following errors:</h3>
+              <ul class="mt-2">
+                <% @mcp_configuration.errors.full_messages.each do |error| %>
+                  <li>• <%= error %></li>
+                <% end %>
+              </ul>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Basic Information -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="form-control">
+            <%= form.label :name, class: "label" do %>
+              <span class="label-text font-semibold">Configuration Name *</span>
+            <% end %>
+            <%= form.text_field :name, class: "input input-bordered", placeholder: "e.g., Linear Production" %>
+          </div>
+
+          <div class="form-control">
+            <%= form.label :server_type, class: "label" do %>
+              <span class="label-text font-semibold">Server Type *</span>
+            <% end %>
+            <%= form.select :server_type, options_for_select([
+              ['Stdio (Local Process)', 'stdio'],
+              ['HTTP', 'http'],
+              ['Server-Sent Events (SSE)', 'sse'],
+              ['WebSocket', 'websocket']
+            ], @mcp_configuration.server_type), { prompt: 'Select server type...' }, { class: "select select-bordered" } %>
+          </div>
+        </div>
+
+        <!-- Enabled Status -->
+        <div class="form-control">
+          <label class="label cursor-pointer justify-start gap-4">
+            <%= form.check_box :enabled, class: "checkbox checkbox-primary" %>
+            <span class="label-text font-semibold">Enable this configuration</span>
+          </label>
+          <div class="label">
+            <span class="label-text-alt">When enabled, this configuration will be available for use by assistants</span>
+          </div>
+        </div>
+
+        <!-- Server Configuration -->
+        <div class="form-control">
+          <%= form.label :server_config, class: "label" do %>
+            <span class="label-text font-semibold">Server Configuration *</span>
+          <% end %>
+          <%= form.text_area :server_config, 
+              value: @mcp_configuration.server_config.present? ? JSON.pretty_generate(@mcp_configuration.server_config) : '{}',
+              class: "textarea textarea-bordered font-mono text-sm", 
+              rows: 10,
+              placeholder: 'Enter JSON configuration...' %>
+          <div class="label">
+            <span class="label-text-alt">JSON configuration for the MCP server (command, args, env, etc.)</span>
+          </div>
+        </div>
+
+        <!-- Templates (if available) -->
+        <% if @templates.any? %>
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text font-semibold">Use Template (Optional)</span>
+            </label>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <% @templates.each do |template| %>
+                <div class="card bg-base-200 shadow-sm hover:shadow-md cursor-pointer" 
+                     onclick="useTemplate('<%= template.id %>')">
+                  <div class="card-body p-4">
+                    <h3 class="card-title text-sm"><%= template.name %></h3>
+                    <p class="text-xs opacity-70"><%= template.description %></p>
+                    <div class="card-actions justify-end mt-2">
+                      <div class="badge badge-ghost badge-sm"><%= template.category %></div>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Metadata -->
+        <div class="form-control">
+          <%= form.label :metadata, class: "label" do %>
+            <span class="label-text font-semibold">Metadata (Optional)</span>
+          <% end %>
+          <%= form.text_area :metadata, 
+              value: @mcp_configuration.metadata.present? ? JSON.pretty_generate(@mcp_configuration.metadata) : '{}',
+              class: "textarea textarea-bordered font-mono text-sm", 
+              rows: 4,
+              placeholder: 'Enter JSON metadata...' %>
+          <div class="label">
+            <span class="label-text-alt">Additional metadata for this configuration (description, tags, etc.)</span>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end gap-2">
+          <%= link_to "Cancel", admin_mcp_configurations_path, class: "btn btn-ghost" %>
+          <%= form.submit "Create Configuration", class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<script>
+function useTemplate(templateId) {
+  // This would be implemented to load template configuration
+  // For now, just show an alert
+  alert('Template functionality coming soon!');
+}
+
+// Auto-format JSON on blur
+document.addEventListener('DOMContentLoaded', function() {
+  const serverConfigField = document.querySelector('textarea[name="mcp_configuration[server_config]"]');
+  const metadataField = document.querySelector('textarea[name="mcp_configuration[metadata]"]');
+  
+  function formatJSON(field) {
+    try {
+      const parsed = JSON.parse(field.value);
+      field.value = JSON.stringify(parsed, null, 2);
+    } catch (e) {
+      // Invalid JSON, leave as is
+    }
+  }
+  
+  if (serverConfigField) {
+    serverConfigField.addEventListener('blur', () => formatJSON(serverConfigField));
+  }
+  
+  if (metadataField) {
+    metadataField.addEventListener('blur', () => formatJSON(metadataField));
+  }
+});
+</script>

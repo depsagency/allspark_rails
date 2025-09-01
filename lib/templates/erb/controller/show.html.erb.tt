@@ -1,0 +1,102 @@
+<div class="container mx-auto px-4 py-8">
+  <!-- Flash messages with DaisyUI alerts -->
+  <%% flash.each do |type, message| %>
+    <div class="alert <%%= type == 'notice' ? 'alert-success' : 'alert-error' %> mb-4">
+      <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+      <span><%%= message %></span>
+    </div>
+  <%% end %>
+
+  <!-- Breadcrumbs navigation -->
+  <div class="breadcrumbs text-sm mb-6">
+    <ul>
+      <li><%%= link_to "Home", root_path, class: "link link-hover" %></li>
+      <li><%%= link_to "<%= plural_name.humanize %>", <%= plural_name %>_path, class: "link link-hover" %></li>
+      <li class="text-base-content/70"><%= singular_name.humanize %></li>
+    </ul>
+  </div>
+
+  <!-- Main content card -->
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h1 class="card-title text-3xl font-bold"><%= singular_name.humanize %></h1>
+        <div class="flex gap-2">
+          <%%= link_to "Edit", "#", class: "btn btn-secondary" %>
+          <%%= link_to "Back", <%= plural_name %>_path, class: "btn btn-outline" %>
+        </div>
+      </div>
+
+      <!-- Content area -->
+      <div class="prose max-w-none">
+        <p class="text-base-content/70 mb-6">
+          This is the detail view for a specific <%= singular_name.humanize.downcase %>. 
+          Replace this content with your actual data display.
+        </p>
+
+        <!-- Example content sections -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 not-prose">
+          <!-- Details section -->
+          <div class="space-y-4">
+            <h3 class="text-lg font-semibold">Details</h3>
+            
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-semibold">Name</span>
+              </label>
+              <div class="bg-base-200 rounded-lg p-3">
+                <!-- Replace with actual data: <%%= @object.name %> -->
+                Sample Name
+              </div>
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-semibold">Description</span>
+              </label>
+              <div class="bg-base-200 rounded-lg p-3 min-h-[6rem]">
+                <!-- Replace with actual data: <%%= @object.description %> -->
+                Sample description content would go here.
+              </div>
+            </div>
+
+            <div class="form-control">
+              <label class="label">
+                <span class="label-text font-semibold">Status</span>
+              </label>
+              <div class="bg-base-200 rounded-lg p-3">
+                <div class="badge badge-success">Active</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Additional information -->
+          <div class="space-y-4">
+            <h3 class="text-lg font-semibold">Additional Information</h3>
+            
+            <div class="stats stats-vertical shadow bg-base-200">
+              <div class="stat">
+                <div class="stat-title">Created</div>
+                <div class="stat-value text-lg">Jan 1, 2024</div>
+                <div class="stat-desc">3 months ago</div>
+              </div>
+              
+              <div class="stat">
+                <div class="stat-title">Last Updated</div>
+                <div class="stat-value text-lg">Today</div>
+                <div class="stat-desc">Just now</div>
+              </div>
+              
+              <div class="stat">
+                <div class="stat-title">Views</div>
+                <div class="stat-value text-lg">1,234</div>
+                <div class="stat-desc">↗︎ 400 (22%)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

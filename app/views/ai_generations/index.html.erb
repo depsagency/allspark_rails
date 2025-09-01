@@ -1,0 +1,294 @@
+<% content_for :title, "AI Generation History" %>
+
+<div class="container mx-auto px-4 py-8 max-w-7xl">
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="breadcrumbs text-sm mb-4">
+      <ul>
+        <li><%= link_to "App Builder", app_projects_path %></li>
+        <li>Generation History</li>
+      </ul>
+    </div>
+    
+    <div class="flex justify-between items-start">
+      <div>
+        <h1 class="text-4xl font-bold mb-2">AI Generation History</h1>
+        <p class="text-gray-600">Track all your LLM usage, costs, and generation performance</p>
+      </div>
+      
+      <div class="stats shadow">
+        <div class="stat">
+          <div class="stat-title">Total Generations</div>
+          <div class="stat-value text-primary"><%= @stats[:total] %></div>
+        </div>
+        
+        <div class="stat">
+          <div class="stat-title">Total Cost</div>
+          <div class="stat-value text-sm">$<%= '%.4f' % @total_cost %></div>
+        </div>
+        
+        <div class="stat">
+          <div class="stat-title">Success Rate</div>
+          <div class="stat-value text-sm"><%= @success_rate %>%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="mb-6">
+    <%= render Ui::CardComponent.new(bordered: true) do |card| %>
+      <%= card.with_body do %>
+        <%= form_with url: ai_generations_path, method: :get, local: true, class: "flex flex-wrap gap-4 items-end" do |form| %>
+          <div class="form-control">
+            <label class="label label-text">Type</label>
+            <%= form.select :type, options_for_select([
+              ['All Types', ''],
+              ['PRD Generation', 'prd'],
+              ['Task Decomposition', 'tasks'],
+              ['Claude Prompts', 'prompts'],
+              ['Logo Generation', 'logo'],
+              ['Marketing Page', 'marketing_page']
+            ], params[:type]), {}, { class: "select select-bordered select-sm" } %>
+          </div>
+          
+          <div class="form-control">
+            <label class="label label-text">Provider</label>
+            <%= form.select :provider, options_for_select([
+              ['All Providers', ''],
+              ['OpenAI', 'openai'],
+              ['Claude', 'claude'],
+              ['Gemini', 'gemini']
+            ], params[:provider]), {}, { class: "select select-bordered select-sm" } %>
+          </div>
+          
+          <div class="form-control">
+            <label class="label label-text">Status</label>
+            <%= form.select :status, options_for_select([
+              ['All Status', ''],
+              ['Completed', 'completed'],
+              ['Failed', 'failed'],
+              ['Processing', 'processing']
+            ], params[:status]), {}, { class: "select select-bordered select-sm" } %>
+          </div>
+          
+          <div class="form-control">
+            <label class="label label-text">Project</label>
+            <%= form.select :project_id, options_for_select([
+              ['All Projects', '']
+            ] + @projects.map { |p| [p.name, p.id] }, params[:project_id]), {}, { class: "select select-bordered select-sm" } %>
+          </div>
+          
+          <div class="form-control">
+            <%= form.submit "Filter", class: "btn btn-primary btn-sm" %>
+          </div>
+          
+          <div class="form-control">
+            <%= link_to "Clear", ai_generations_path, class: "btn btn-outline btn-sm" %>
+          </div>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <!-- Results Info -->
+  <div class="mb-4 flex justify-between items-center">
+    <div class="text-sm text-gray-600">
+      Showing <%= @ai_generations.offset_value + 1 %>-<%= @ai_generations.offset_value + @ai_generations.length %> 
+      of <%= @ai_generations.total_count %> generations
+    </div>
+    
+    <div class="text-sm text-gray-600">
+      Page <%= @ai_generations.current_page %> of <%= @ai_generations.total_pages %>
+    </div>
+  </div>
+
+  <!-- Generations Table -->
+  <% if @ai_generations.any? %>
+    <div class="overflow-x-auto">
+      <table class="table table-zebra w-full">
+        <thead>
+          <tr>
+            <th>Project</th>
+            <th>Type</th>
+            <th>Provider</th>
+            <th>Model</th>
+            <th>Status</th>
+            <th>Cost</th>
+            <th>Tokens</th>
+            <th>Duration</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @ai_generations.each do |generation| %>
+            <tr>
+              <td>
+                <div class="font-medium">
+                  <%= link_to generation.app_project.name, app_project_path(generation.app_project), 
+                              class: "hover:text-primary" %>
+                </div>
+              </td>
+              
+              <td>
+                <%= render Ui::BadgeComponent.new(variant: :ghost, size: :sm) do %>
+                  <%= generation.generation_type_display %>
+                <% end %>
+              </td>
+              
+              <td>
+                <%= render Ui::BadgeComponent.new(variant: :outline, size: :sm) do %>
+                  <%= generation.provider_display %>
+                <% end %>
+              </td>
+              
+              <td>
+                <span class="text-sm text-gray-600">
+                  <%= generation.model_used || 'N/A' %>
+                </span>
+              </td>
+              
+              <td>
+                <%= render Ui::BadgeComponent.new(variant: generation.status.to_sym, size: :sm) do %>
+                  <%= generation.status.humanize %>
+                <% end %>
+                <% if generation.failed? && generation.error_message.present? %>
+                  <div class="text-xs text-red-600 mt-1" title="<%= generation.error_message %>">
+                    <%= generation.error_message.truncate(30) %>
+                  </div>
+                <% end %>
+              </td>
+              
+              <td>
+                <span class="font-mono text-sm">
+                  <%= generation.formatted_cost %>
+                </span>
+              </td>
+              
+              <td>
+                <span class="font-mono text-sm">
+                  <%= generation.token_count ? number_with_delimiter(generation.token_count) : 'N/A' %>
+                </span>
+              </td>
+              
+              <td>
+                <span class="text-sm">
+                  <%= generation.duration_display %>
+                </span>
+              </td>
+              
+              <td>
+                <div class="text-sm">
+                  <%= generation.created_at.strftime("%m/%d/%y") %>
+                </div>
+                <div class="text-xs text-gray-500">
+                  <%= generation.created_at.strftime("%H:%M") %>
+                </div>
+              </td>
+              
+              <td>
+                <div class="flex gap-1">
+                  <%= link_to ai_generation_path(generation), class: "btn btn-ghost btn-xs" do %>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  <% end %>
+                  
+                  <% if generation.completed? && generation.raw_output.present? %>
+                    <button class="btn btn-ghost btn-xs" 
+                            onclick="copyToClipboard('<%= j(generation.raw_output) %>', this)"
+                            title="Copy output">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                    </button>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <% if @ai_generations.total_pages > 1 %>
+      <% 
+        # Extract permitted filter parameters
+        filter_params = params.permit(:type, :provider, :status, :project_id).to_h
+      %>
+      <div class="mt-6 flex justify-center">
+        <div class="join">
+          <% if @ai_generations.prev_page %>
+            <%= link_to ai_generations_path(filter_params.merge(page: @ai_generations.prev_page)), 
+                        class: "join-item btn btn-outline" do %>
+              « Previous
+            <% end %>
+          <% else %>
+            <button class="join-item btn btn-outline btn-disabled">« Previous</button>
+          <% end %>
+          
+          <% page_range = [[@ai_generations.current_page - 2, 1].max, [@ai_generations.current_page + 2, @ai_generations.total_pages].min] %>
+          <% (page_range[0]..page_range[1]).each do |page| %>
+            <% if page == @ai_generations.current_page %>
+              <button class="join-item btn btn-active"><%= page %></button>
+            <% else %>
+              <%= link_to ai_generations_path(filter_params.merge(page: page)), 
+                          class: "join-item btn btn-outline" do %>
+                <%= page %>
+              <% end %>
+            <% end %>
+          <% end %>
+          
+          <% if @ai_generations.next_page %>
+            <%= link_to ai_generations_path(filter_params.merge(page: @ai_generations.next_page)), 
+                        class: "join-item btn btn-outline" do %>
+              Next »
+            <% end %>
+          <% else %>
+            <button class="join-item btn btn-outline btn-disabled">Next »</button>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  <% else %>
+    <!-- Empty State -->
+    <div class="text-center py-12">
+      <div class="text-6xl mb-4">🤖</div>
+      <h3 class="text-2xl font-bold mb-2">No Generations Found</h3>
+      <% if params.values.any?(&:present?) %>
+        <p class="text-gray-600 mb-6">No AI generations match your current filters. Try adjusting the filters or clearing them.</p>
+        <%= link_to "Clear Filters", ai_generations_path, class: "btn btn-outline" %>
+      <% else %>
+        <p class="text-gray-600 mb-6">Start creating projects and generating blueprints to see your AI usage history.</p>
+        <%= render Ui::ButtonComponent.new(variant: :primary) do %>
+          <%= link_to app_projects_path, class: "text-white no-underline" do %>
+            Create Your First Project
+          <% end %>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+</div>
+
+<script>
+function copyToClipboard(text, button) {
+  if (navigator.clipboard && text) {
+    navigator.clipboard.writeText(text).then(() => {
+      // Show success feedback
+      const originalHtml = button.innerHTML
+      button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>'
+      button.classList.add('btn-success')
+      
+      setTimeout(() => {
+        button.innerHTML = originalHtml
+        button.classList.remove('btn-success')
+      }, 2000)
+    }).catch(err => {
+      console.error('Failed to copy text: ', err)
+    })
+  }
+}
+</script>

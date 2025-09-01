@@ -1,0 +1,58 @@
+# AllSpark Docker Compose Configuration
+# Simple development setup for building your Rails app
+
+services:
+  db:
+    image: pgvector/pgvector:pg15
+    environment:
+      POSTGRES_DB: allspark_development
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  web:
+    build: .
+    volumes:
+      - .:/app
+      # Optional: Mount AllSpark gem for monitoring integration
+      # - ../../vendor/gems/allspark:/app/vendor/gems/allspark
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+      - redis
+    environment:
+      DATABASE_URL: postgresql://postgres:password@db:5432/allspark_development
+      REDIS_URL: redis://redis:6379/0
+      RAILS_ENV: development
+    stdin_open: true
+    tty: true
+
+  sidekiq:
+    build: .
+    volumes:
+      - .:/app
+      # Optional: Mount AllSpark gem for monitoring integration
+      # - ../../vendor/gems/allspark:/app/vendor/gems/allspark
+    depends_on:
+      - db
+      - redis
+    environment:
+      DATABASE_URL: postgresql://postgres:password@db:5432/allspark_development
+      REDIS_URL: redis://redis:6379/0
+      RAILS_ENV: development
+      CONTAINER_ROLE: sidekiq
+
+volumes:
+  postgres_data:
+  redis_data:

@@ -1,0 +1,42 @@
+<title><%= content_for(:title) || "AllSpark" %> </title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no viewport-fit=cover">
+<meta name="description" content="Allspark - A modern Rails 8.0 application">
+<meta name="keywords" content="DaisyUI, Rails, TailwindCSS, Template, Bootstrap, Jumpstart, Kickstart, Stater">
+<meta name="author" content="khairi.my">
+<meta name="view-transition" content="same-origin" />
+<meta name="turbo-prefetch" content="false">
+
+<!-- DevTools Configuration for AllSpark Builder -->
+<% if Rails.env.development? || ENV['DEVTOOLS_ENABLED'] == 'true' %>
+  <!-- These meta tags signal to the DevTools monitor that it should activate -->
+  <meta name="devtools-enabled" content="true">
+  <!-- Note: X-Frame-Options and CSP are handled by the DevToolsMiddleware for proper HTTP headers -->
+<% end %>
+
+<%= csrf_meta_tags %>
+<%= csp_meta_tag %>
+<%= action_cable_meta_tag%>
+<%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+<% if (controller_name == "workflows" && action_name == "edit") || controller_name == "workflow_executions" %>
+  <%= stylesheet_link_tag "reactflow", "data-turbo-track": "reload" %>
+<% end %>
+<%= javascript_include_tag "application", "data-turbo-track": "reload", defer: true %>
+<% if (controller_name == "workflows" && action_name == "edit") || controller_name == "workflow_executions" %>
+  <%= javascript_include_tag "workflow_builder", "data-turbo-track": "reload", defer: true %>
+<% end %>
+<%= yield :head %>
+<link rel="manifest" href="/manifest.json">
+<link rel="icon" href="/icon.png" type="image/png">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon.png">
+<script>
+  // Always default to light theme if no theme is saved
+  const savedTheme = window.localStorage.getItem('theme') || window.localStorage.getItem('daisyui-theme');
+  const theme = savedTheme || 'light';
+  document.documentElement.setAttribute('data-theme', theme);
+  // Save the default theme if nothing was saved
+  if (!savedTheme) {
+    window.localStorage.setItem('theme', 'light');
+    window.localStorage.setItem('daisyui-theme', 'light');
+  }
+</script>

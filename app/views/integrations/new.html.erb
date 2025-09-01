@@ -1,0 +1,46 @@
+<div class="container mx-auto px-4 py-8 max-w-md">
+  <h1 class="text-3xl font-bold mb-8">Connect <%= @service.humanize %></h1>
+  
+  <%= form_with model: @integration || ExternalIntegration.new, url: integrations_path, local: true do |form| %>
+    <%= form.hidden_field :service, value: @service %>
+    
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <% case @service %>
+        <% when 'todoist' %>
+          <p class="mb-4">
+            To connect Todoist, you'll need your API token. You can find it in your 
+            Todoist Settings under Integrations.
+          </p>
+          
+          <div class="form-control">
+            <%= form.label :access_token, "API Token", class: "label" %>
+            <%= form.text_field :access_token, 
+                class: "input input-bordered",
+                placeholder: "Your Todoist API token",
+                required: true %>
+          </div>
+          
+          <div class="alert alert-info mt-4">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <div>
+              <p>To get your API token:</p>
+              <ol class="list-decimal ml-4 mt-2">
+                <li>Go to Todoist Settings</li>
+                <li>Click on "Integrations"</li>
+                <li>Copy your API token</li>
+              </ol>
+            </div>
+          </div>
+        <% else %>
+          <p>Configuration for <%= @service %> coming soon!</p>
+        <% end %>
+        
+        <div class="card-actions justify-end mt-6">
+          <%= link_to "Cancel", integrations_path, class: "btn btn-ghost" %>
+          <%= form.submit "Connect", class: "btn btn-primary" %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

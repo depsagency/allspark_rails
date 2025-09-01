@@ -1,0 +1,987 @@
+<% content_for :title, @app_project.name %>
+
+<div class="container mx-auto px-4 py-8 max-w-6xl" 
+     data-controller="serialize" 
+     data-app-project-id="<%= @app_project.id %>"
+     data-serialize-project-id-value="<%= @app_project.slug %>">
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="breadcrumbs text-sm mb-4">
+      <ul>
+        <li><%= link_to "App Builder", app_projects_path %></li>
+        <li><%= @app_project.name %></li>
+      </ul>
+    </div>
+    
+    <div class="flex justify-between items-start gap-4">
+      <div class="flex flex-col gap-2">
+        <h1 class="text-4xl font-bold"><%= @app_project.name %></h1>
+        <div class="flex flex-wrap items-center gap-3">
+          <%= render Ui::BadgeComponent.new(variant: @app_project.status.to_sym, css_class: "project-status-badge") do %>
+            <%= @app_project.status.humanize %>
+          <% end %>
+          <span class="text-sm text-gray-600">
+            Created <%= @app_project.created_at.strftime("%B %d, %Y") %>
+          </span>
+          <% if @app_project.status == 'generating' %>
+            <div class="flex items-center gap-2 text-blue-600">
+              <span class="loading loading-spinner loading-sm"></span>
+              <span class="text-sm generation-status">Generating...</span>
+            </div>
+          <% elsif @app_project.status == 'error' && @app_project.generation_metadata['last_error'].present? %>
+            <div class="text-sm text-red-600">
+              Error: <%= @app_project.generation_metadata['last_error'] %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+      
+      <div class="flex flex-wrap gap-2">
+        <%= render Ui::ButtonComponent.new(variant: :secondary, href: wizard_app_projects_path(project_slug: @app_project.slug)) do %>
+          <%= @completion_percentage < 100 ? "Continue Questionnaire" : "Edit Responses" %>
+        <% end %>
+        
+        <%= render Ui::ButtonComponent.new(variant: :secondary, href: edit_app_project_path(@app_project)) do %>
+          Edit Project
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Generated Outputs -->
+  <div class="mb-8">
+    <%= render Ui::CardComponent.new(shadow: true) do |card| %>
+      <%= card.with_body do %>
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">Generated Outputs</h2>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- PRD Card (Always Visible) -->
+            <div class="card bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 min-h-80 flex flex-col">
+              <div class="card-body text-center flex flex-col justify-between h-full">
+                <div class="flex-1">
+                  <div class="text-4xl mb-4">📋</div>
+                  <h3 class="card-title justify-center text-lg mb-2">Product Requirements Document</h3>
+                  <p class="text-sm text-gray-600 mb-4">
+                    Comprehensive 15-section PRD with technical specifications
+                  </p>
+                  <% if @app_project.generated_prd.present? %>
+                    <div class="text-xs text-gray-500 mb-4">
+                      <%= @app_project.generated_prd.length %> characters • 
+                      Generated <%= time_ago_in_words(@app_project.generation_metadata['prd_generated_at']&.to_time || @app_project.updated_at) %> ago
+                    </div>
+                  <% else %>
+                    <div class="text-xs text-gray-500 mb-4">
+                      Not yet generated
+                    </div>
+                  <% end %>
+                </div>
+                <div class="card-actions justify-center gap-1 flex-wrap">
+                  <% if @app_project.generated_prd.present? %>
+                    <button class="btn btn-ghost btn-xs" onclick="document.getElementById('prd-preview').showModal()">
+                      Preview
+                    </button>
+                    <button class="btn btn-ghost btn-xs" onclick="document.getElementById('prd-edit').showModal()">
+                      Edit
+                    </button>
+                    <button class="btn btn-ghost btn-xs">
+                      <%= link_to export_app_project_path(@app_project, format: 'prd'), class: "no-underline" do %>
+                        Download
+                      <% end %>
+                    </button>
+                    <button class="btn btn-ghost btn-xs" data-action="click->clipboard#copy" data-clipboard-text="<%= @app_project.generated_prd %>">
+                      Copy
+                    </button>
+                    <button class="btn btn-success btn-xs serialize-btn" 
+                            data-output-type="prd" 
+                            data-action="click->serialize#serialize">
+                      <span class="serialize-text">Serialize</span>
+                      <span class="loading loading-spinner loading-xs hidden"></span>
+                    </button>
+                    <%= form_with url: generate_prd_app_project_path(@app_project), method: :post, local: true,
+                                  data: { confirm: "Regenerate PRD?" }, class: "inline" do |form| %>
+                      <%= render Ui::ButtonComponent.new(variant: :ghost, size: :xs, type: :submit) do %>
+                        Regenerate
+                      <% end %>
+                    <% end %>
+                  <% else %>
+                    <% if @completion_percentage >= 70 %>
+                      <%= form_with url: generate_prd_app_project_path(@app_project), method: :post, local: true,
+                                    data: { confirm: "Generate PRD?" }, class: "inline" do |form| %>
+                        <%= render Ui::ButtonComponent.new(variant: :primary, size: :sm, css_class: "generate-prd-btn", type: :submit) do %>
+                          Generate
+                        <% end %>
+                      <% end %>
+                    <% else %>
+                      <button class="btn btn-sm btn-disabled" disabled>
+                        Complete Questionnaire to Generate
+                      </button>
+                    <% end %>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Tasks Card (Always Visible) -->
+            <div class="card bg-gradient-to-br from-green-50 to-green-100 border border-green-200 min-h-80 flex flex-col">
+              <div class="card-body text-center flex flex-col justify-between h-full">
+                <div class="flex-1">
+                  <div class="text-4xl mb-4">📝</div>
+                  <h3 class="card-title justify-center text-lg mb-2">Development Task List</h3>
+                  <p class="text-sm text-gray-600 mb-4">
+                    Phased breakdown with dependencies and time estimates
+                  </p>
+                  <% if @app_project.generated_tasks.present? %>
+                    <div class="text-xs text-gray-500 mb-4">
+                      <%= @app_project.generation_metadata['task_count'] || 'N/A' %> tasks • 
+                      <%= @app_project.generation_metadata['estimated_hours'] || 'N/A' %> estimated hours
+                    </div>
+                  <% else %>
+                    <div class="text-xs text-gray-500 mb-4">
+                      Not yet generated
+                    </div>
+                  <% end %>
+                </div>
+                <div class="card-actions justify-center gap-1 flex-wrap">
+                  <% if @app_project.generated_tasks.present? %>
+                    <button class="btn btn-ghost btn-xs" onclick="document.getElementById('tasks-preview').showModal()">
+                      Browse Tasks
+                    </button>
+                    <button class="btn btn-ghost btn-xs" onclick="document.getElementById('tasks-edit').showModal()">
+                      Edit
+                    </button>
+                    <button class="btn btn-ghost btn-xs">
+                      <%= link_to export_app_project_path(@app_project, format: 'tasks'), class: "no-underline" do %>
+                        Download
+                      <% end %>
+                    </button>
+                    <button class="btn btn-ghost btn-xs" data-action="click->clipboard#copy" data-clipboard-text="<%= @app_project.generated_tasks %>">
+                      Copy
+                    </button>
+                    <button class="btn btn-success btn-xs serialize-btn" 
+                            data-output-type="tasks" 
+                            data-action="click->serialize#serialize">
+                      <span class="serialize-text">Serialize</span>
+                      <span class="loading loading-spinner loading-xs hidden"></span>
+                    </button>
+                    <%= form_with url: generate_tasks_app_project_path(@app_project), method: :post, local: true,
+                                  data: { confirm: "Regenerate task breakdown?" }, class: "inline" do |form| %>
+                      <%= render Ui::ButtonComponent.new(variant: :ghost, size: :xs, type: :submit) do %>
+                        Regenerate
+                      <% end %>
+                    <% end %>
+                  <% else %>
+                    <% if @app_project.generated_prd.present? %>
+                      <%= form_with url: generate_tasks_app_project_path(@app_project), method: :post, local: true,
+                                    data: { confirm: "Generate task breakdown?" }, class: "inline" do |form| %>
+                        <%= render Ui::ButtonComponent.new(variant: :primary, size: :sm, css_class: "generate-tasks-btn", type: :submit) do %>
+                          Generate
+                        <% end %>
+                      <% end %>
+                    <% else %>
+                      <button class="btn btn-sm btn-disabled" disabled>
+                        Generate PRD First
+                      </button>
+                    <% end %>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Claude Prompts Card (Always Visible) -->
+            <div class="card bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 min-h-80 flex flex-col">
+              <div class="card-body text-center flex flex-col justify-between h-full">
+                <div class="flex-1">
+                  <div class="text-4xl mb-4">🤖</div>
+                  <h3 class="card-title justify-center text-lg mb-2">Claude Code Prompt</h3>
+                  <p class="text-sm text-gray-600 mb-4">
+                    Simple copy-paste prompt to implement this project
+                  </p>
+                  <% if @app_project.generated_prd.present? && @app_project.generated_tasks.present? %>
+                    <div class="text-xs text-gray-500 mb-4">
+                      Ready to copy • References PRD & tasks
+                    </div>
+                  <% else %>
+                    <div class="text-xs text-gray-500 mb-4">
+                      Waiting for PRD & tasks
+                    </div>
+                  <% end %>
+                </div>
+                <div class="card-actions justify-center gap-1 flex-wrap">
+                  <% if @app_project.generated_prd.present? && @app_project.generated_tasks.present? %>
+                    <button class="btn btn-ghost btn-xs" onclick="document.getElementById('prompts-preview').showModal()">
+                      View Prompt
+                    </button>
+                    <button class="btn btn-primary btn-xs" data-action="click->clipboard#copy" data-clipboard-text="<%= claude_code_prompt(@app_project) %>">
+                      Copy Prompt
+                    </button>
+                  <% else %>
+                    <button class="btn btn-sm btn-disabled" disabled>
+                      Generate PRD & Tasks First
+                    </button>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Logo Card (Always Visible) -->
+            <div class="card bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 min-h-80 flex flex-col">
+              <div class="card-body text-center flex flex-col justify-between h-full">
+                <div class="flex-1">
+                  <div class="text-4xl mb-4">🎨</div>
+                  <h3 class="card-title justify-center text-lg mb-2">Application Logo</h3>
+                  <p class="text-sm text-gray-600 mb-4">
+                    AI-generated logo based on your PRD and design preferences
+                  </p>
+                  <% if @app_project.has_logo? %>
+                    <div class="text-xs text-gray-500 mb-4">
+                      <%= @app_project.logo_generation_metadata&.dig('size') || 'N/A' %> • 
+                      Cost: <%= @app_project.logo_generation_cost > 0 ? "$#{'%.4f' % @app_project.logo_generation_cost}" : 'Free' %>
+                    </div>
+                  <% else %>
+                    <div class="text-xs text-gray-500 mb-4">
+                      Not yet generated
+                    </div>
+                  <% end %>
+                </div>
+                <div class="card-actions justify-center gap-1 flex-wrap">
+                  <% if @app_project.has_logo? %>
+                    <button class="btn btn-ghost btn-xs" onclick="document.getElementById('logo-preview').showModal()">
+                      Preview
+                    </button>
+                    <% if @app_project.generated_logo.attached? %>
+                      <button class="btn btn-ghost btn-xs">
+                        <%= link_to rails_blob_path(@app_project.generated_logo, disposition: "attachment"), class: "no-underline" do %>
+                          Download
+                        <% end %>
+                      </button>
+                    <% end %>
+                    <button class="btn btn-success btn-xs serialize-btn" 
+                            data-output-type="logo_data" 
+                            data-action="click->serialize#serialize"
+                                                  <span class="serialize-text">Serialize</span>
+                      <span class="loading loading-spinner loading-xs hidden"></span>
+                    </button>
+                    <%= form_with url: generate_logo_app_project_path(@app_project), method: :post, local: true,
+                                  data: { confirm: "Regenerate logo?" }, class: "inline" do |form| %>
+                      <%= render Ui::ButtonComponent.new(variant: :ghost, size: :xs, type: :submit) do %>
+                        Regenerate
+                      <% end %>
+                    <% end %>
+                  <% else %>
+                    <% if @app_project.logo_ready_for_generation? %>
+                      <%= form_with url: generate_logo_app_project_path(@app_project), method: :post, local: true,
+                                    data: { confirm: "Generate a custom logo based on your PRD?" }, class: "inline" do |form| %>
+                        <%= render Ui::ButtonComponent.new(variant: :primary, size: :sm, css_class: "generate-logo-btn", type: :submit) do %>
+                          Generate
+                        <% end %>
+                      <% end %>
+                    <% else %>
+                      <button class="btn btn-sm btn-disabled" disabled>
+                        Generate PRD First
+                      </button>
+                    <% end %>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Marketing Page Card (Always Visible) -->
+            <div class="card bg-gradient-to-br from-cyan-50 to-cyan-100 border border-cyan-200 min-h-80 flex flex-col">
+              <div class="card-body text-center flex flex-col justify-between h-full">
+                <div class="flex-1">
+                  <div class="text-4xl mb-4">🚀</div>
+                  <h3 class="card-title justify-center text-lg mb-2">Marketing Landing Page</h3>
+                  <p class="text-sm text-gray-600 mb-4">
+                    AI-generated marketing copy with hero section, features, and CTAs
+                  </p>
+                  <% if @app_project.has_marketing_page? %>
+                    <div class="text-xs text-gray-500 mb-4">
+                      <%= @app_project.generated_marketing_page&.content&.length || 'N/A' %> characters • 
+                      Cost: <%= @app_project.marketing_page_generation_cost > 0 ? "$#{'%.4f' % @app_project.marketing_page_generation_cost}" : 'Free' %>
+                    </div>
+                  <% else %>
+                    <div class="text-xs text-gray-500 mb-4">
+                      Not yet generated
+                    </div>
+                  <% end %>
+                </div>
+                <div class="card-actions justify-center gap-1 flex-wrap">
+                  <% if @app_project.has_marketing_page? %>
+                    <button class="btn btn-ghost btn-xs" onclick="document.getElementById('marketing-preview').showModal()">
+                      Preview
+                    </button>
+                    <% if @app_project.generated_marketing_page.present? %>
+                      <button class="btn btn-ghost btn-xs">
+                        <%= link_to page_path(@app_project.generated_marketing_page), class: "no-underline", target: "_blank" do %>
+                          View Page
+                        <% end %>
+                      </button>
+                    <% end %>
+                    <button class="btn btn-ghost btn-xs" data-action="click->clipboard#copy" data-clipboard-text="<%= @app_project.generated_marketing_page&.content %>">
+                      Copy
+                    </button>
+                    <button class="btn btn-success btn-xs serialize-btn" 
+                            data-output-type="marketing_page" 
+                            data-action="click->serialize#serialize"
+                                                  <span class="serialize-text">Serialize</span>
+                      <span class="loading loading-spinner loading-xs hidden"></span>
+                    </button>
+                    <%= form_with url: generate_marketing_page_app_project_path(@app_project), method: :post, local: true,
+                                  data: { confirm: "Regenerate the marketing landing page with new content?" }, class: "inline" do |form| %>
+                      <%= render Ui::ButtonComponent.new(variant: :ghost, size: :xs, type: :submit) do %>
+                        Regenerate
+                      <% end %>
+                    <% end %>
+                  <% else %>
+                    <% if @app_project.marketing_page_ready_for_generation? %>
+                      <%= form_with url: generate_marketing_page_app_project_path(@app_project), method: :post, local: true,
+                                    data: { confirm: "Generate a marketing landing page based on your PRD?" }, class: "inline" do |form| %>
+                        <%= render Ui::ButtonComponent.new(variant: :primary, size: :sm, css_class: "generate-marketing-btn", type: :submit) do %>
+                          Generate
+                        <% end %>
+                      <% end %>
+                    <% else %>
+                      <button class="btn btn-sm btn-disabled" disabled>
+                        Generate PRD First
+                      </button>
+                    <% end %>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+            
+            <!-- CLAUDE.md Card (Always Visible) -->
+            <div class="card bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200 min-h-80 flex flex-col">
+              <div class="card-body text-center flex flex-col justify-between h-full">
+                <div class="flex-1">
+                  <div class="text-4xl mb-4">📄</div>
+                  <h3 class="card-title justify-center text-lg mb-2">CLAUDE.md Documentation</h3>
+                  <p class="text-sm text-gray-600 mb-4">
+                    Project-specific guidance file for Claude Code development
+                  </p>
+                  <% if @app_project.has_claude_md? %>
+                    <div class="text-xs text-gray-500 mb-4">
+                      <%= @app_project.generated_claude_md&.length || 'N/A' %> characters • 
+                      Cost: <%= @app_project.claude_md_generation_cost > 0 ? "$#{'%.4f' % @app_project.claude_md_generation_cost}" : 'Free' %>
+                    </div>
+                  <% else %>
+                    <div class="text-xs text-gray-500 mb-4">
+                      Not yet generated
+                    </div>
+                  <% end %>
+                </div>
+                <div class="card-actions justify-center gap-1 flex-wrap">
+                  <% if @app_project.has_claude_md? %>
+                    <button class="btn btn-ghost btn-xs" onclick="document.getElementById('claude-md-preview').showModal()">
+                      Preview
+                    </button>
+                    <button class="btn btn-ghost btn-xs" onclick="document.getElementById('claude-md-edit').showModal()">
+                      Edit
+                    </button>
+                    <% if @app_project.generated_claude_md.present? %>
+                      <button class="btn btn-ghost btn-xs">
+                        <%= link_to app_project_path(@app_project, format: 'md'), class: "no-underline" do %>
+                          Download
+                        <% end %>
+                      </button>
+                    <% end %>
+                    <button class="btn btn-ghost btn-xs" data-action="click->clipboard#copy" data-clipboard-text="<%= j(@app_project.generated_claude_md) %>">
+                      Copy
+                    </button>
+                    <button class="btn btn-success btn-xs serialize-btn" 
+                            data-output-type="claude_context" 
+                            data-action="click->serialize#serialize"
+                                                  <span class="serialize-text">Serialize</span>
+                      <span class="loading loading-spinner loading-xs hidden"></span>
+                    </button>
+                    <%= form_with url: generate_claude_md_app_project_path(@app_project), method: :post, local: true,
+                                  data: { confirm: "Regenerate the CLAUDE.md file with updated content?" }, class: "inline" do |form| %>
+                      <%= render Ui::ButtonComponent.new(variant: :ghost, size: :xs, type: :submit) do %>
+                        Regenerate
+                      <% end %>
+                    <% end %>
+                    <%= form_with url: replace_claude_md_app_project_path(@app_project), method: :post, local: true,
+                                  data: { confirm: "Replace the root CLAUDE.md file with this generated version? This will convert the app from a generator to the specific app. A backup will be created." }, class: "inline" do |form| %>
+                      <%= render Ui::ButtonComponent.new(variant: :warning, size: :xs, type: :submit) do %>
+                        Replace Existing
+                      <% end %>
+                    <% end %>
+                  <% else %>
+                    <% if @app_project.claude_md_ready_for_generation? %>
+                      <%= form_with url: generate_claude_md_app_project_path(@app_project), method: :post, local: true,
+                                    data: { confirm: "Generate a CLAUDE.md file customized for this project?" }, class: "inline" do |form| %>
+                        <%= render Ui::ButtonComponent.new(variant: :primary, size: :sm, css_class: "generate-claude-md-btn", type: :submit) do %>
+                          Generate
+                        <% end %>
+                      <% end %>
+                    <% else %>
+                      <button class="btn btn-sm btn-disabled" disabled>
+                        Generate PRD First
+                      </button>
+                    <% end %>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+
+
+
+  <!-- AI Generations History -->
+  <% if @ai_generations.any? %>
+    <div class="mb-8">
+      <%= render Ui::CardComponent.new(shadow: true) do |card| %>
+        <%= card.with_body do %>
+          <h2 class="text-2xl font-bold mb-4">Generation History</h2>
+          
+          <div class="overflow-x-auto">
+            <table class="table table-zebra w-full">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Provider</th>
+                  <th>Status</th>
+                  <th>Cost</th>
+                  <th>Duration</th>
+                  <th>Created</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @ai_generations.each do |generation| %>
+                  <tr>
+                    <td><%= generation.generation_type_display %></td>
+                    <td><%= generation.provider_display %></td>
+                    <td>
+                      <%= render Ui::BadgeComponent.new(variant: generation.status.to_sym, size: :sm) do %>
+                        <%= generation.status.humanize %>
+                      <% end %>
+                      <% if generation.failed? && generation.error_message.present? %>
+                        <br><span class="text-xs text-red-600"><%= generation.error_message.truncate(50) %></span>
+                      <% end %>
+                    </td>
+                    <td><%= generation.formatted_cost %></td>
+                    <td><%= generation.duration_display %></td>
+                    <td><%= generation.created_at.strftime("%m/%d %H:%M") %></td>
+                    <td>
+                      <button class="btn btn-ghost btn-xs" onclick="openGenerationModal('<%= generation.id %>')">
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="text-center mt-4">
+            <%= render Ui::ButtonComponent.new(variant: :outline, size: :sm) do %>
+              <%= link_to ai_generations_path, class: "no-underline" do %>
+                View All Generations
+              <% end %>
+            <% end %>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <!-- Content Preview Modals -->
+  <!-- PRD Preview Modal -->
+    <% if @app_project.generated_prd.present? %>
+      <dialog id="prd-preview" class="modal">
+        <div class="modal-box w-11/12 max-w-7xl">
+          <form method="dialog">
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+          </form>
+          <h3 class="font-bold text-lg mb-4">Product Requirements Document Preview</h3>
+          <div class="prose prose-sm max-w-full max-h-96 overflow-y-auto">
+            <%= markdown_to_html(@app_project.generated_prd) %>
+          </div>
+          <div class="modal-action">
+            <%= render Ui::ButtonComponent.new(variant: :primary) do %>
+              <%= link_to export_app_project_path(@app_project, format: 'prd'), class: "text-white no-underline" do %>
+                Download Full PRD
+              <% end %>
+            <% end %>
+            <button class="btn btn-outline" data-action="click->clipboard#copy" data-clipboard-text="<%= @app_project.generated_prd %>">
+              Copy Full Content
+            </button>
+          </div>
+        </div>
+      </dialog>
+    <% end %>
+
+    <!-- Tasks Preview Modal -->
+    <% if @app_project.generated_tasks.present? %>
+      <dialog id="tasks-preview" class="modal">
+        <div class="modal-box w-11/12 max-w-7xl">
+          <form method="dialog">
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+          </form>
+          <h3 class="font-bold text-lg mb-4">Development Tasks Preview</h3>
+          <div class="prose prose-sm max-w-full max-h-96 overflow-y-auto">
+            <%= markdown_to_html(@app_project.generated_tasks) %>
+          </div>
+          <div class="modal-action">
+            <%= render Ui::ButtonComponent.new(variant: :primary) do %>
+              <%= link_to export_app_project_path(@app_project, format: 'tasks'), class: "text-white no-underline" do %>
+                Download Full Task List
+              <% end %>
+            <% end %>
+            <button class="btn btn-outline" data-action="click->clipboard#copy" data-clipboard-text="<%= @app_project.generated_tasks %>">
+              Copy Full Content
+            </button>
+          </div>
+        </div>
+      </dialog>
+    <% end %>
+
+    <!-- Prompts Preview Modal -->
+    <% if @app_project.generated_prd.present? && @app_project.generated_tasks.present? %>
+      <dialog id="prompts-preview" class="modal">
+        <div class="modal-box w-11/12 max-w-7xl">
+          <form method="dialog">
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+          </form>
+          <h3 class="font-bold text-lg mb-4">Claude Code Implementation Prompt</h3>
+          <div class="prose prose-sm max-w-full max-h-96 overflow-y-auto">
+            <pre class="whitespace-pre-wrap"><%= claude_code_prompt(@app_project) %></pre>
+          </div>
+          <div class="modal-action">
+            <button class="btn btn-primary" data-action="click->clipboard#copy" data-clipboard-text="<%= claude_code_prompt(@app_project) %>">
+              Copy Prompt
+            </button>
+          </div>
+        </div>
+      </dialog>
+    <% end %>
+
+    <!-- Logo Preview Modal -->
+    <dialog id="logo-preview" class="modal">
+      <div class="modal-box w-11/12 max-w-4xl">
+        <form method="dialog">
+          <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        </form>
+        <h3 class="font-bold text-lg mb-4">Generated Logo Preview</h3>
+        <div class="flex justify-center mb-6">
+          <%= render Ui::LogoDisplayComponent.new(app_project: @app_project) %>
+        </div>
+        <div class="modal-action">
+          <% if @app_project.generated_logo.attached? %>
+            <%= render Ui::ButtonComponent.new(variant: :primary) do %>
+              <%= link_to rails_blob_path(@app_project.generated_logo, disposition: "attachment"), class: "text-white no-underline" do %>
+                Download Logo
+              <% end %>
+            <% end %>
+          <% end %>
+          <% if @app_project.logo_ready_for_generation? %>
+            <%= form_with url: generate_logo_app_project_path(@app_project), method: :post, local: true, class: "inline" do |form| %>
+              <%= render Ui::ButtonComponent.new(variant: :outline, type: :submit) do %>
+                Regenerate Logo
+              <% end %>
+            <% end %>
+          <% end %>
+          <form method="dialog">
+            <button class="btn btn-secondary">Close</button>
+          </form>
+        </div>
+      </div>
+    </dialog>
+
+    <!-- Marketing Page Preview Modal -->
+    <% if @app_project.has_marketing_page? %>
+      <dialog id="marketing-preview" class="modal">
+        <div class="modal-box w-11/12 max-w-7xl">
+          <form method="dialog">
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+          </form>
+          <h3 class="font-bold text-lg mb-4">Marketing Landing Page Preview</h3>
+          <div class="prose prose-sm max-w-full max-h-96 overflow-y-auto">
+            <% if @app_project.generated_marketing_page&.content.present? %>
+              <%= process_marketing_page_content(@app_project.generated_marketing_page).html_safe %>
+            <% else %>
+              <p class="text-gray-500">No marketing content available.</p>
+            <% end %>
+          </div>
+          <div class="modal-action">
+            <% if @app_project.generated_marketing_page.present? %>
+              <%= render Ui::ButtonComponent.new(variant: :primary) do %>
+                <%= link_to page_path(@app_project.generated_marketing_page), class: "text-white no-underline", target: "_blank" do %>
+                  View Full Page
+                <% end %>
+              <% end %>
+            <% end %>
+            <button class="btn btn-outline" data-action="click->clipboard#copy" data-clipboard-text="<%= @app_project.generated_marketing_page&.content %>">
+              Copy Full Content
+            </button>
+            <% if @app_project.marketing_page_ready_for_generation? %>
+              <%= form_with url: generate_marketing_page_app_project_path(@app_project), method: :post, local: true, class: "inline" do |form| %>
+                <%= render Ui::ButtonComponent.new(variant: :outline, type: :submit) do %>
+                  Regenerate Page
+                <% end %>
+              <% end %>
+            <% end %>
+            <form method="dialog">
+              <button class="btn btn-secondary">Close</button>
+            </form>
+          </div>
+        </div>
+      </dialog>
+    <% end %>
+
+    <!-- CLAUDE.md Preview Modal -->
+    <% if @app_project.generated_claude_md.present? %>
+      <dialog id="claude-md-preview" class="modal">
+        <div class="modal-box w-11/12 max-w-7xl">
+          <form method="dialog">
+            <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+          </form>
+          <h3 class="font-bold text-lg mb-4">CLAUDE.md Documentation Preview</h3>
+          <div class="prose prose-sm max-w-full max-h-96 overflow-y-auto">
+            <%= markdown_to_html(@app_project.generated_claude_md) %>
+          </div>
+          <div class="modal-action">
+            <%= render Ui::ButtonComponent.new(variant: :primary) do %>
+              <%= link_to export_app_project_path(@app_project, format: 'claude_md'), class: "text-white no-underline" do %>
+                Download CLAUDE.md
+              <% end %>
+            <% end %>
+            <button class="btn btn-outline" data-action="click->clipboard#copy" data-clipboard-text="<%= @app_project.generated_claude_md %>">
+              Copy Full Content
+            </button>
+            <% if @app_project.claude_md_ready_for_generation? %>
+              <%= form_with url: generate_claude_md_app_project_path(@app_project), method: :post, local: true, class: "inline" do |form| %>
+                <%= render Ui::ButtonComponent.new(variant: :outline, type: :submit) do %>
+                  Regenerate CLAUDE.md
+                <% end %>
+              <% end %>
+            <% end %>
+            <%= form_with url: replace_claude_md_app_project_path(@app_project), method: :post, local: true, class: "inline" do |form| %>
+              <%= render Ui::ButtonComponent.new(variant: :warning, type: :submit, 
+                                              data: { confirm: "Replace the root CLAUDE.md file with this generated version? This will convert the app from a generator to the specific app. A backup will be created." }) do %>
+                Replace Existing CLAUDE.md
+              <% end %>
+            <% end %>
+            <form method="dialog">
+              <button class="btn btn-secondary">Close</button>
+            </form>
+          </div>
+        </div>
+      </dialog>
+    <% end %>
+
+  <!-- Generation Details Modals -->
+  <% @ai_generations.each do |generation| %>
+    <dialog id="generation-<%= generation.id %>" class="modal">
+      <div class="modal-box w-11/12 max-w-4xl">
+        <form method="dialog">
+          <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        </form>
+        <h3 class="font-bold text-lg mb-4">Generation Details - <%= generation.generation_type_display %></h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div>
+            <h4 class="font-semibold text-sm text-gray-600 mb-1">Type</h4>
+            <p><%= generation.generation_type_display %></p>
+          </div>
+          
+          <div>
+            <h4 class="font-semibold text-sm text-gray-600 mb-1">Provider</h4>
+            <p><%= generation.provider_display %></p>
+          </div>
+          
+          <div>
+            <h4 class="font-semibold text-sm text-gray-600 mb-1">Model</h4>
+            <p><%= generation.model_used || 'N/A' %></p>
+          </div>
+          
+          <div>
+            <h4 class="font-semibold text-sm text-gray-600 mb-1">Status</h4>
+            <p>
+              <%= render Ui::BadgeComponent.new(variant: generation.status.to_sym, size: :sm) do %>
+                <%= generation.status.humanize %>
+              <% end %>
+            </p>
+          </div>
+          
+          <div>
+            <h4 class="font-semibold text-sm text-gray-600 mb-1">Cost</h4>
+            <p><%= generation.formatted_cost %></p>
+          </div>
+          
+          <div>
+            <h4 class="font-semibold text-sm text-gray-600 mb-1">Token Count</h4>
+            <p><%= generation.token_count || 'N/A' %></p>
+          </div>
+          
+          <div>
+            <h4 class="font-semibold text-sm text-gray-600 mb-1">Processing Time</h4>
+            <p><%= generation.duration_display %></p>
+          </div>
+          
+          <div>
+            <h4 class="font-semibold text-sm text-gray-600 mb-1">Created</h4>
+            <p><%= generation.created_at.strftime("%B %d, %Y at %I:%M %p") %></p>
+          </div>
+        </div>
+
+        <% if generation.error_message.present? %>
+          <div class="mb-4">
+            <h4 class="font-semibold text-sm text-red-600 mb-2">Error Message</h4>
+            <div class="bg-red-50 border border-red-200 rounded p-3">
+              <p class="text-sm text-red-700"><%= generation.error_message %></p>
+            </div>
+          </div>
+        <% end %>
+
+        <% if generation.input_prompt.present? %>
+          <div class="mb-4">
+            <h4 class="font-semibold text-sm text-gray-600 mb-2">Input Prompt</h4>
+            <div class="bg-gray-50 border rounded p-3 max-h-32 overflow-y-auto">
+              <pre class="text-xs whitespace-pre-wrap"><%= generation.input_prompt.truncate(1000) %></pre>
+            </div>
+          </div>
+        <% end %>
+
+        <% if generation.raw_output.present? %>
+          <div class="mb-4">
+            <h4 class="font-semibold text-sm text-gray-600 mb-2">Generated Output</h4>
+            <div class="bg-gray-50 border rounded p-3 max-h-40 overflow-y-auto">
+              <div class="prose prose-sm max-w-none">
+                <%= markdown_to_html(generation.raw_output.truncate(2000)) %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+
+        <div class="modal-action">
+          <% if generation.raw_output.present? %>
+            <button class="btn btn-outline btn-sm" data-action="click->clipboard#copy" data-clipboard-text="<%= generation.raw_output %>">
+              Copy Output
+            </button>
+          <% end %>
+          <form method="dialog">
+            <button class="btn btn-primary">Close</button>
+          </form>
+        </div>
+      </div>
+    </dialog>
+  <% end %>
+
+  <!-- Edit Modals -->
+  <!-- PRD Edit Modal -->
+  <% if @app_project.generated_prd.present? %>
+    <dialog id="prd-edit" class="modal">
+      <div class="modal-box w-11/12 max-w-7xl">
+        <form method="dialog">
+          <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        </form>
+        <h3 class="font-bold text-lg mb-4">Edit Product Requirements Document</h3>
+        <%= form_with model: @app_project, url: app_project_path(@app_project), method: :patch, class: "edit-form", data: { field: "generated_prd" } do |form| %>
+          <div class="mb-4">
+            <%= form.text_area :generated_prd, value: @app_project.generated_prd, class: "textarea textarea-bordered w-full", rows: 20, style: "font-family: 'Courier New', monospace; font-size: 14px;" %>
+          </div>
+          <div class="modal-action">
+            <%= form.submit "Save Changes", class: "btn btn-primary" %>
+            <button type="button" class="btn btn-outline" onclick="document.getElementById('prd-edit').close()">
+              Cancel
+            </button>
+          </div>
+        <% end %>
+      </div>
+    </dialog>
+  <% end %>
+
+  <!-- Tasks Edit Modal -->
+  <% if @app_project.generated_tasks.present? %>
+    <dialog id="tasks-edit" class="modal">
+      <div class="modal-box w-11/12 max-w-7xl">
+        <form method="dialog">
+          <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        </form>
+        <h3 class="font-bold text-lg mb-4">Edit Development Tasks</h3>
+        <%= form_with model: @app_project, url: app_project_path(@app_project), method: :patch, class: "edit-form", data: { field: "generated_tasks" } do |form| %>
+          <div class="mb-4">
+            <%= form.text_area :generated_tasks, value: @app_project.generated_tasks, class: "textarea textarea-bordered w-full", rows: 20, style: "font-family: 'Courier New', monospace; font-size: 14px;" %>
+          </div>
+          <div class="modal-action">
+            <%= form.submit "Save Changes", class: "btn btn-primary" %>
+            <button type="button" class="btn btn-outline" onclick="document.getElementById('tasks-edit').close()">
+              Cancel
+            </button>
+          </div>
+        <% end %>
+      </div>
+    </dialog>
+  <% end %>
+
+
+  <!-- CLAUDE.md Edit Modal -->
+  <% if @app_project.generated_claude_md.present? %>
+    <dialog id="claude-md-edit" class="modal">
+      <div class="modal-box w-11/12 max-w-7xl">
+        <form method="dialog">
+          <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">✕</button>
+        </form>
+        <h3 class="font-bold text-lg mb-4">Edit CLAUDE.md Documentation</h3>
+        <%= form_with model: @app_project, url: app_project_path(@app_project), method: :patch, class: "edit-form", data: { field: "generated_claude_md" } do |form| %>
+          <div class="mb-4">
+            <%= form.text_area :generated_claude_md, value: @app_project.generated_claude_md, class: "textarea textarea-bordered w-full", rows: 20, style: "font-family: 'Courier New', monospace; font-size: 14px;" %>
+          </div>
+          <div class="modal-action">
+            <%= form.submit "Save Changes", class: "btn btn-primary" %>
+            <button type="button" class="btn btn-outline" onclick="document.getElementById('claude-md-edit').close()">
+              Cancel
+            </button>
+          </div>
+        <% end %>
+      </div>
+    </dialog>
+  <% end %>
+</div>
+
+<!-- JavaScript for Clipboard -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Clipboard functionality
+  const clipboardButtons = document.querySelectorAll('[data-action*="clipboard#copy"]')
+  clipboardButtons.forEach(button => {
+    button.addEventListener('click', function(e) {
+      e.preventDefault()
+      const text = this.getAttribute('data-clipboard-text')
+      
+      if (navigator.clipboard && text) {
+        navigator.clipboard.writeText(text).then(() => {
+          // Show success feedback
+          const originalText = this.textContent
+          this.textContent = 'Copied!'
+          this.classList.add('btn-success')
+          
+          setTimeout(() => {
+            this.textContent = originalText
+            this.classList.remove('btn-success')
+          }, 2000)
+        }).catch(err => {
+          console.error('Failed to copy text: ', err)
+          // Fallback for older browsers
+          fallbackCopyTextToClipboard(text, this)
+        })
+      }
+    })
+  })
+
+  // Share link functionality
+  const shareButtons = document.querySelectorAll('[data-action*="clipboard#copyShareLink"]')
+  shareButtons.forEach(button => {
+    button.addEventListener('click', function(e) {
+      e.preventDefault()
+      const shareUrl = window.location.href
+      
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(shareUrl).then(() => {
+          const originalText = this.textContent
+          this.textContent = 'Link Copied!'
+          
+          setTimeout(() => {
+            this.textContent = originalText
+          }, 2000)
+        })
+      }
+    })
+  })
+
+  function fallbackCopyTextToClipboard(text, button) {
+    const textArea = document.createElement('textarea')
+    textArea.value = text
+    document.body.appendChild(textArea)
+    textArea.focus()
+    textArea.select()
+    
+    try {
+      document.execCommand('copy')
+      const originalText = button.textContent
+      button.textContent = 'Copied!'
+      button.classList.add('btn-success')
+      
+      setTimeout(() => {
+        button.textContent = originalText
+        button.classList.remove('btn-success')
+      }, 2000)
+    } catch (err) {
+      console.error('Fallback: Could not copy text: ', err)
+    }
+    
+    document.body.removeChild(textArea)
+  }
+})
+
+// Function to open generation details modal
+function openGenerationModal(generationId) {
+  const modal = document.getElementById(`generation-${generationId}`)
+  if (modal) {
+    modal.showModal()
+  }
+}
+
+// Auto-refresh when project is generating
+<% if @app_project.status == 'generating' %>
+function checkGenerationStatus() {
+  fetch('<%= status_app_project_path(@app_project) %>')
+    .then(response => response.json())
+    .then(data => {
+      if (data.status !== 'generating') {
+        // Generation completed, refresh the page to show results
+        window.location.reload()
+      }
+    })
+    .catch(error => {
+      console.error('Error checking generation status:', error)
+    })
+}
+
+// Check status every 3 seconds
+setInterval(checkGenerationStatus, 3000)
+<% end %>
+
+// Form submission handling for edit forms
+document.addEventListener('submit', function(e) {
+  if (e.target.matches('.edit-form')) {
+    e.preventDefault();
+    
+    const form = e.target;
+    const formData = new FormData(form);
+    
+    fetch(form.action, {
+      method: 'PATCH',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+        'Accept': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        // Close modal and refresh page to show updated content
+        document.querySelector('.modal[open]').close();
+        window.location.reload();
+      } else {
+        alert('Error saving changes: ' + (data.message || 'Unknown error'));
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Error saving changes. Please try again.');
+    });
+  }
+});
+</script>

@@ -1,0 +1,28 @@
+<div class="container mx-auto px-4 py-8">
+  <!-- Breadcrumbs navigation -->
+  <div class="breadcrumbs text-sm mb-6">
+    <ul>
+      <li><%%= link_to "Home", root_path, class: "link link-hover" %></li>
+      <li><%%= link_to "<%= human_name.pluralize %>", <%= index_helper %>_path, class: "link link-hover" %></li>
+      <li><%%= link_to @<%= singular_table_name %>, @<%= singular_table_name %>, class: "link link-hover" %></li>
+      <li class="text-base-content/70">Edit</li>
+    </ul>
+  </div>
+
+  <!-- Main content card -->
+  <div class="card bg-base-100 shadow-xl max-w-4xl mx-auto">
+    <div class="card-body">
+      <!-- Header -->
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h1 class="card-title text-3xl font-bold">Edit <%= human_name %></h1>
+        <div class="flex gap-2">
+          <%%= link_to "Show", @<%= singular_table_name %>, class: "btn btn-ghost" %>
+          <%%= link_to "Back", <%= index_helper %>_path, class: "btn btn-outline" %>
+        </div>
+      </div>
+
+      <!-- Form -->
+      <%%= render "form", <%= singular_table_name %>: @<%= singular_table_name %> %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Simple Terminal Test</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <%= javascript_include_tag 'application', 'data-turbo-track': 'reload' %>
+  <%= stylesheet_link_tag 'application', 'data-turbo-track': 'reload' %>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #1a1a1a;
+    }
+    
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      color: white;
+      margin-bottom: 20px;
+    }
+    
+    #terminal {
+      height: 400px;
+      width: 100%;
+      background: black;
+      border-radius: 8px;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Simple Terminal Test</h1>
+    
+    <div id="terminal"></div>
+    
+    <p style="color: white; margin-top: 20px;">
+      Status: <span id="terminal-status">Initializing...</span>
+    </p>
+  </div>
+</body>
+</html>

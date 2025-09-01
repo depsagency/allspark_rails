@@ -1,0 +1,87 @@
+<div class="mb-6">
+  <h1 class="text-3xl font-bold"><%= @page.title %></h1>
+</div>
+
+<div class="marketing-page-content">
+  <% if @page.content.present? %>
+    <% processed_content = process_marketing_page_content(@page) %>
+    <%= processed_content.html_safe %>
+  <% else %>
+    <p class="text-gray-500">No content available.</p>
+  <% end %>
+</div>
+
+<style>
+  .marketing-page-content {
+    max-width: 65ch;
+    margin: 0 auto;
+  }
+  
+  .marketing-page-content h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+  
+  .marketing-page-content h2 {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    margin-top: 2rem;
+    text-align: center;
+  }
+  
+  .marketing-page-content h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    margin-top: 1.5rem;
+  }
+  
+  .marketing-page-content p {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+  }
+  
+  .marketing-page-content ul {
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+  }
+  
+  .marketing-page-content li {
+    margin-bottom: 0.5rem;
+    list-style-type: disc;
+  }
+  
+  .marketing-page-content img {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  .marketing-page-content hr {
+    margin: 2rem 0;
+    border-color: #e5e7eb;
+  }
+  
+  .marketing-page-content blockquote {
+    padding-left: 1rem;
+    border-left: 4px solid #3b82f6;
+    margin: 1.5rem 0;
+    font-style: italic;
+  }
+  
+  .marketing-page-content .btn {
+    display: inline-block;
+    margin: 1rem 0;
+  }
+  
+  .marketing-page-content strong {
+    font-weight: 600;
+  }
+</style>
+
+<div class="mt-6">
+  <%= link_to 'Edit', edit_page_path(@page), class: "btn btn-warning" %> |
+  <%= link_to 'Back', pages_path, class: "btn btn-primary" %>
+</div>

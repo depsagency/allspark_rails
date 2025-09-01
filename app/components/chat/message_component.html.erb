@@ -1,0 +1,50 @@
+<div class="chat <%= is_own_message? ? 'chat-end' : 'chat-start' %>" 
+     data-message-id="<%= @message.id %>"
+     data-user-id="<%= @message.user_id %>">
+  <div class="chat-image avatar">
+    <div class="w-10 h-10 rounded-full bg-<%= is_own_message? ? 'primary' : 'neutral' %> text-<%= is_own_message? ? 'primary' : 'neutral' %>-content">
+      <div class="flex items-center justify-center h-full text-sm font-semibold">
+        <%= is_own_message? ? @current_user.initials : @message.user.initials %>
+      </div>
+    </div>
+  </div>
+  
+  <div class="chat-header">
+    <%= @message.user.display_name %>
+    <time class="text-xs opacity-50"><%= formatted_time %></time>
+  </div>
+  
+  <div class="chat-bubble <%= is_own_message? ? 'chat-bubble-primary' : '' %>">
+    <div class="prose prose-sm max-w-none">
+      <%= markdown_to_html(formatted_content) %>
+    </div>
+  </div>
+  
+  <div class="chat-footer opacity-50">
+    <% if @message.edited? %>
+      <span class="text-xs">Edited <%= edited_indicator %></span>
+    <% end %>
+    
+    <% if is_own_message? %>
+      <div class="dropdown dropdown-top dropdown-end">
+        <label tabindex="0" class="btn btn-ghost btn-xs">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+          </svg>
+        </label>
+        <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-32">
+          <li>
+            <a data-action="click->chat#editMessage" data-message-id="<%= @message.id %>">
+              Edit
+            </a>
+          </li>
+          <li>
+            <a data-action="click->chat#deleteMessage" data-message-id="<%= @message.id %>" class="text-error">
+              Delete
+            </a>
+          </li>
+        </ul>
+      </div>
+    <% end %>
+  </div>
+</div>

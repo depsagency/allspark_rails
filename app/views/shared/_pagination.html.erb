@@ -1,0 +1,61 @@
+<% if paginator.total_pages > 1 %>
+  <div class="join">
+    <% if paginator.current_page > 1 %>
+      <%= link_to url_for(page: 1), class: "join-item btn" do %>
+        «
+      <% end %>
+      <%= link_to url_for(page: paginator.current_page - 1), class: "join-item btn" do %>
+        ‹
+      <% end %>
+    <% else %>
+      <button class="join-item btn btn-disabled" disabled>«</button>
+      <button class="join-item btn btn-disabled" disabled>‹</button>
+    <% end %>
+    
+    <% 
+      # Calculate page range
+      window = 2
+      first = [paginator.current_page - window, 1].max
+      last = [paginator.current_page + window, paginator.total_pages].min
+      
+      # Always show first page
+      if first > 1
+    %>
+        <%= link_to "1", url_for(page: 1), class: "join-item btn" %>
+        <% if first > 2 %>
+          <button class="join-item btn btn-disabled" disabled>...</button>
+        <% end %>
+      <% end %>
+      
+      <% # Show page range
+      (first..last).each do |page|
+    %>
+      <% if page == paginator.current_page %>
+        <button class="join-item btn btn-active"><%= page %></button>
+      <% else %>
+        <%= link_to page.to_s, url_for(page: page), class: "join-item btn" %>
+      <% end %>
+    <% end %>
+    
+    <% # Always show last page
+      if last < paginator.total_pages
+        if last < paginator.total_pages - 1
+    %>
+          <button class="join-item btn btn-disabled" disabled>...</button>
+        <% end %>
+        <%= link_to paginator.total_pages.to_s, url_for(page: paginator.total_pages), class: "join-item btn" %>
+      <% end %>
+    
+    <% if paginator.current_page < paginator.total_pages %>
+      <%= link_to url_for(page: paginator.current_page + 1), class: "join-item btn" do %>
+        ›
+      <% end %>
+      <%= link_to url_for(page: paginator.total_pages), class: "join-item btn" do %>
+        »
+      <% end %>
+    <% else %>
+      <button class="join-item btn btn-disabled" disabled>›</button>
+      <button class="join-item btn btn-disabled" disabled>»</button>
+    <% end %>
+  </div>
+<% end %>

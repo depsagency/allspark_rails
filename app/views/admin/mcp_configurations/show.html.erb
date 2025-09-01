@@ -1,0 +1,452 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl font-bold"><%= @mcp_configuration.name %></h1>
+      <p class="text-base-content/70 mt-2">
+        <%= @mcp_configuration.server_type.upcase %> MCP Configuration
+      </p>
+    </div>
+    
+    <div class="flex gap-2">
+      <%= link_to "← Back to Configurations", admin_mcp_configurations_path, class: "btn btn-ghost" %>
+      <%= link_to "Edit", edit_admin_mcp_configuration_path(@mcp_configuration), class: "btn btn-primary" %>
+      
+      <%= button_to test_connection_admin_mcp_configuration_path(@mcp_configuration), 
+          method: :post,
+          class: "btn btn-outline btn-info",
+          form_class: "inline" do %>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+        </svg>
+        Test Connection
+      <% end %>
+      
+      <%= button_to discover_tools_admin_mcp_configuration_path(@mcp_configuration), 
+          method: :post,
+          class: "btn btn-outline btn-warning",
+          form_class: "inline" do %>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        Discover Tools
+      <% end %>
+      
+      <%= link_to monitoring_admin_mcp_configuration_path(@mcp_configuration), class: "btn btn-outline" do %>
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+        </svg>
+        Monitoring
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Configuration Status & Info -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Status Card -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title text-lg">Status</h2>
+        
+        <div class="space-y-3">
+          <div class="flex justify-between items-center">
+            <span>Enabled</span>
+            <div class="badge badge-<%= @mcp_configuration.enabled? ? 'success' : 'ghost' %> badge-lg">
+              <%= @mcp_configuration.enabled? ? 'Yes' : 'No' %>
+            </div>
+          </div>
+          
+          <div class="flex justify-between items-center">
+            <span>Server Type</span>
+            <div class="badge badge-<%= @mcp_configuration.server_type == 'stdio' ? 'primary' : 'secondary' %> badge-lg">
+              <%= @mcp_configuration.server_type.upcase %>
+            </div>
+          </div>
+          
+          <% if @analytics[:health_status] %>
+            <div class="flex justify-between items-center">
+              <span>Health</span>
+              <div class="badge badge-<%= @analytics[:health_status][:healthy] ? 'success' : 'error' %> badge-lg">
+                <%= @analytics[:health_status][:healthy] ? 'Healthy' : 'Issues' %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Owner Info -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title text-lg">Owner</h2>
+        
+        <div class="space-y-3">
+          <div>
+            <label class="label">
+              <span class="label-text font-semibold">Type</span>
+            </label>
+            <div><%= @mcp_configuration.owner_type || 'System' %></div>
+          </div>
+          
+          <% if @mcp_configuration.owner %>
+            <div>
+              <label class="label">
+                <span class="label-text font-semibold">
+                  <%= @mcp_configuration.owner_type == 'User' ? 'User' : 'Name' %>
+                </span>
+              </label>
+              <div>
+                <% if @mcp_configuration.owner.respond_to?(:email) %>
+                  <%= @mcp_configuration.owner.email %>
+                <% else %>
+                  <%= @mcp_configuration.owner.name rescue @mcp_configuration.owner.to_s %>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timestamps -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title text-lg">Timeline</h2>
+        
+        <div class="space-y-3">
+          <div class="flex justify-between text-sm">
+            <span class="font-semibold">Created</span>
+            <span><%= @mcp_configuration.created_at.strftime("%Y-%m-%d %H:%M") %></span>
+          </div>
+          
+          <div class="flex justify-between text-sm">
+            <span class="font-semibold">Updated</span>
+            <span><%= @mcp_configuration.updated_at.strftime("%Y-%m-%d %H:%M") %></span>
+          </div>
+          
+          <% if @mcp_configuration.metadata['migrated_at'] %>
+            <div class="flex justify-between text-sm">
+              <span class="font-semibold">Migrated</span>
+              <span><%= Time.parse(@mcp_configuration.metadata['migrated_at']).strftime("%Y-%m-%d %H:%M") %></span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Configuration Details & Performance -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <!-- Server Configuration -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title">Server Configuration</h2>
+        
+        <div class="mockup-code text-sm">
+          <pre><code><%= JSON.pretty_generate(@mcp_configuration.server_config) %></code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Performance Metrics -->
+    <% if @analytics[:performance_stats] %>
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title">Performance Metrics</h2>
+          
+          <div class="stats stats-vertical w-full">
+            <div class="stat">
+              <div class="stat-title">Average Response Time</div>
+              <div class="stat-value text-lg"><%= @analytics[:performance_stats][:avg_response_time].round(0) %>ms</div>
+            </div>
+            
+            <div class="stat">
+              <div class="stat-title">P95 Response Time</div>
+              <div class="stat-value text-lg"><%= @analytics[:performance_stats][:p95_response_time] %>ms</div>
+            </div>
+            
+            <div class="stat">
+              <div class="stat-title">Min / Max</div>
+              <div class="stat-value text-sm">
+                <%= @analytics[:performance_stats][:min_response_time] %>ms / 
+                <%= @analytics[:performance_stats][:max_response_time] %>ms
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Usage Statistics -->
+  <% if @analytics[:usage_stats] %>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <!-- Usage Overview -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title">Usage Statistics</h2>
+          
+          <div class="stats stats-vertical w-full">
+            <div class="stat">
+              <div class="stat-title">Total Executions</div>
+              <div class="stat-value"><%= number_with_delimiter(@analytics[:usage_stats][:total_executions]) %></div>
+              <div class="stat-desc">
+                <%= @analytics[:usage_stats][:successful_executions] %> successful, 
+                <%= @analytics[:usage_stats][:failed_executions] %> failed
+              </div>
+            </div>
+            
+            <div class="stat">
+              <div class="stat-title">Success Rate</div>
+              <div class="stat-value text-lg">
+                <% success_rate = @analytics[:usage_stats][:total_executions] > 0 ? 
+                   (@analytics[:usage_stats][:successful_executions].to_f / @analytics[:usage_stats][:total_executions] * 100).round(1) : 0 %>
+                <%= success_rate %>%
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Most Used Tools -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title">Most Used Tools</h2>
+          
+          <% if @analytics[:usage_stats][:most_used_tools].any? %>
+            <div class="space-y-2">
+              <% @analytics[:usage_stats][:most_used_tools].each_with_index do |(tool, count), index| %>
+                <div class="flex items-center justify-between p-2 hover:bg-base-200 rounded">
+                  <div>
+                    <div class="font-medium text-sm">#<%= index + 1 %> <%= tool %></div>
+                  </div>
+                  <div class="badge badge-neutral">
+                    <%= number_with_delimiter(count) %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="text-center py-8 opacity-70">No tool usage data available</p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Available Tools -->
+  <div class="card bg-base-100 shadow-xl mb-8">
+    <div class="card-body">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="card-title">Available Tools</h2>
+        
+        <div class="flex items-center gap-3">
+          <% if @last_tool_discovery %>
+            <div class="text-xs opacity-70">
+              Last discovery: <%= time_ago_in_words(Time.parse(@last_tool_discovery[:timestamp])) %> ago
+              <% if @last_tool_discovery[:successful] %>
+                <span class="badge badge-success badge-xs ml-1">Success</span>
+              <% else %>
+                <span class="badge badge-error badge-xs ml-1">Failed</span>
+              <% end %>
+            </div>
+          <% end %>
+          
+          <%= button_to discover_tools_admin_mcp_configuration_path(@mcp_configuration), 
+              method: :post, 
+              class: "btn btn-outline btn-sm",
+              form_class: "inline",
+              data: { 
+                confirm: "This will discover tools from the MCP server. Continue?",
+                disable_with: "Discovering..."
+              } do %>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Refresh Tools
+          <% end %>
+        </div>
+      </div>
+      
+      <% if @cached_tools.any? %>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <% @cached_tools.each do |tool| %>
+            <div class="card bg-base-200 shadow-sm">
+              <div class="card-body p-4">
+                <h3 class="card-title text-sm font-medium">
+                  <%= tool['name'] %>
+                </h3>
+                
+                <p class="text-xs opacity-70 mb-3">
+                  <%= tool['description'] %>
+                </p>
+                
+                <div class="card-actions justify-between items-center">
+                  <div class="flex gap-1">
+                    <% if tool['inputSchema'] && tool['inputSchema']['properties'] %>
+                      <div class="badge badge-primary badge-xs">
+                        <%= tool['inputSchema']['properties'].keys.size %> inputs
+                      </div>
+                    <% end %>
+                    
+                    <% if tool['_discovered_at'] %>
+                      <div class="badge badge-ghost badge-xs">
+                        <%= time_ago_in_words(Time.parse(tool['_discovered_at'])) %> ago
+                      </div>
+                    <% end %>
+                  </div>
+                  
+                  <details class="dropdown dropdown-end">
+                    <summary class="btn btn-ghost btn-xs">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </summary>
+                    <div class="dropdown-content z-[1] card card-compact w-80 p-2 shadow bg-base-100">
+                      <div class="card-body">
+                        <h4 class="card-title text-sm">Tool Schema</h4>
+                        <div class="mockup-code text-xs">
+                          <pre><code><%= JSON.pretty_generate(tool.except('_configuration_id', '_configuration_name', '_discovered_at', '_version', '_server_type')) %></code></pre>
+                        </div>
+                      </div>
+                    </div>
+                  </details>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+        
+        <div class="stats shadow mt-6">
+          <div class="stat">
+            <div class="stat-figure text-primary">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <div class="stat-title">Tools Available</div>
+            <div class="stat-value text-primary"><%= @cached_tools.size %></div>
+            <div class="stat-desc">
+              <% if @last_tool_discovery && @last_tool_discovery[:successful] %>
+                Successfully discovered <%= pluralize(@cached_tools.size, 'tool') %>
+              <% else %>
+                Tools ready for use
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% else %>
+        <div class="text-center py-12">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto opacity-30 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          
+          <h3 class="text-lg font-semibold mb-2">No Tools Discovered Yet</h3>
+          <p class="opacity-70 mb-6">
+            <% if @last_tool_discovery && !@last_tool_discovery[:successful] %>
+              Last discovery attempt failed. 
+              <% if @last_tool_discovery[:error] %>
+                Error: <%= @last_tool_discovery[:error] %>
+              <% end %>
+            <% else %>
+              Click "Refresh Tools" to discover available tools from this MCP server.
+            <% end %>
+          </p>
+          
+          <%= button_to discover_tools_admin_mcp_configuration_path(@mcp_configuration), 
+              method: :post, 
+              class: "btn btn-primary",
+              data: { 
+                confirm: "This will connect to the MCP server and discover available tools. Continue?",
+                disable_with: "Discovering tools..."
+              } do %>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Discover Tools
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+      <h2 class="card-title">Recent Activity</h2>
+      
+      <% if @audit_logs.any? %>
+        <div class="overflow-x-auto">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>Tool</th>
+                <th>User</th>
+                <th>Status</th>
+                <th>Response Time</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @audit_logs.each do |log| %>
+                <tr>
+                  <td class="text-xs">
+                    <%= time_ago_in_words(log.executed_at) %> ago
+                  </td>
+                  <td class="text-xs font-medium">
+                    <%= log.tool_name %>
+                  </td>
+                  <td class="text-xs">
+                    <%= log.user&.email || 'Unknown' %>
+                  </td>
+                  <td>
+                    <div class="badge badge-<%= log.status == 'success' ? 'success' : 'error' %> badge-xs">
+                      <%= log.status %>
+                    </div>
+                  </td>
+                  <td class="text-xs">
+                    <%= log.response_time_ms || 0 %>ms
+                  </td>
+                  <td class="text-xs">
+                    <% if log.response_data.is_a?(Hash) && log.response_data['error'] %>
+                      <div class="tooltip" data-tip="<%= log.response_data['error'] %>">
+                        <span class="text-error">Error</span>
+                      </div>
+                    <% else %>
+                      <span class="opacity-70">Success</span>
+                    <% end %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="text-center mt-4">
+          <%= link_to "View Full Monitoring", monitoring_admin_mcp_configuration_path(@mcp_configuration), 
+              class: "btn btn-outline btn-sm" %>
+        </div>
+      <% else %>
+        <p class="text-center py-8 opacity-70">No recent activity recorded</p>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Metadata -->
+  <% if @mcp_configuration.metadata.present? && @mcp_configuration.metadata.any? %>
+    <div class="card bg-base-100 shadow-xl mt-8">
+      <div class="card-body">
+        <details>
+          <summary class="cursor-pointer font-semibold">View Additional Metadata</summary>
+          <div class="mt-4 mockup-code">
+            <pre><code><%= JSON.pretty_generate(@mcp_configuration.metadata) %></code></pre>
+          </div>
+        </details>
+      </div>
+    </div>
+  <% end %>
+</div>

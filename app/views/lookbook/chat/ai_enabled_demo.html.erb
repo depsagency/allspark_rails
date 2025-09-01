@@ -1,0 +1,108 @@
+<div class="min-h-[600px] bg-base-100 rounded-lg shadow-xl p-4">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-4 pb-4 border-b border-base-300">
+    <div>
+      <h2 class="text-xl font-bold">Chat Thread with AI Assistant</h2>
+      <p class="text-sm text-base-content/70">2 participants</p>
+    </div>
+    
+    <div class="flex items-center gap-2">
+      <div class="badge badge-primary badge-outline">
+        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        </svg>
+        AI Active
+      </div>
+      <button class="btn btn-warning btn-sm">Disable AI Assistant</button>
+    </div>
+  </div>
+
+  <div class="alert alert-info mb-4">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    <span>AI Assistant is active in this thread</span>
+  </div>
+
+  <!-- Messages -->
+  <div class="h-[400px] overflow-y-auto mb-4 space-y-3">
+    <div class="chat chat-start">
+      <div class="chat-image avatar">
+        <div class="w-10 rounded-full bg-base-300 flex items-center justify-center">
+          <span class="text-lg font-semibold">U</span>
+        </div>
+      </div>
+      <div class="chat-header">
+        User
+        <time class="text-xs opacity-50">10:00</time>
+      </div>
+      <div class="chat-bubble">Hello! Can you help me with something?</div>
+    </div>
+
+    <div class="chat chat-start">
+      <div class="chat-image avatar">
+        <div class="w-10 rounded-full bg-base-300 flex items-center justify-center">
+          <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
+        </div>
+      </div>
+      <div class="chat-header">
+        AI Assistant
+        <span class="badge badge-primary badge-xs">AI</span>
+        <time class="text-xs opacity-50">10:01</time>
+      </div>
+      <div class="chat-bubble chat-bubble-accent">
+        Of course! I'm here to help. What would you like assistance with?
+      </div>
+    </div>
+
+    <div class="chat chat-end">
+      <div class="chat-image avatar">
+        <div class="w-10 rounded-full bg-base-300 flex items-center justify-center">
+          <span class="text-lg font-semibold">U</span>
+        </div>
+      </div>
+      <div class="chat-header">
+        User
+        <time class="text-xs opacity-50">10:02</time>
+      </div>
+      <div class="chat-bubble chat-bubble-primary">
+        I need to calculate the total cost with tax for a $150 purchase with 8.5% sales tax.
+      </div>
+    </div>
+
+    <div class="chat chat-start">
+      <div class="chat-image avatar">
+        <div class="w-10 rounded-full bg-base-300 flex items-center justify-center">
+          <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
+        </div>
+      </div>
+      <div class="chat-header">
+        AI Assistant
+        <span class="badge badge-primary badge-xs">AI</span>
+        <time class="text-xs opacity-50">10:03</time>
+      </div>
+      <div class="chat-bubble chat-bubble-accent">
+        I'll calculate that for you:<br><br>
+        Purchase amount: $150.00<br>
+        Sales tax rate: 8.5%<br>
+        Tax amount: $150.00 × 0.085 = $12.75<br><br>
+        <strong>Total cost: $150.00 + $12.75 = $162.75</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Input -->
+  <div class="flex gap-2">
+    <input type="text" placeholder="Type your message..." class="input input-bordered flex-1" />
+    <button class="btn btn-primary">Send</button>
+  </div>
+
+  <!-- Info -->
+  <div class="mt-4 text-sm text-base-content/70">
+    <p>This preview shows a chat thread with AI Assistant enabled. The AI can respond to messages and use tools like calculator, web search, and code interpreter.</p>
+  </div>
+</div>

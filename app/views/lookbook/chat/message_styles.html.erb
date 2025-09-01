@@ -1,0 +1,124 @@
+<div class="p-8 space-y-8 bg-base-100">
+  <div>
+    <h3 class="text-lg font-semibold mb-4">DaisyUI Chat Component Examples</h3>
+    
+    <!-- Basic Chat -->
+    <div class="mb-8">
+      <h4 class="text-sm font-medium mb-2 text-base-content/70">Basic Messages</h4>
+      <div class="space-y-2">
+        <div class="chat chat-start">
+          <div class="chat-bubble">Hello! How can I help you today?</div>
+        </div>
+        <div class="chat chat-end">
+          <div class="chat-bubble chat-bubble-primary">I need help with the chat component</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- With Avatars -->
+    <div class="mb-8">
+      <h4 class="text-sm font-medium mb-2 text-base-content/70">With Avatars and Headers</h4>
+      <div class="space-y-2">
+        <div class="chat chat-start">
+          <div class="chat-image avatar">
+            <div class="w-10 rounded-full">
+              <div class="bg-secondary text-secondary-content w-10 h-10 flex items-center justify-center font-semibold">AJ</div>
+            </div>
+          </div>
+          <div class="chat-header">
+            Alice Johnson
+            <time class="text-xs opacity-50">12:45</time>
+          </div>
+          <div class="chat-bubble">Great! The chat component uses DaisyUI's built-in styling</div>
+        </div>
+        
+        <div class="chat chat-end">
+          <div class="chat-image avatar">
+            <div class="w-10 rounded-full">
+              <div class="bg-primary text-primary-content w-10 h-10 flex items-center justify-center font-semibold">JD</div>
+            </div>
+          </div>
+          <div class="chat-header">
+            John Doe
+            <time class="text-xs opacity-50">12:46</time>
+          </div>
+          <div class="chat-bubble chat-bubble-primary">That's perfect! It looks really clean</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Different Bubble Colors -->
+    <div class="mb-8">
+      <h4 class="text-sm font-medium mb-2 text-base-content/70">Bubble Color Variations</h4>
+      <div class="space-y-2">
+        <div class="chat chat-start">
+          <div class="chat-bubble chat-bubble-primary">Primary bubble</div>
+        </div>
+        <div class="chat chat-start">
+          <div class="chat-bubble chat-bubble-secondary">Secondary bubble</div>
+        </div>
+        <div class="chat chat-start">
+          <div class="chat-bubble chat-bubble-accent">Accent bubble</div>
+        </div>
+        <div class="chat chat-start">
+          <div class="chat-bubble chat-bubble-info">Info bubble</div>
+        </div>
+        <div class="chat chat-start">
+          <div class="chat-bubble chat-bubble-success">Success bubble</div>
+        </div>
+        <div class="chat chat-start">
+          <div class="chat-bubble chat-bubble-warning">Warning bubble</div>
+        </div>
+        <div class="chat chat-start">
+          <div class="chat-bubble chat-bubble-error">Error bubble</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- With Footer -->
+    <div class="mb-8">
+      <h4 class="text-sm font-medium mb-2 text-base-content/70">With Footer (Read/Delivered Status)</h4>
+      <div class="space-y-2">
+        <div class="chat chat-end">
+          <div class="chat-bubble chat-bubble-primary">Did you get my message?</div>
+          <div class="chat-footer opacity-50">
+            <time class="text-xs">Delivered</time>
+          </div>
+        </div>
+        <div class="chat chat-end">
+          <div class="chat-bubble chat-bubble-primary">Let me know when you're free</div>
+          <div class="chat-footer opacity-50">
+            <time class="text-xs">Seen at 12:46</time>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Image Messages -->
+    <div class="mb-8">
+      <h4 class="text-sm font-medium mb-2 text-base-content/70">With Images</h4>
+      <div class="space-y-2">
+        <div class="chat chat-start">
+          <div class="chat-bubble">
+            <img src="https://via.placeholder.com/200x150" alt="Shared image" class="rounded-lg mb-2">
+            Check out this mockup!
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Long Messages -->
+    <div class="mb-8">
+      <h4 class="text-sm font-medium mb-2 text-base-content/70">Long Messages</h4>
+      <div class="space-y-2">
+        <div class="chat chat-start">
+          <div class="chat-bubble max-w-md">
+            This is a longer message that demonstrates how the chat bubble handles text wrapping. 
+            The bubble will expand to accommodate the content while maintaining a maximum width 
+            to ensure readability. This helps create a more natural conversation flow.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

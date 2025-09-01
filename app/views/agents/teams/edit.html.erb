@@ -1,0 +1,184 @@
+<div class="container mx-auto px-4 py-8 max-w-6xl">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl font-bold">Edit Team</h1>
+      <p class="text-base-content/70 mt-1">Configure team settings and workflow</p>
+    </div>
+    <%= link_to agents_teams_path, class: "btn btn-ghost gap-2" do %>
+      <span>←</span>
+      Back to Teams
+    <% end %>
+  </div>
+
+  <%= form_with model: @team, url: agents_team_path(@team), class: "space-y-8" do |form| %>
+    <% if @team.errors.any? %>
+      <div class="alert alert-error">
+        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <div>
+          <h3 class="font-bold">Please fix the following errors:</h3>
+          <ul class="list-disc list-inside mt-2">
+            <% @team.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Main Settings Column -->
+      <div class="lg:col-span-2 space-y-8">
+        <!-- Basic Information Card -->
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title text-lg mb-4">
+              <span class="text-2xl">📋</span>
+              Basic Information
+            </h2>
+            
+            <div class="space-y-4">
+              <div class="form-control">
+                <%= form.label :name, class: "label" do %>
+                  <span class="label-text font-semibold">Team Name</span>
+                  <span class="label-text-alt text-error">*Required</span>
+                <% end %>
+                <%= form.text_field :name, class: "input input-bordered w-full", 
+                    placeholder: "e.g., Feature Development Team", required: true %>
+              </div>
+
+              <div class="form-control">
+                <%= form.label :purpose, class: "label" do %>
+                  <span class="label-text font-semibold">Purpose & Goals</span>
+                <% end %>
+                <%= form.text_area :purpose, rows: 4, class: "textarea textarea-bordered w-full", 
+                    placeholder: "Describe the team's main objectives, responsibilities, and goals..." %>
+                <label class="label">
+                  <span class="label-text-alt">Help team members understand their collective mission</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Workflow Configuration Card -->
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title text-lg mb-4">
+              <span class="text-2xl">⚙️</span>
+              Workflow Configuration
+            </h2>
+            
+            <div class="form-control">
+              <%= form.label :workflow, class: "label" do %>
+                <span class="label-text font-semibold">Team Workflow</span>
+                <span class="label-text-alt">Markdown supported</span>
+              <% end %>
+              <div data-controller="tinymce">
+                <%= form.text_area :workflow, 
+                    class: "textarea textarea-bordered w-full", 
+                    rows: 15,
+                    data: { 
+                      tinymce_target: "input",
+                      action: "turbo:before-cache@window->tinymce#teardown"
+                    },
+                    placeholder: "# Team Workflow\n\n## Responsibilities\n- ...\n\n## Process\n1. ...\n\n## Communication Guidelines\n- ..." %>
+              </div>
+              <label class="label">
+                <span class="label-text-alt">Use markdown to document workflow, processes, and coordination guidelines</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="space-y-6">
+        <!-- Status Card -->
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h3 class="font-bold text-lg mb-4">Team Status</h3>
+            
+            <div class="form-control">
+              <%= form.label :active, class: "label cursor-pointer justify-start gap-4" do %>
+                <%= form.check_box :active, class: "toggle toggle-primary toggle-lg" %>
+                <div>
+                  <span class="label-text text-base font-medium">Active</span>
+                  <p class="text-sm text-base-content/70">Team can be assigned to projects</p>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Team Members Card -->
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h3 class="font-bold text-lg mb-4">
+              <span class="text-xl">👥</span>
+              Team Members
+            </h3>
+            
+            <div class="form-control">
+              <label class="label pb-2">
+                <span class="label-text">Select Assistants</span>
+              </label>
+              
+              <div class="max-h-96 overflow-y-auto space-y-2 pr-2">
+                <%= hidden_field_tag "agent_team[assistant_ids][]", "" %>
+                <% current_user.assistants.active.order(:name).each do |assistant| %>
+                  <div class="card card-compact bg-base-200 hover:bg-base-300 transition-colors">
+                    <label class="card-body cursor-pointer">
+                      <div class="flex items-start gap-3">
+                        <%= check_box_tag "agent_team[assistant_ids][]", assistant.id, 
+                            @team.assistants.include?(assistant), 
+                            class: "checkbox checkbox-primary mt-1", 
+                            id: "assistant_#{assistant.id}" %>
+                        <div class="flex-1">
+                          <h4 class="font-semibold"><%= assistant.name %></h4>
+                          <% if assistant.instructions.present? %>
+                            <p class="text-sm text-base-content/70 mt-1">
+                              <%= truncate(assistant.instructions, length: 80) %>
+                            </p>
+                          <% end %>
+                          <% if assistant.tools.any? %>
+                            <div class="flex flex-wrap gap-1 mt-2">
+                              <% assistant.tools.first(3).each do |tool| %>
+                                <span class="badge badge-xs badge-outline">
+                                  <%= tool['type'].to_s.humanize %>
+                                </span>
+                              <% end %>
+                              <% if assistant.tools.size > 3 %>
+                                <span class="badge badge-xs badge-ghost">
+                                  +<%= assistant.tools.size - 3 %> more
+                                </span>
+                              <% end %>
+                            </div>
+                          <% end %>
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                <% end %>
+                
+                <% if current_user.assistants.active.empty? %>
+                  <div class="text-center py-8">
+                    <p class="text-base-content/70">No assistants available</p>
+                    <%= link_to "Create Assistant", new_agents_assistant_path, 
+                        class: "btn btn-sm btn-primary mt-2" %>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="flex justify-end gap-3 pt-6 border-t">
+      <%= link_to "Cancel", agents_team_path(@team), class: "btn btn-ghost" %>
+      <%= form.submit "Update Team", class: "btn btn-primary" %>
+    </div>
+  <% end %>
+</div>

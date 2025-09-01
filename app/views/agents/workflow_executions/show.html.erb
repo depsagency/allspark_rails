@@ -1,0 +1,385 @@
+<div class="container mx-auto px-4 py-8" 
+     data-controller="workflow-execution"
+     data-workflow-execution-id-value="<%= @execution.id %>"
+     data-workflow-execution-team-id-value="<%= @team.id %>"
+     data-workflow-execution-workflow-id-value="<%= @workflow.id %>">
+  <div class="flex justify-between items-start mb-8">
+    <div>
+      <h1 class="text-3xl font-bold"><%= @workflow.name %></h1>
+      <p class="text-base-content/70 mt-1">
+        Execution #<%= @execution.id.last(8) %>
+        <% if @workflow.description.present? %>
+          • <%= @workflow.description %>
+        <% end %>
+      </p>
+      <div class="flex gap-2 mt-3">
+        <span class="badge badge-<%= @execution.completed? ? 'success' : @execution.failed? ? 'error' : @execution.cancelled? ? 'ghost' : @execution.running? ? 'warning' : 'info' %> badge-lg">
+          <%= @execution.status %>
+        </span>
+        <span class="badge badge-outline">Version <%= @workflow.version %></span>
+        <span class="text-sm opacity-60">
+          Started <%= time_ago_in_words(@execution.created_at) %> ago by <%= @execution.user.email %>
+          <% if @execution.elapsed_time %>
+            • Duration: <%= distance_of_time_in_words(@execution.elapsed_time) %>
+          <% end %>
+        </span>
+      </div>
+    </div>
+    
+    <div class="flex gap-2">
+      <% if @execution.running? %>
+        <%= link_to cancel_agents_team_workflow_execution_path(@team, @workflow, @execution), 
+            method: :post,
+            data: { 
+              turbo_method: :post,
+              turbo_confirm: "Are you sure you want to cancel this execution?" 
+            },
+            class: "btn btn-error" do %>
+          ⏹ Cancel Execution
+        <% end %>
+      <% elsif @execution.completed? || @execution.failed? %>
+        <%= button_to execute_agents_team_workflow_path(@team, @workflow), 
+            method: :post,
+            class: "btn btn-primary",
+            form: { class: "inline" } do %>
+          ▶️ Run Again
+        <% end %>
+      <% end %>
+      
+      <%= link_to "View Workflow", agents_team_workflow_path(@team, @workflow), 
+          class: "btn btn-outline" %>
+      
+      <%= link_to "All Executions", agents_team_workflow_executions_path(@team, @workflow), 
+          class: "btn btn-ghost" %>
+    </div>
+  </div>
+
+  <!-- Progress Overview -->
+  <% if @execution.running? %>
+    <div class="alert alert-info mb-8">
+      <div class="flex items-center gap-4">
+        <div class="loading loading-spinner loading-md"></div>
+        <div class="flex-1">
+          <h3 class="font-bold">Execution in Progress</h3>
+          <p data-workflow-execution-target="status">Processing workflow tasks...</p>
+        </div>
+        <div class="text-right">
+          <div class="text-2xl font-bold" data-workflow-execution-target="progress">
+            <%= @execution.progress_percentage %>%
+          </div>
+          <div class="text-sm opacity-70">Complete</div>
+        </div>
+      </div>
+      
+      <progress class="progress progress-primary mt-4" 
+                value="<%= @execution.progress_percentage %>" 
+                max="100"
+                data-workflow-execution-target="progressBar"></progress>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Workflow Visualization and Task Details -->
+    <div class="lg:col-span-2">
+      <!-- Workflow Diagram -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title mb-4">Workflow Diagram</h2>
+          
+          <% if @workflow.flow_definition['nodes']&.any? %>
+            <!-- Mermaid diagram showing the workflow structure -->
+            <div class="bg-base-200 rounded-lg p-8 min-h-[400px] flex items-center justify-center">
+              <div class="text-center max-w-2xl">
+                <pre class="mermaid">
+<%= @workflow.to_mermaid %>
+                </pre>
+              </div>
+            </div>
+            
+            <div class="mt-4 text-sm text-base-content/60 text-center">
+              This diagram shows the workflow structure. See task details below for execution progress.
+            </div>
+          <% else %>
+            <!-- Empty state -->
+            <div class="bg-base-200 rounded-lg p-16 text-center">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1" stroke="currentColor" class="w-16 h-16 mx-auto mb-4 opacity-20">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 0 1 6 3.75h2.25A2.25 2.25 0 0 1 10.5 6v2.25a2.25 2.25 0 0 1-2.25 2.25H6a2.25 2.25 0 0 1-2.25-2.25V6ZM3.75 15.75A2.25 2.25 0 0 1 6 13.5h2.25a2.25 2.25 0 0 1 2.25 2.25V18a2.25 2.25 0 0 1-2.25 2.25H6A2.25 2.25 0 0 1 3.75 18v-2.25ZM13.5 6a2.25 2.25 0 0 1 2.25-2.25H18A2.25 2.25 0 0 1 20.25 6v2.25A2.25 2.25 0 0 1 18 10.5h-2.25a2.25 2.25 0 0 1-2.25-2.25V6ZM13.5 15.75a2.25 2.25 0 0 1 2.25-2.25H18a2.25 2.25 0 0 1 2.25 2.25V18A2.25 2.25 0 0 1 18 20.25h-2.25A2.25 2.25 0 0 1 13.5 18v-2.25Z" />
+              </svg>
+              <p class="text-lg font-medium mb-2">No workflow defined</p>
+              <p class="text-sm opacity-60">This execution has no workflow structure to display</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Task Execution Details -->
+      <div class="card bg-base-100 shadow-xl mt-6">
+        <div class="card-body">
+          <h2 class="card-title mb-4">Task Execution Details</h2>
+          
+          <div class="space-y-4">
+            <% @tasks.each do |task| %>
+              <div class="collapse collapse-arrow bg-base-200" 
+                   data-workflow-execution-target="task"
+                   data-task-id="<%= task.id %>">
+                <input type="checkbox" <%= 'checked' if task.running? || task.failed? %> />
+                <div class="collapse-title">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h4 class="font-semibold"><%= task.title %></h4>
+                      <p class="text-sm opacity-70">
+                        Node: <%= task.node_id %> • 
+                        <% if task.assistant %>
+                          Assigned to: <%= task.assistant.name %>
+                        <% else %>
+                          Unassigned
+                        <% end %>
+                      </p>
+                    </div>
+                    <div class="badge badge-<%= task.completed? ? 'success' : task.failed? ? 'error' : task.running? ? 'warning' : 'ghost' %>"
+                         data-workflow-execution-target="taskStatus">
+                      <%= task.status %>
+                    </div>
+                  </div>
+                </div>
+                <div class="collapse-content">
+                  <div class="space-y-3">
+                    <% if task.instructions.present? %>
+                      <div>
+                        <h5 class="font-semibold text-sm mb-1">Instructions:</h5>
+                        <p class="text-sm bg-base-100 p-3 rounded"><%= task.instructions %></p>
+                      </div>
+                    <% end %>
+                    
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span class="font-semibold">Started:</span>
+                        <span data-field="started"><%= task.started_at ? task.started_at.strftime("%I:%M:%S %p") : "Not started" %></span>
+                      </div>
+                      <div>
+                        <span class="font-semibold">Completed:</span>
+                        <span data-field="completed"><%= task.completed_at ? task.completed_at.strftime("%I:%M:%S %p") : "—" %></span>
+                      </div>
+                      <div>
+                        <span class="font-semibold">Duration:</span>
+                        <span data-field="duration"><%= task.elapsed_time ? distance_of_time_in_words(task.elapsed_time) : "—" %></span>
+                      </div>
+                      <div>
+                        <span class="font-semibold">Status:</span>
+                        <span class="badge badge-sm badge-<%= task.completed? ? 'success' : task.failed? ? 'error' : task.running? ? 'warning' : 'ghost' %>">
+                          <%= task.status %>
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <% if task.result_data.present? %>
+                      <div>
+                        <h5 class="font-semibold text-sm mb-1">Result:</h5>
+                        <div class="bg-base-100 p-3 rounded">
+                          <% if task.result_data['result'] || task.result_data['output'] %>
+                            <div class="prose prose-sm max-w-none">
+                              <%= simple_format(task.result_data['result'] || task.result_data['output']) %>
+                            </div>
+                          <% elsif task.result_data['error'] %>
+                            <div class="text-error">
+                              Error: <%= task.result_data['error'] %>
+                            </div>
+                          <% else %>
+                            <pre class="text-sm"><%= JSON.pretty_generate(task.result_data) %></pre>
+                          <% end %>
+                        </div>
+                      </div>
+                    <% end %>
+                    
+                    <!-- Container for dynamically added results -->
+                    <div class="task-result-container"></div>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+            
+            <% if @tasks.empty? %>
+              <p class="text-center py-8 opacity-70">No tasks have been created yet.</p>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+      <!-- Execution Summary -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h3 class="font-bold text-lg mb-4">Execution Summary</h3>
+          
+          <div class="space-y-3">
+            <div>
+              <div class="text-sm font-semibold opacity-70">Status</div>
+              <div class="mt-1">
+                <span class="badge badge-<%= @execution.completed? ? 'success' : @execution.failed? ? 'error' : @execution.cancelled? ? 'ghost' : @execution.running? ? 'warning' : 'info' %> badge-lg">
+                  <%= @execution.status %>
+                </span>
+              </div>
+            </div>
+            
+            <div>
+              <div class="text-sm font-semibold opacity-70">Progress</div>
+              <div class="mt-1">
+                <div class="flex items-center gap-2">
+                  <progress class="progress progress-primary flex-1" 
+                           value="<%= @execution.progress_percentage %>" 
+                           max="100"></progress>
+                  <span class="text-sm font-semibold"><%= @execution.progress_percentage %>%</span>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <div class="text-sm font-semibold opacity-70">Started</div>
+              <div class="mt-1">
+                <%= @execution.started_at&.strftime("%B %d, %Y at %I:%M %p") || "Not started" %>
+                <div class="text-xs opacity-60">by <%= @execution.user.email %></div>
+              </div>
+            </div>
+            
+            <div>
+              <div class="text-sm font-semibold opacity-70">Duration</div>
+              <div class="mt-1">
+                <% if @execution.elapsed_time %>
+                  <%= distance_of_time_in_words(@execution.elapsed_time) %>
+                <% elsif @execution.running? %>
+                  <span data-workflow-execution-target="elapsed">Calculating...</span>
+                <% else %>
+                  —
+                <% end %>
+              </div>
+            </div>
+            
+            <% if @execution.completed_at %>
+              <div>
+                <div class="text-sm font-semibold opacity-70">Completed</div>
+                <div class="mt-1">
+                  <%= @execution.completed_at.strftime("%B %d, %Y at %I:%M %p") %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- Task Statistics -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h3 class="font-bold text-lg mb-4">Task Statistics</h3>
+          
+          <div class="space-y-3">
+            <div class="flex justify-between">
+              <span class="text-sm">Total Tasks</span>
+              <span class="font-semibold" data-stat="total"><%= @tasks.count %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-sm text-success">Completed</span>
+              <span class="font-semibold text-success" data-stat="completed"><%= @tasks.completed.count %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-sm text-warning">Running</span>
+              <span class="font-semibold text-warning" data-stat="running"><%= @tasks.running.count %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-sm">Pending</span>
+              <span class="font-semibold" data-stat="pending"><%= @tasks.pending.count %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-sm text-error">Failed</span>
+              <span class="font-semibold text-error" data-stat="failed"><%= @tasks.failed.count %></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Execution Data -->
+      <% if @execution.execution_data.present? && @execution.execution_data.any? %>
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h3 class="font-bold text-lg mb-4">Execution Parameters</h3>
+            
+            <div class="bg-base-200 p-3 rounded">
+              <pre class="text-sm"><%= JSON.pretty_generate(@execution.execution_data) %></pre>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- Team Information -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h3 class="font-bold text-lg mb-4">Team</h3>
+          
+          <div class="space-y-3">
+            <div class="flex items-center gap-3">
+              <div class="avatar placeholder">
+                <div class="bg-neutral text-neutral-content rounded-full w-12">
+                  <span class="text-lg"><%= @team.name.first.upcase %></span>
+                </div>
+              </div>
+              <div>
+                <div class="font-semibold"><%= @team.name %></div>
+                <div class="text-sm opacity-70"><%= pluralize(@team.assistants.count, 'member') %></div>
+              </div>
+            </div>
+            
+            <div class="divider"></div>
+            
+            <div>
+              <div class="text-sm font-semibold opacity-70 mb-2">Team Members</div>
+              <div class="space-y-2">
+                <% @team.assistants.each do |assistant| %>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm"><%= assistant.name %></span>
+                    <% tasks_for_assistant = @tasks.select { |t| t.assistant_id == assistant.id } %>
+                    <% if tasks_for_assistant.any? %>
+                      <span class="badge badge-sm badge-outline">
+                        <%= tasks_for_assistant.count %> task<%= 's' if tasks_for_assistant.count != 1 %>
+                      </span>
+                    <% end %>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+            
+            <div class="pt-2">
+              <%= link_to "View Team", agents_team_path(@team), class: "btn btn-outline btn-sm btn-block" %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Include Mermaid for workflow diagram -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>
+  // Initialize Mermaid diagrams
+  document.addEventListener('DOMContentLoaded', () => {
+    mermaid.initialize({ 
+      startOnLoad: true,
+      theme: 'default',
+      themeVariables: {
+        primaryColor: '#f3f4f6',
+        primaryTextColor: '#111827',
+        primaryBorderColor: '#d1d5db',
+        lineColor: '#6b7280',
+        secondaryColor: '#e5e7eb',
+        tertiaryColor: '#f9fafb'
+      }
+    });
+  });
+  
+  // Re-render on Turbo navigation
+  document.addEventListener('turbo:load', () => {
+    mermaid.init();
+  });
+</script>

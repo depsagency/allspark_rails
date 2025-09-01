@@ -1,0 +1,36 @@
+# Example Brakeman security scanner configuration
+# Copy this to config/brakeman.yml and customize as needed
+
+# Application root directory
+:app_path: "."
+
+# Rails version (will be detected automatically if not specified)
+# :rails_version: "8.0"
+
+# Output format (:json, :html, :csv, :tabs, :text)
+:output_format: :text
+
+# Print warnings to STDOUT
+:print_report: true
+
+# Checks to run (leave empty to run all)
+:run_checks: []
+
+# Checks to skip
+:skip_checks:
+  - CheckForgerySetting # Skip CSRF setting check
+
+# Files/directories to skip
+:skip_files:
+  - "lib/templates/"
+  - "test/"
+  - "spec/"
+
+# Exit on warnings
+:exit_on_warn: false
+
+# Minimum confidence level (0-2, 0 is highest)
+:min_confidence: 1
+
+# Ignore warnings in these files/methods
+:ignore_file: "config/brakeman.ignore"

@@ -1,0 +1,21 @@
+<dialog <%= modal_attributes.map { |k, v| "#{k}=\"#{v}\"" }.join(' ').html_safe %> class="<%= modal_classes %>" data-controller="modal">
+  <div class="<%= modal_box_classes %>">
+    <% if closable %>
+      <button class="<%= close_button_classes %>" data-action="click->modal#close">✕</button>
+    <% end %>
+    
+    <% if show_default_layout? %>
+      <%= content %>
+    <% else %>
+      <%= header if header? %>
+      <%= body if body? %>
+      <%= footer if footer? %>
+    <% end %>
+  </div>
+  
+  <% if closable %>
+    <form method="dialog" class="<%= backdrop_classes %>">
+      <button data-action="click->modal#close">close</button>
+    </form>
+  <% end %>
+</dialog>

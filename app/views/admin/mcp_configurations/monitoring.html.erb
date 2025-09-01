@@ -1,0 +1,320 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl font-bold">Configuration Monitoring</h1>
+      <p class="text-base-content/70 mt-2">
+        Detailed monitoring and analytics for <%= @mcp_configuration.name %>
+      </p>
+    </div>
+    
+    <div class="flex gap-2">
+      <%= link_to "← Back to Configuration", admin_mcp_configuration_path(@mcp_configuration), class: "btn btn-ghost" %>
+      <%= link_to "Global Analytics", analytics_admin_mcp_configurations_path, class: "btn btn-outline" %>
+    </div>
+  </div>
+
+  <!-- Configuration Overview -->
+  <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+    <div class="stats shadow">
+      <div class="stat">
+        <div class="stat-figure text-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <div class="stat-title">Total Executions</div>
+        <div class="stat-value"><%= number_with_delimiter(@analytics[:usage_stats][:total_executions]) %></div>
+        <div class="stat-desc">
+          <%= @analytics[:usage_stats][:successful_executions] %> successful
+        </div>
+      </div>
+    </div>
+
+    <div class="stats shadow">
+      <div class="stat">
+        <div class="stat-figure text-secondary">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div class="stat-title">Success Rate</div>
+        <div class="stat-value text-lg">
+          <% success_rate = @analytics[:usage_stats][:total_executions] > 0 ? 
+             (@analytics[:usage_stats][:successful_executions].to_f / @analytics[:usage_stats][:total_executions] * 100).round(1) : 0 %>
+          <%= success_rate %>%
+        </div>
+        <div class="stat-desc">
+          <%= @analytics[:usage_stats][:failed_executions] %> failures
+        </div>
+      </div>
+    </div>
+
+    <div class="stats shadow">
+      <div class="stat">
+        <div class="stat-figure text-accent">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div class="stat-title">Avg Response Time</div>
+        <div class="stat-value text-lg"><%= @analytics[:performance_stats][:avg_response_time].round(0) %>ms</div>
+        <div class="stat-desc">
+          P95: <%= @analytics[:performance_stats][:p95_response_time] %>ms
+        </div>
+      </div>
+    </div>
+
+    <div class="stats shadow">
+      <div class="stat">
+        <div class="stat-figure text-info">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        </div>
+        <div class="stat-title">Health Status</div>
+        <div class="stat-value text-lg">
+          <div class="badge badge-<%= @analytics[:health_status][:healthy] ? 'success' : 'error' %> badge-lg">
+            <%= @analytics[:health_status][:healthy] ? 'Healthy' : 'Issues' %>
+          </div>
+        </div>
+        <div class="stat-desc">
+          <% if @analytics[:health_status][:consecutive_failures] > 0 %>
+            <%= @analytics[:health_status][:consecutive_failures] %> consecutive failures
+          <% else %>
+            No recent failures
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Performance Charts -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <!-- Daily Usage Chart -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title">Daily Usage (Last 7 Days)</h2>
+        
+        <div class="h-64 flex items-center justify-center">
+          <canvas id="dailyUsageChart" width="400" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Response Time Trends -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title">Performance Metrics</h2>
+        
+        <div class="stats stats-vertical w-full">
+          <div class="stat">
+            <div class="stat-title">Average Response Time</div>
+            <div class="stat-value text-lg"><%= @analytics[:performance_stats][:avg_response_time].round(0) %>ms</div>
+          </div>
+          
+          <div class="stat">
+            <div class="stat-title">Median Response Time</div>
+            <div class="stat-value text-lg"><%= @analytics[:performance_stats][:median_response_time] %>ms</div>
+          </div>
+          
+          <div class="stat">
+            <div class="stat-title">95th Percentile</div>
+            <div class="stat-value text-lg"><%= @analytics[:performance_stats][:p95_response_time] %>ms</div>
+          </div>
+          
+          <div class="stat">
+            <div class="stat-title">Min / Max</div>
+            <div class="stat-value text-sm">
+              <%= @analytics[:performance_stats][:min_response_time] %>ms / 
+              <%= @analytics[:performance_stats][:max_response_time] %>ms
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tool Usage & Error Analysis -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+    <!-- Most Used Tools -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title">Most Used Tools</h2>
+        
+        <% if @analytics[:usage_stats][:most_used_tools].any? %>
+          <div class="space-y-3">
+            <% @analytics[:usage_stats][:most_used_tools].each_with_index do |(tool, count), index| %>
+              <div class="flex items-center justify-between p-3 bg-base-200 rounded-lg">
+                <div>
+                  <div class="font-semibold text-sm">#<%= index + 1 %> <%= tool %></div>
+                  <div class="text-xs opacity-70">Tool usage count</div>
+                </div>
+                <div class="badge badge-primary">
+                  <%= number_with_delimiter(count) %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-center py-8 opacity-70">No tool usage data available</p>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Error Analysis -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title">Error Analysis</h2>
+        
+        <div class="stats stats-vertical w-full">
+          <div class="stat">
+            <div class="stat-title">Total Errors</div>
+            <div class="stat-value text-lg text-error"><%= @analytics[:error_stats][:total_errors] %></div>
+          </div>
+          
+          <div class="stat">
+            <div class="stat-title">Error Rate</div>
+            <div class="stat-value text-lg">
+              <span class="text-<%= @analytics[:error_stats][:error_rate] > 10 ? 'error' : @analytics[:error_stats][:error_rate] > 5 ? 'warning' : 'success' %>">
+                <%= @analytics[:error_stats][:error_rate] %>%
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <% if @analytics[:error_stats][:common_errors].any? %>
+          <div class="mt-4">
+            <h3 class="font-semibold mb-2">Common Errors</h3>
+            <div class="space-y-2">
+              <% @analytics[:error_stats][:common_errors].each do |error, count| %>
+                <div class="text-sm p-2 bg-error/10 rounded">
+                  <div class="font-medium text-error"><%= error %></div>
+                  <div class="text-xs opacity-70"><%= count %> occurrences</div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Users -->
+  <% if @analytics[:usage_stats][:top_users].any? %>
+    <div class="card bg-base-100 shadow-xl mb-8">
+      <div class="card-body">
+        <h2 class="card-title">Top Users</h2>
+        
+        <div class="overflow-x-auto">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>User</th>
+                <th>Executions</th>
+                <th>Usage Percentage</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% total_executions = @analytics[:usage_stats][:top_users].sum { |_, count| count } %>
+              <% @analytics[:usage_stats][:top_users].each_with_index do |(user, count), index| %>
+                <tr>
+                  <td class="font-semibold">#<%= index + 1 %></td>
+                  <td><%= user %></td>
+                  <td><%= number_with_delimiter(count) %></td>
+                  <td>
+                    <div class="flex items-center gap-2">
+                      <progress class="progress progress-primary w-20" 
+                                value="<%= count %>" 
+                                max="<%= total_executions %>"></progress>
+                      <span class="text-sm"><%= (count.to_f / total_executions * 100).round(1) %>%</span>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Configuration Details -->
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+      <h2 class="card-title">Configuration Details</h2>
+      
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div>
+          <h3 class="font-semibold mb-2">Basic Information</h3>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="opacity-70">Name:</span>
+              <span class="font-medium"><%= @mcp_configuration.name %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="opacity-70">Server Type:</span>
+              <span class="badge badge-primary badge-sm"><%= @mcp_configuration.server_type.upcase %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="opacity-70">Status:</span>
+              <span class="badge badge-<%= @mcp_configuration.enabled? ? 'success' : 'ghost' %> badge-sm">
+                <%= @mcp_configuration.enabled? ? 'Enabled' : 'Disabled' %>
+              </span>
+            </div>
+            <div class="flex justify-between">
+              <span class="opacity-70">Created:</span>
+              <span><%= @mcp_configuration.created_at.strftime('%Y-%m-%d %H:%M') %></span>
+            </div>
+            <div class="flex justify-between">
+              <span class="opacity-70">Updated:</span>
+              <span><%= @mcp_configuration.updated_at.strftime('%Y-%m-%d %H:%M') %></span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="font-semibold mb-2">Server Configuration</h3>
+          <div class="mockup-code text-xs">
+            <pre><code><%= JSON.pretty_generate(@mcp_configuration.server_config) %></code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Daily Usage Chart
+  const dailyCtx = document.getElementById('dailyUsageChart').getContext('2d');
+  const dailyUsageData = <%= @analytics[:daily_usage].to_json.html_safe %>;
+  
+  new Chart(dailyCtx, {
+    type: 'line',
+    data: {
+      labels: Object.keys(dailyUsageData),
+      datasets: [{
+        label: 'Daily Executions',
+        data: Object.values(dailyUsageData),
+        borderColor: 'rgb(59, 130, 246)',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        tension: 0.1,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+});
+</script>

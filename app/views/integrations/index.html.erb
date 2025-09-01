@@ -1,0 +1,92 @@
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold mb-8">External Integrations</h1>
+  
+  <!-- Connected Services -->
+  <% if @integrations.any? %>
+    <div class="mb-12">
+      <h2 class="text-2xl font-semibold mb-4">Connected Services</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <% @integrations.each do |integration| %>
+          <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+              <h3 class="card-title">
+                <%= integration.service.humanize %>
+                <% if integration.active? %>
+                  <div class="badge badge-success">Active</div>
+                <% else %>
+                  <div class="badge badge-ghost">Inactive</div>
+                <% end %>
+              </h3>
+              
+              <p class="text-sm opacity-70">
+                Connected <%= time_ago_in_words(integration.created_at) %> ago
+              </p>
+              
+              <div class="card-actions justify-end mt-4">
+                <%= link_to "View", integration_path(integration), class: "btn btn-primary btn-sm" %>
+                <%= link_to "Disconnect", integration_path(integration), 
+                    method: :delete,
+                    data: { confirm: "Are you sure?" },
+                    class: "btn btn-ghost btn-sm" %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+  
+  <!-- Available Services -->
+  <div>
+    <h2 class="text-2xl font-semibold mb-4">Available Services</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <% @available_services.each do |service| %>
+        <% connected = @integrations.find { |i| i.service == service[:id] } %>
+        
+        <div class="card bg-base-100 shadow-xl <%= 'opacity-50' if connected %>">
+          <div class="card-body">
+            <h3 class="card-title">
+              <span class="text-2xl mr-2"><%= service[:icon] %></span>
+              <%= service[:name] %>
+            </h3>
+            
+            <p class="text-sm opacity-70">
+              <%= service[:description] %>
+            </p>
+            
+            <div class="card-actions justify-end mt-4">
+              <% if connected %>
+                <span class="text-sm opacity-50">Already connected</span>
+              <% elsif service[:oauth] %>
+                <%= link_to "Connect", authorize_integrations_oauth_path(service: service[:id]), 
+                    class: "btn btn-primary btn-sm" %>
+              <% else %>
+                <%= link_to "Connect", new_integration_path(service: service[:id]), 
+                    class: "btn btn-primary btn-sm" %>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+  
+  <!-- How to Use -->
+  <div class="mt-12">
+    <div class="card bg-base-200">
+      <div class="card-body">
+        <h3 class="card-title">How to Use Integrations</h3>
+        <p>
+          Connect external services to enable AI assistants to interact with them. 
+          Once connected, you can create assistants with tools that access these services.
+        </p>
+        <p class="mt-2">
+          For example, connect Todoist to let your AI assistant manage your tasks, 
+          or connect GitHub to interact with your repositories.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

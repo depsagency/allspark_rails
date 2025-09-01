@@ -1,0 +1,471 @@
+<% content_for :title, "Live Features Demo" %>
+
+<!-- Add meta tags for ActionCable -->
+<%= action_cable_meta_tags %>
+
+<!-- Add live updates styles -->
+<%= live_updates_styles %>
+
+<div class="min-h-screen bg-base-200 p-4">
+  <div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-base-content mb-2">Real-time Features Demo</h1>
+      <p class="text-base-content/70">
+        This page demonstrates the ActionCable real-time features including notifications, 
+        presence tracking, live updates, and collaborative features.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Left Column: Controls -->
+      <div class="space-y-6">
+        <!-- Notifications Demo -->
+        <div class="card bg-base-100 shadow-lg">
+          <div class="card-body">
+            <h2 class="card-title">
+              📱 Notifications Demo
+              <%= notification_badge(current_user, class: "badge-primary ml-2") %>
+            </h2>
+            
+            <%= form_with url: send_notification_live_demo_index_path, method: :post, data: { turbo_stream: true }, class: "space-y-4" do |form| %>
+              <%= form.text_field :title, 
+                                  placeholder: "Notification title", 
+                                  class: "input input-bordered w-full" %>
+              <%= form.text_area :message, 
+                                 placeholder: "Notification message", 
+                                 class: "textarea textarea-bordered w-full", 
+                                 rows: 3 %>
+              <%= form.select :type, 
+                              options_for_select([
+                                ['Info', 'info'],
+                                ['Success', 'success'], 
+                                ['Warning', 'warning'],
+                                ['Error', 'error']
+                              ]), 
+                              {}, 
+                              { class: "select select-bordered w-full" } %>
+              <%= form.submit "Send Notification", class: "btn btn-primary w-full" %>
+            <% end %>
+
+            <% if current_user.system_admin? %>
+              <div class="divider">Admin Only</div>
+              <%= form_with url: send_system_announcement_live_demo_index_path, method: :post, data: { turbo_stream: true }, class: "space-y-4" do |form| %>
+                <%= form.text_field :title, 
+                                    placeholder: "System announcement", 
+                                    class: "input input-bordered w-full" %>
+                <%= form.text_area :message, 
+                                   placeholder: "Announcement message", 
+                                   class: "textarea textarea-bordered w-full", 
+                                   rows: 2 %>
+                <%= form.submit "Send System Announcement", class: "btn btn-warning w-full" %>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Presence Demo -->
+        <div class="card bg-base-100 shadow-lg">
+          <div class="card-body">
+            <h2 class="card-title">
+              👥 Presence Demo
+              <%= online_users_indicator %>
+            </h2>
+            
+            <div class="space-y-4">
+              <div>
+                <label class="label">
+                  <span class="label-text">Your Status</span>
+                </label>
+                <select id="activity-select" class="select select-bordered w-full">
+                  <option value="active">🟢 Active</option>
+                  <option value="away">🟡 Away</option>
+                  <option value="busy">🔴 Busy</option>
+                </select>
+              </div>
+              
+              <div>
+                <label class="label">
+                  <span class="label-text">Status Message</span>
+                </label>
+                <input type="text" 
+                       id="status-message" 
+                       placeholder="What are you working on?" 
+                       class="input input-bordered w-full"
+                       maxlength="100">
+              </div>
+              
+              <button id="update-status-btn" class="btn btn-secondary w-full">
+                Update Status
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Updates Demo -->
+        <div class="card bg-base-100 shadow-lg">
+          <div class="card-body">
+            <h2 class="card-title">⚡ Live Updates Demo</h2>
+            
+            <%= form_with url: broadcast_update_live_demo_index_path, method: :post, data: { turbo_stream: true }, class: "space-y-4" do |form| %>
+              <%= form.text_area :message, 
+                                 placeholder: "Broadcast message", 
+                                 class: "textarea textarea-bordered w-full", 
+                                 rows: 3 %>
+              <%= form.submit "Broadcast Update", class: "btn btn-accent w-full" %>
+            <% end %>
+
+            <div class="divider">Progress Demo</div>
+            
+            <button id="start-progress-btn" class="btn btn-info w-full">
+              Start Progress Demo
+            </button>
+            
+            <div id="progress-container" class="mt-4 hidden">
+              <div class="mb-2">
+                <span class="text-sm font-medium">Progress:</span>
+                <span id="progress-text" class="text-sm text-base-content/60"></span>
+              </div>
+              <%= live_progress_bar("demo-progress", class: "progress-primary") %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Middle Column: Live Feed -->
+      <div class="space-y-6">
+        <!-- Recent Notifications -->
+        <div class="card bg-base-100 shadow-lg">
+          <div class="card-body">
+            <h2 class="card-title">📬 Recent Notifications</h2>
+            
+            <div id="notifications-list" class="space-y-2 max-h-80 overflow-y-auto">
+              <% if @notifications.any? %>
+                <% @notifications.each do |notification| %>
+                  <div class="notification-item p-3 border border-base-300 rounded-lg <%= notification.read? ? 'read opacity-75' : 'unread' %>"
+                       data-notification-id="<%= notification.id %>">
+                    <div class="flex items-start gap-3">
+                      <span class="text-lg flex-shrink-0"><%= notification.icon %></span>
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-start justify-between gap-2">
+                          <h4 class="font-medium text-sm leading-tight"><%= notification.title %></h4>
+                          <span class="text-xs text-base-content/60 flex-shrink-0"><%= notification.time_ago %></span>
+                        </div>
+                        <p class="text-sm text-base-content/80 mt-1"><%= notification.message %></p>
+                        <% unless notification.read? %>
+                          <div class="w-2 h-2 bg-primary rounded-full mt-2"></div>
+                        <% end %>
+                      </div>
+                    </div>
+                  </div>
+                <% end %>
+              <% else %>
+                <div class="text-center text-base-content/60 py-8">
+                  <p>No notifications yet.</p>
+                  <p class="text-sm">Send yourself a notification to see it appear here in real-time!</p>
+                </div>
+              <% end %>
+            </div>
+            
+            <div class="card-actions justify-end mt-4">
+              <button id="mark-all-read-btn" class="btn btn-sm btn-ghost">
+                Mark All Read
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Activity Feed -->
+        <div class="card bg-base-100 shadow-lg">
+          <div class="card-body">
+            <h2 class="card-title">📈 Live Activity Feed</h2>
+            
+            <div id="activity-feed" class="space-y-2 max-h-60 overflow-y-auto">
+              <div class="text-center text-base-content/60 py-8">
+                <p>Activity will appear here as things happen in real-time.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Online Users & Collaboration -->
+      <div class="space-y-6">
+        <!-- Online Users -->
+        <div class="card bg-base-100 shadow-lg">
+          <div class="card-body">
+            <h2 class="card-title">👨‍👩‍👧‍👦 Online Users</h2>
+            
+            <div id="online-users-list" class="space-y-2">
+              <div class="text-center text-base-content/60 py-8">
+                <p>Loading online users...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Typing Demo -->
+        <div class="card bg-base-100 shadow-lg">
+          <div class="card-body">
+            <h2 class="card-title">⌨️ Typing Indicators</h2>
+            
+            <div class="space-y-4">
+              <div>
+                <label class="label">
+                  <span class="label-text">Type to show typing indicator</span>
+                </label>
+                <textarea id="typing-demo" 
+                          placeholder="Start typing to show others you're typing..."
+                          class="textarea textarea-bordered w-full"
+                          rows="3"></textarea>
+              </div>
+              
+              <%= typing_indicator("demo_chat") %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Collaborative Demo -->
+        <div class="card bg-base-100 shadow-lg">
+          <div class="card-body">
+            <h2 class="card-title">🤝 Collaborative Editing</h2>
+            
+            <div class="relative">
+              <div class="text-sm text-base-content/60 mb-2">
+                Move your cursor in the text area below to see collaborative cursors
+              </div>
+              
+              <div class="relative border border-base-300 rounded-lg p-4 min-h-32" 
+                   <%= collaborative_editor_attributes(current_user, enabled: true).map { |k, v| "#{k}=\"#{v}\"" }.join(' ').html_safe %>>
+                <textarea id="collaborative-editor"
+                          placeholder="This is a collaborative editor demo. Your cursor position will be visible to other users."
+                          class="w-full h-24 bg-transparent border-none outline-none resize-none"
+                          data-resource-type="demo"
+                          data-resource-id="collaborative-demo"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Activity selector
+  const activitySelect = document.getElementById('activity-select');
+  const statusMessage = document.getElementById('status-message');
+  const updateStatusBtn = document.getElementById('update-status-btn');
+  
+  if (activitySelect && window.presenceChannel) {
+    activitySelect.addEventListener('change', function() {
+      console.log('Activity changed to:', this.value);
+      window.presenceChannel.updateActivity(this.value);
+    });
+  } else {
+    console.log('Activity select or presence channel not available:', {
+      activitySelect: !!activitySelect,
+      presenceChannel: !!window.presenceChannel
+    });
+  }
+  
+  if (updateStatusBtn && window.presenceChannel) {
+    updateStatusBtn.addEventListener('click', function() {
+      const activity = activitySelect.value;
+      const message = statusMessage.value.trim();
+      
+      console.log('Updating status:', { activity, message });
+      
+      // Update both activity and status message
+      window.presenceChannel.updateActivity(activity);
+      window.presenceChannel.updateStatus(message);
+      
+      // Visual feedback
+      this.textContent = 'Updated!';
+      this.classList.add('btn-success');
+      this.classList.remove('btn-secondary');
+      
+      setTimeout(() => {
+        this.textContent = 'Update Status';
+        this.classList.remove('btn-success');
+        this.classList.add('btn-secondary');
+      }, 2000);
+    });
+  } else {
+    console.log('Update status button or presence channel not available:', {
+      updateStatusBtn: !!updateStatusBtn,
+      presenceChannel: !!window.presenceChannel
+    });
+  }
+  
+  // Mark all notifications as read
+  const markAllReadBtn = document.getElementById('mark-all-read-btn');
+  if (markAllReadBtn && window.notificationsChannel) {
+    markAllReadBtn.addEventListener('click', function() {
+      window.notificationsChannel.markAllAsRead();
+    });
+  }
+  
+  // Progress demo
+  const startProgressBtn = document.getElementById('start-progress-btn');
+  const progressContainer = document.getElementById('progress-container');
+  const progressBar = document.querySelector('[data-operation-id="demo-progress"]');
+  const progressText = document.getElementById('progress-text');
+  
+  if (startProgressBtn) {
+    startProgressBtn.addEventListener('click', async function() {
+      this.disabled = true;
+      this.textContent = 'Starting...';
+      
+      try {
+        const response = await fetch('<%= start_progress_demo_live_demo_index_path %>', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+          }
+        });
+        
+        const data = await response.json();
+        
+        if (data.operation_id) {
+          progressContainer.classList.remove('hidden');
+          progressBar.setAttribute('data-operation-id', data.operation_id);
+          progressText.textContent = 'Starting operation...';
+          
+          // Listen for progress updates
+          if (window.liveUpdatesChannel) {
+            window.liveUpdatesChannel.on('userUpdate', function(updateData) {
+              if (updateData.data.type === 'progress_update' && 
+                  updateData.data.operation_id === data.operation_id) {
+                
+                const progress = updateData.data.progress;
+                const message = updateData.data.message;
+                
+                progressBar.value = progress;
+                progressText.textContent = message;
+                
+                if (progress >= 100) {
+                  setTimeout(() => {
+                    startProgressBtn.disabled = false;
+                    startProgressBtn.textContent = 'Start Progress Demo';
+                    progressContainer.classList.add('hidden');
+                  }, 2000);
+                }
+              }
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error starting progress demo:', error);
+        this.disabled = false;
+        this.textContent = 'Start Progress Demo';
+      }
+    });
+  }
+  
+  // Typing demo
+  const typingDemo = document.getElementById('typing-demo');
+  let typingTimer;
+  
+  if (typingDemo && window.presenceChannel) {
+    typingDemo.addEventListener('input', function() {
+      window.presenceChannel.startTyping('demo_chat');
+      
+      clearTimeout(typingTimer);
+      typingTimer = setTimeout(() => {
+        window.presenceChannel.stopTyping('demo_chat');
+      }, 1000);
+    });
+    
+    typingDemo.addEventListener('blur', function() {
+      window.presenceChannel.stopTyping('demo_chat');
+    });
+  }
+  
+  // Collaborative editor cursor tracking
+  const collaborativeEditor = document.getElementById('collaborative-editor');
+  
+  if (collaborativeEditor && window.liveUpdatesChannel) {
+    collaborativeEditor.addEventListener('mousemove', function(e) {
+      const rect = this.getBoundingClientRect();
+      const position = {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top
+      };
+      
+      window.liveUpdatesChannel.updateCursorPosition('demo', 'collaborative-demo', position);
+    });
+    
+    collaborativeEditor.addEventListener('select', function() {
+      const start = this.selectionStart;
+      const end = this.selectionEnd;
+      
+      if (start !== end) {
+        const rect = this.getBoundingClientRect();
+        const selection = {
+          start: { x: 10, y: start * 2 }, // Simplified for demo
+          end: { x: 100, y: end * 2 }
+        };
+        
+        window.liveUpdatesChannel.updateSelection('demo', 'collaborative-demo', selection);
+      }
+    });
+  }
+  
+  // Activity feed updates
+  if (window.liveUpdatesChannel) {
+    window.liveUpdatesChannel.on('userUpdate', function(data) {
+      addActivityFeedItem(`User update: ${data.data.type}`, data.data.message || 'No details');
+    });
+  }
+  
+  if (window.notificationsChannel) {
+    window.notificationsChannel.on('notification', function(notification) {
+      addActivityFeedItem(`New notification: ${notification.title}`, notification.message);
+    });
+  }
+  
+  if (window.presenceChannel) {
+    window.presenceChannel.on('userOnline', function(user) {
+      addActivityFeedItem(`${user.name} came online`, 'User joined the session');
+    });
+    
+    window.presenceChannel.on('userOffline', function(user) {
+      addActivityFeedItem(`${user.name} went offline`, 'User left the session');
+    });
+  }
+  
+  function addActivityFeedItem(title, message) {
+    const feed = document.getElementById('activity-feed');
+    if (!feed) return;
+    
+    // Remove the "no activity" message if it exists
+    const noActivity = feed.querySelector('.text-center');
+    if (noActivity) {
+      noActivity.remove();
+    }
+    
+    const item = document.createElement('div');
+    item.className = 'p-3 border border-base-300 rounded-lg';
+    item.innerHTML = `
+      <div class="flex items-start justify-between">
+        <div class="flex-1">
+          <h4 class="font-medium text-sm">${title}</h4>
+          <p class="text-xs text-base-content/60 mt-1">${message}</p>
+        </div>
+        <span class="text-xs text-base-content/40">${new Date().toLocaleTimeString()}</span>
+      </div>
+    `;
+    
+    feed.insertBefore(item, feed.firstChild);
+    
+    // Keep only the last 10 items
+    const items = feed.children;
+    if (items.length > 10) {
+      feed.removeChild(items[items.length - 1]);
+    }
+  }
+});
+</script>

@@ -1,0 +1,176 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl font-bold">Edit MCP Configuration</h1>
+      <p class="text-base-content/70 mt-2">
+        Modify configuration for <%= @mcp_configuration.name %>
+      </p>
+    </div>
+    
+    <div class="flex gap-2">
+      <%= link_to "← Back to Configuration", admin_mcp_configuration_path(@mcp_configuration), class: "btn btn-ghost" %>
+    </div>
+  </div>
+
+  <!-- Configuration Form -->
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+      <%= form_with model: [:admin, @mcp_configuration], local: true, class: "space-y-6" do |form| %>
+        <% if @mcp_configuration.errors.any? %>
+          <div class="alert alert-error">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <h3 class="font-bold">Please fix the following errors:</h3>
+              <ul class="mt-2">
+                <% @mcp_configuration.errors.full_messages.each do |error| %>
+                  <li>• <%= error %></li>
+                <% end %>
+              </ul>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Basic Information -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="form-control">
+            <%= form.label :name, class: "label" do %>
+              <span class="label-text font-semibold">Configuration Name *</span>
+            <% end %>
+            <%= form.text_field :name, class: "input input-bordered", placeholder: "e.g., Linear Production" %>
+          </div>
+
+          <div class="form-control">
+            <%= form.label :server_type, class: "label" do %>
+              <span class="label-text font-semibold">Server Type *</span>
+            <% end %>
+            <%= form.select :server_type, options_for_select([
+              ['Stdio (Local Process)', 'stdio'],
+              ['HTTP', 'http'],
+              ['Server-Sent Events (SSE)', 'sse'],
+              ['WebSocket', 'websocket']
+            ], @mcp_configuration.server_type), {}, { class: "select select-bordered" } %>
+          </div>
+        </div>
+
+        <!-- Enabled Status -->
+        <div class="form-control">
+          <label class="label cursor-pointer justify-start gap-4">
+            <%= form.check_box :enabled, class: "checkbox checkbox-primary" %>
+            <span class="label-text font-semibold">Enable this configuration</span>
+          </label>
+          <div class="label">
+            <span class="label-text-alt">When enabled, this configuration will be available for use by assistants</span>
+          </div>
+        </div>
+
+        <!-- Server Configuration -->
+        <div class="form-control">
+          <%= form.label :server_config, class: "label" do %>
+            <span class="label-text font-semibold">Server Configuration *</span>
+          <% end %>
+          <%= form.text_area :server_config, 
+              value: @mcp_configuration.server_config.present? ? JSON.pretty_generate(@mcp_configuration.server_config) : '{}',
+              class: "textarea textarea-bordered font-mono text-sm", 
+              rows: 10,
+              placeholder: 'Enter JSON configuration...' %>
+          <div class="label">
+            <span class="label-text-alt">JSON configuration for the MCP server (command, args, env, etc.)</span>
+          </div>
+        </div>
+
+        <!-- Metadata -->
+        <div class="form-control">
+          <%= form.label :metadata, class: "label" do %>
+            <span class="label-text font-semibold">Metadata (Optional)</span>
+          <% end %>
+          <%= form.text_area :metadata, 
+              value: @mcp_configuration.metadata.present? ? JSON.pretty_generate(@mcp_configuration.metadata) : '{}',
+              class: "textarea textarea-bordered font-mono text-sm", 
+              rows: 4,
+              placeholder: 'Enter JSON metadata...' %>
+          <div class="label">
+            <span class="label-text-alt">Additional metadata for this configuration (description, tags, etc.)</span>
+          </div>
+        </div>
+
+        <!-- Change Log -->
+        <div class="alert alert-info">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div>
+            <h3 class="font-bold">Configuration Update</h3>
+            <div class="text-sm">
+              Changes to server configuration may require testing the connection and rediscovering tools.
+              <br>
+              Last updated: <%= @mcp_configuration.updated_at.strftime('%Y-%m-%d %H:%M') %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-end gap-2">
+          <%= link_to "Cancel", admin_mcp_configuration_path(@mcp_configuration), class: "btn btn-ghost" %>
+          <%= form.submit "Update Configuration", class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Configuration History (if available) -->
+  <% if @mcp_configuration.metadata.present? && @mcp_configuration.metadata['change_history'] %>
+    <div class="card bg-base-100 shadow-xl mt-8">
+      <div class="card-body">
+        <h2 class="card-title">Change History</h2>
+        
+        <div class="timeline timeline-vertical">
+          <% @mcp_configuration.metadata['change_history'].each_with_index do |change, index| %>
+            <div class="timeline-item">
+              <div class="timeline-middle">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.236 4.53L8.23 10.66a.75.75 0 00-1.06 1.061l2.125 2.125a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+                </svg>
+              </div>
+              <div class="timeline-start md:text-end mb-10">
+                <time class="font-mono italic"><%= change['timestamp'] %></time>
+                <div class="text-lg font-black"><%= change['action'] %></div>
+                <div class="text-sm"><%= change['description'] %></div>
+                <% if change['user'] %>
+                  <div class="text-xs opacity-70">by <%= change['user'] %></div>
+                <% end %>
+              </div>
+              <hr/>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<script>
+// Auto-format JSON on blur
+document.addEventListener('DOMContentLoaded', function() {
+  const serverConfigField = document.querySelector('textarea[name="mcp_configuration[server_config]"]');
+  const metadataField = document.querySelector('textarea[name="mcp_configuration[metadata]"]');
+  
+  function formatJSON(field) {
+    try {
+      const parsed = JSON.parse(field.value);
+      field.value = JSON.stringify(parsed, null, 2);
+    } catch (e) {
+      // Invalid JSON, leave as is
+    }
+  }
+  
+  if (serverConfigField) {
+    serverConfigField.addEventListener('blur', () => formatJSON(serverConfigField));
+  }
+  
+  if (metadataField) {
+    metadataField.addEventListener('blur', () => formatJSON(metadataField));
+  }
+});
+</script>

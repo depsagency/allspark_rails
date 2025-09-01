@@ -1,0 +1,81 @@
+# Rails Docker Compose Configuration
+# Development setup with Rails app, Sidekiq, PostgreSQL, and Redis
+
+services:
+  db:
+    image: pgvector/pgvector:pg15
+    environment:
+      POSTGRES_DB: allspark_development
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  web:
+    build: .
+    volumes:
+      - .:/app
+      - ../../vendor/gems/allspark:/app/vendor/gems/allspark
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - .env
+    environment:
+      CONTAINER_ROLE: target
+      DATABASE_URL: postgresql://postgres:password@db:5432/allspark_development
+      REDIS_URL: redis://redis:6379/0
+      RAILS_ENV: development
+    stdin_open: true
+    tty: true
+    networks:
+      - default
+      - traefik_public
+      - allspark_builder-network
+    extra_hosts:
+      - "builder.localhost:172.18.0.2"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.target.rule=Host(`target.localhost`)"
+      - "traefik.http.routers.target.tls=true"
+      - "traefik.http.services.target.loadbalancer.server.port=3000"
+      - "traefik.docker.network=traefik_public"
+
+  sidekiq:
+    build: .
+    command: bundle exec sidekiq
+    volumes:
+      - .:/app
+      - ../../vendor/gems/allspark:/app/vendor/gems/allspark
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - .env
+    environment:
+      CONTAINER_ROLE: target_sidekiq
+      DATABASE_URL: postgresql://postgres:password@db:5432/allspark_development
+      REDIS_URL: redis://redis:6379/0
+      RAILS_ENV: development
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+  traefik_public:
+    external: true
+  allspark_builder-network:
+    external: true

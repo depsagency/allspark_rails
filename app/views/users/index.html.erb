@@ -1,0 +1,244 @@
+<% content_for :title, "Users" %>
+
+<div class="container mx-auto px-4 py-8 max-w-7xl">
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="breadcrumbs text-sm mb-4">
+      <ul>
+        <li><%= link_to "Dashboard", root_path %></li>
+        <li>Users</li>
+      </ul>
+    </div>
+    
+    <div class="flex justify-between items-start">
+      <div>
+        <h1 class="text-4xl font-bold mb-2">Users</h1>
+        <p class="text-gray-600">Manage user accounts and permissions</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="mb-6">
+    <%= render Ui::CardComponent.new(bordered: true) do |card| %>
+      <%= card.with_body do %>
+        <%= form_with url: users_path, method: :get, local: true, class: "flex flex-wrap gap-4 items-end" do |form| %>
+          <div class="form-control">
+            <label class="label label-text">Search</label>
+            <%= form.text_field :search, 
+                value: params[:search], 
+                placeholder: "Name or email...",
+                class: "input input-bordered input-sm" %>
+          </div>
+          
+          <div class="form-control">
+            <label class="label label-text">Role</label>
+            <%= form.select :role, options_for_select([
+              ['All Roles', ''],
+              ['Admin', 'admin'],
+              ['User', 'user']
+            ], params[:role]), {}, { class: "select select-bordered select-sm" } %>
+          </div>
+          
+          <div class="form-control">
+            <label class="label label-text">Sort By</label>
+            <%= form.select :sort, options_for_select([
+              ['Created (Newest)', 'created'],
+              ['Name', 'name'],
+              ['Email', 'email']
+            ], params[:sort]), {}, { class: "select select-bordered select-sm" } %>
+          </div>
+          
+          <div class="form-control">
+            <%= form.submit "Filter", class: "btn btn-primary btn-sm" %>
+          </div>
+          
+          <div class="form-control">
+            <%= link_to "Clear", users_path, class: "btn btn-outline btn-sm" %>
+          </div>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <!-- Results Info -->
+  <div class="mb-4 flex justify-between items-center">
+    <div class="text-sm text-gray-600">
+      Showing <%= @users.offset_value + 1 %>-<%= @users.offset_value + @users.length %> 
+      of <%= @users.total_count %> users
+    </div>
+    
+    <div class="text-sm text-gray-600">
+      Page <%= @users.current_page %> of <%= @users.total_pages %>
+    </div>
+  </div>
+
+  <!-- Users Table -->
+  <% if @users.any? %>
+    <div class="overflow-x-auto">
+      <table class="table table-zebra w-full">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Sign In Count</th>
+            <th>Last Sign In</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @users.each do |user| %>
+            <tr>
+              <td>
+                <div class="font-bold">
+                  <%= link_to user.full_name.presence || "Unnamed User", user_path(user), 
+                              class: "hover:text-primary" %>
+                </div>
+                <% if user.title.present? %>
+                  <div class="text-sm opacity-50"><%= user.title %></div>
+                <% end %>
+              </td>
+              
+              <td>
+                <span class="text-sm">
+                  <%= user.email %>
+                </span>
+              </td>
+              
+              <td>
+                <%= render Ui::BadgeComponent.new(
+                  variant: user.admin? ? :primary : :ghost,
+                  size: :sm
+                ) do %>
+                  <%= user.role.humanize %>
+                <% end %>
+              </td>
+              
+              <td>
+                <span class="font-mono text-sm">
+                  <%= user.sign_in_count %>
+                </span>
+              </td>
+              
+              <td>
+                <% if user.last_sign_in_at.present? %>
+                  <div class="text-sm">
+                    <%= user.last_sign_in_at.strftime("%m/%d/%y") %>
+                  </div>
+                  <div class="text-xs text-gray-500">
+                    <%= user.last_sign_in_at.strftime("%H:%M") %>
+                  </div>
+                <% else %>
+                  <span class="text-sm text-gray-500">Never</span>
+                <% end %>
+              </td>
+              
+              <td>
+                <div class="text-sm">
+                  <%= user.created_at.strftime("%m/%d/%y") %>
+                </div>
+                <div class="text-xs text-gray-500">
+                  <%= user.created_at.strftime("%H:%M") %>
+                </div>
+              </td>
+              
+              <td>
+                <div class="flex gap-1">
+                  <%= link_to user_path(user), class: "btn btn-ghost btn-xs", title: "View" do %>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  <% end %>
+                  
+                  <%= link_to edit_user_path(user), class: "btn btn-ghost btn-xs", title: "Edit" do %>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  <% end %>
+                  
+                  <% if current_user.admin? && current_user.can_impersonate?(user) %>
+                    <%= form_with url: start_admin_impersonation_index_path, method: :post, local: true, class: "inline" do |form| %>
+                      <%= form.hidden_field :user_id, value: user.id %>
+                      <%= form.button type: :submit, 
+                          class: "btn btn-ghost btn-xs text-info", 
+                          title: "Impersonate #{user.display_name}",
+                          data: { 
+                            confirm: "Are you sure you want to impersonate #{user.display_name}?" 
+                          } do %>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                      <% end %>
+                    <% end %>
+                  <% elsif user.admin? && user != current_user %>
+                    <button class="btn btn-ghost btn-xs text-warning" title="Admin User - Cannot Impersonate" disabled>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                    </button>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <% if @users.total_pages > 1 %>
+      <% 
+        # Extract permitted filter parameters
+        filter_params = params.permit(:search, :role, :sort).to_h
+      %>
+      <div class="mt-6 flex justify-center">
+        <div class="join">
+          <% if @users.prev_page %>
+            <%= link_to users_path(filter_params.merge(page: @users.prev_page)), 
+                        class: "join-item btn btn-outline" do %>
+              &laquo; Previous
+            <% end %>
+          <% else %>
+            <button class="join-item btn btn-outline btn-disabled">&laquo; Previous</button>
+          <% end %>
+          
+          <% page_range = [[@users.current_page - 2, 1].max, [@users.current_page + 2, @users.total_pages].min] %>
+          <% (page_range[0]..page_range[1]).each do |page| %>
+            <% if page == @users.current_page %>
+              <button class="join-item btn btn-active"><%= page %></button>
+            <% else %>
+              <%= link_to users_path(filter_params.merge(page: page)), 
+                          class: "join-item btn btn-outline" do %>
+                <%= page %>
+              <% end %>
+            <% end %>
+          <% end %>
+          
+          <% if @users.next_page %>
+            <%= link_to users_path(filter_params.merge(page: @users.next_page)), 
+                        class: "join-item btn btn-outline" do %>
+              Next &raquo;
+            <% end %>
+          <% else %>
+            <button class="join-item btn btn-outline btn-disabled">Next &raquo;</button>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  <% else %>
+    <!-- Empty State -->
+    <div class="text-center py-12">
+      <div class="text-6xl mb-4">👥</div>
+      <h3 class="text-2xl font-bold mb-2">No Users Found</h3>
+      <% if params.values.any?(&:present?) %>
+        <p class="text-gray-600 mb-6">No users match your current filters. Try adjusting the filters or clearing them.</p>
+        <%= link_to "Clear Filters", users_path, class: "btn btn-outline" %>
+      <% else %>
+        <p class="text-gray-600 mb-6">No users have been created yet.</p>
+      <% end %>
+    </div>
+  <% end %>
+</div>

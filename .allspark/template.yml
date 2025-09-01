@@ -1,0 +1,121 @@
+# AllSpark Rails Template Metadata
+# This file defines the template configuration for the AllSpark ecosystem
+
+template:
+  name: "allspark_rails"
+  display_name: "AllSpark Rails"
+  version: "1.0.0"
+  platform: "rails"
+  platform_version: "8.0"
+  description: "Production-ready Rails 8 template with AI superpowers for creators. Build production apps in hours, not months."
+  author: "AllSpark Team"
+  license: "MIT"
+  repository: "https://github.com/TanookiLabs/allspark_rails"
+  homepage: "https://allspark.build"
+  
+features:
+  core:
+    - authentication       # Devise-based authentication system
+    - authorization       # Pundit for authorization
+    - ai_assistants      # AI/LLM integration framework
+    - app_projects       # Project planning and PRD generation
+    - knowledge_base     # RAG-enabled document management
+    - real_time_chat     # ActionCable-powered chat system
+    - visual_workflows   # Drag-and-drop workflow builder
+    - background_jobs    # Sidekiq for async processing
+    - responsive_ui      # DaisyUI components with Tailwind
+    - api_ready         # API controllers and serialization
+    
+  ai_features:
+    - openrouter_integration  # 100+ models with one key
+    - multi_provider_support  # OpenAI, Anthropic, Gemini
+    - streaming_responses     # Real-time AI responses
+    - token_tracking         # Usage monitoring
+    - prompt_templates       # Reusable prompt patterns
+    - ai_agents             # Autonomous agent framework
+    
+  developer_tools:
+    - smart_generators      # AI-enhanced Rails generators
+    - browser_testing      # Self-healing browser tests
+    - quality_tools        # RuboCop, Brakeman, bundler-audit
+    - docker_ready         # Complete Docker development setup
+    - vibe_coding_optimized # Optimized for AI-assisted development
+    
+requirements:
+  ruby: ">= 3.2"
+  rails: "~> 8.0"
+  postgresql: ">= 15"
+  redis: ">= 7"
+  node: ">= 18"
+  yarn: ">= 1.22"
+  docker: "optional"
+  
+deployment:
+  supported_platforms:
+    - name: "heroku"
+      one_click: true
+      documentation: "docs/deployment/heroku.md"
+    - name: "digitalocean"
+      one_click: false
+      documentation: "docs/deployment/digitalocean.md"
+    - name: "railway"
+      one_click: true
+      documentation: "docs/deployment/railway.md"
+    - name: "render"
+      one_click: true
+      documentation: "docs/deployment/render.md"
+    - name: "fly.io"
+      one_click: false
+      documentation: "docs/deployment/fly.md"
+    - name: "docker"
+      one_click: false
+      documentation: "docs/deployment/docker.md"
+    - name: "kamal"
+      one_click: false
+      documentation: "docs/deployment/kamal.md"
+      
+  default_environment:
+    rails_env: "production"
+    force_ssl: true
+    serve_static_files: true
+    log_level: "info"
+    
+variants:
+  available:
+    - name: "base"
+      description: "Full-featured template with all components"
+      default: true
+    - name: "api"
+      description: "API-only Rails application"
+      default: false
+    - name: "minimal"
+      description: "Lightweight version with core features only"
+      default: false
+    - name: "saas"
+      description: "Multi-tenant SaaS template"
+      default: false
+    - name: "enterprise"
+      description: "Enterprise features with advanced security"
+      default: false
+      
+metrics:
+  stars: 0
+  forks: 0
+  contributors: 0
+  last_updated: "2024-09-01"
+  
+tags:
+  - rails
+  - rails8
+  - template
+  - ai
+  - vibe-coding
+  - production-ready
+  - creator-tools
+  - allspark
+  
+community:
+  discord: "https://discord.gg/allspark"
+  documentation: "https://docs.allspark.build"
+  issues: "https://github.com/TanookiLabs/allspark_rails/issues"
+  discussions: "https://github.com/TanookiLabs/allspark_rails/discussions"

@@ -1,0 +1,37 @@
+<% content_for :title, "New MCP Server" %>
+
+<div class="container mx-auto px-4 py-6 max-w-4xl">
+  <!-- Header Section -->
+  <div class="mb-6">
+    <div class="breadcrumbs text-sm mb-2">
+      <ul>
+        <li><%= link_to "Admin", "#", class: "text-primary" %></li>
+        <li><%= link_to "MCP Servers", admin_mcp_servers_path, class: "text-primary" %></li>
+        <li>New Server</li>
+      </ul>
+    </div>
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">Add New MCP Server</h1>
+    <p class="text-gray-600">Configure a new Model Context Protocol server for system-wide use.</p>
+  </div>
+
+  <!-- Help Alert -->
+  <div class="alert alert-info mb-6">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    <div>
+      <h3 class="font-bold">About MCP Servers</h3>
+      <div class="text-sm">
+        MCP (Model Context Protocol) servers provide external tools and capabilities to AI assistants. 
+        System-wide servers created here will be available to all users and instances.
+        <div class="mt-2">
+          <strong>Required:</strong> Server name and endpoint URL<br>
+          <strong>Authentication:</strong> Choose the authentication method required by your MCP server
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form -->
+  <%= render 'form' %>
+</div>

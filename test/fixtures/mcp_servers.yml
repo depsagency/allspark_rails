@@ -1,0 +1,26 @@
+# Test fixtures for mcp_servers
+one:
+  id: e47ac10b-58cc-4372-a567-0e02b2c3d479
+  name: Test MCP Server
+  endpoint: https://example.com/mcp
+  protocol_version: "1.0"
+  auth_type: no_auth
+  config: {}
+  credentials: {}
+  status: active
+  transport_type: stdio
+  created_at: <%= 1.week.ago %>
+  updated_at: <%= 1.week.ago %>
+
+sse_server:
+  id: 18dc0932-b220-413c-9a7c-51f51eb20cd9
+  name: Test SSE Server
+  endpoint: https://example.com/mcp/sse
+  protocol_version: "1.0"
+  auth_type: no_auth
+  config: {}
+  credentials: {}
+  status: active
+  transport_type: sse
+  created_at: <%= 1.week.ago %>
+  updated_at: <%= 1.week.ago %>

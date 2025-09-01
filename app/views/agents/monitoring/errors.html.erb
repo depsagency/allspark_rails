@@ -1,0 +1,158 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-3xl font-bold">Agent Errors</h1>
+    <%= link_to "← Back to Monitoring", agents_monitoring_index_path, class: "btn btn-ghost" %>
+  </div>
+
+  <!-- Error Summary -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="stats shadow">
+      <div class="stat">
+        <div class="stat-title">Total Errors</div>
+        <div class="stat-value text-error"><%= @errors.size %></div>
+        <div class="stat-desc">In memory buffer</div>
+      </div>
+    </div>
+
+    <% if @errors.any? %>
+      <div class="stats shadow">
+        <div class="stat">
+          <div class="stat-title">Most Recent</div>
+          <div class="stat-value text-sm">
+            <%= time_ago_in_words(@errors.first[:timestamp]) %> ago
+          </div>
+        </div>
+      </div>
+
+      <div class="stats shadow">
+        <div class="stat">
+          <div class="stat-title">Error Types</div>
+          <div class="stat-value">
+            <%= @errors.map { |e| e[:error_class] }.uniq.size %>
+          </div>
+          <div class="stat-desc">Unique error classes</div>
+        </div>
+      </div>
+
+      <div class="stats shadow">
+        <div class="stat">
+          <div class="stat-title">Affected Assistants</div>
+          <div class="stat-value">
+            <%= @errors.map { |e| e[:assistant_id] }.uniq.compact.size %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Error List -->
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+      <h2 class="card-title mb-4">Recent Errors</h2>
+      
+      <% if @errors.any? %>
+        <div class="space-y-4">
+          <% @errors.each do |error| %>
+            <div class="collapse collapse-arrow bg-base-200">
+              <input type="checkbox" name="error-<%= error[:timestamp].to_i %>" />
+              <div class="collapse-title">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <div class="font-bold text-error">
+                      <%= error[:error_class] %>
+                    </div>
+                    <div class="text-sm opacity-70">
+                      <%= truncate(error[:error_message], length: 100) %>
+                    </div>
+                    <div class="text-xs opacity-50 mt-1">
+                      <%= error[:timestamp].strftime("%Y-%m-%d %H:%M:%S") %>
+                      <% if error[:assistant_id] %>
+                        • Assistant: <%= error[:assistant_id] %>
+                      <% end %>
+                    </div>
+                  </div>
+                  <% if error[:run_id] %>
+                    <div class="badge badge-ghost badge-sm">
+                      Run: <%= error[:run_id][0..7] %>...
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+              <div class="collapse-content">
+                <div class="space-y-4">
+                  <!-- Full Error Message -->
+                  <div>
+                    <h4 class="font-semibold mb-1">Error Message</h4>
+                    <div class="p-3 bg-base-300 rounded text-sm">
+                      <%= error[:error_message] %>
+                    </div>
+                  </div>
+
+                  <!-- Backtrace -->
+                  <% if error[:backtrace].present? %>
+                    <div>
+                      <h4 class="font-semibold mb-1">Backtrace</h4>
+                      <div class="p-3 bg-base-300 rounded text-xs font-mono overflow-x-auto">
+                        <% error[:backtrace].each do |line| %>
+                          <%= line %><br>
+                        <% end %>
+                      </div>
+                    </div>
+                  <% end %>
+
+                  <!-- Context -->
+                  <% if error[:context].present? && error[:context].any? %>
+                    <div>
+                      <h4 class="font-semibold mb-1">Context</h4>
+                      <div class="p-3 bg-base-300 rounded text-sm">
+                        <pre><%= JSON.pretty_generate(error[:context]) %></pre>
+                      </div>
+                    </div>
+                  <% end %>
+
+                  <!-- Details -->
+                  <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span class="font-semibold">Timestamp:</span>
+                      <%= error[:timestamp].strftime("%Y-%m-%d %H:%M:%S %Z") %>
+                    </div>
+                    <% if error[:assistant_id] %>
+                      <div>
+                        <span class="font-semibold">Assistant ID:</span>
+                        <%= link_to error[:assistant_id], agents_assistant_path(error[:assistant_id]), 
+                            class: "link link-primary" %>
+                      </div>
+                    <% end %>
+                    <% if error[:run_id] %>
+                      <div>
+                        <span class="font-semibold">Run ID:</span>
+                        <span class="font-mono"><%= error[:run_id] %></span>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="text-center py-12">
+          <div class="text-6xl mb-4">🎉</div>
+          <p class="text-xl font-semibold">No errors recorded!</p>
+          <p class="text-sm opacity-70 mt-2">The error monitor is active and will display any agent errors here.</p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="mt-8 flex gap-4">
+    <%= link_to "Refresh", errors_agents_monitoring_index_path, class: "btn btn-outline" %>
+    <% if @errors.any? %>
+      <%= button_to "Clear All Errors", clear_errors_agents_monitoring_index_path, 
+          method: :delete, 
+          data: { confirm: "Are you sure you want to clear all error logs?" },
+          class: "btn btn-error btn-outline" %>
+    <% end %>
+  </div>
+</div>

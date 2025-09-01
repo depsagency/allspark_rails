@@ -1,0 +1,354 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl font-bold">MCP Configurations</h1>
+      <p class="text-base-content/70 mt-2">
+        Manage Model Context Protocol server configurations
+      </p>
+    </div>
+    
+    <div class="flex gap-2">
+      <%= link_to "Analytics Dashboard", analytics_admin_mcp_configurations_path, class: "btn btn-outline" %>
+      <%= link_to "Add Configuration", new_admin_mcp_configuration_path, class: "btn btn-primary" %>
+    </div>
+  </div>
+
+  <!-- Health Overview -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <div class="stats shadow">
+      <div class="stat">
+        <div class="stat-title">Total</div>
+        <div class="stat-value text-lg"><%= @health_stats[:total] %></div>
+        <div class="stat-desc">configurations</div>
+      </div>
+    </div>
+
+    <div class="stats shadow">
+      <div class="stat">
+        <div class="stat-title">Active</div>
+        <div class="stat-value text-lg text-success"><%= @health_stats[:active] %></div>
+        <div class="stat-desc">enabled</div>
+      </div>
+    </div>
+
+    <div class="stats shadow">
+      <div class="stat">
+        <div class="stat-title">Inactive</div>
+        <div class="stat-value text-lg text-warning"><%= @health_stats[:inactive] %></div>
+        <div class="stat-desc">disabled</div>
+      </div>
+    </div>
+
+    <div class="stats shadow">
+      <div class="stat">
+        <div class="stat-title">Health</div>
+        <div class="stat-value text-lg text-<%= @health_stats[:health_percentage] > 90 ? 'success' : @health_stats[:health_percentage] > 70 ? 'warning' : 'error' %>">
+          <%= @health_stats[:health_percentage] %>%
+        </div>
+        <div class="stat-desc">system health</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Main Card with Filters and Table -->
+  <% if @mcp_configurations.any? %>
+    <%= form_with url: bulk_action_admin_mcp_configurations_path, method: :post, local: true, id: "bulk-action-form" do |form| %>
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <!-- Filters Section -->
+          <div class="pb-4">
+            <%= form_with url: admin_mcp_configurations_path, method: :get, local: true, class: "flex flex-wrap gap-4 items-end" do |filter_form| %>
+              <div class="form-control">
+                <%= filter_form.label :search, "Search", class: "label" %>
+                <%= filter_form.text_field :search, value: params[:search], placeholder: "Configuration name...", class: "input input-bordered input-sm w-64" %>
+              </div>
+
+              <div class="form-control">
+                <%= filter_form.label :server_type, "Server Type", class: "label" %>
+                <%= filter_form.select :server_type, options_for_select([
+                  ['All Types', ''],
+                  ['HTTP', 'http'],
+                  ['SSE', 'sse'],
+                  ['WebSocket', 'websocket'],
+                  ['Stdio', 'stdio']
+                ], params[:server_type]), {}, { class: "select select-bordered select-sm" } %>
+              </div>
+
+              <div class="form-control">
+                <%= filter_form.label :enabled, "Status", class: "label" %>
+                <%= filter_form.select :enabled, options_for_select([
+                  ['All', ''],
+                  ['Enabled', 'true'],
+                  ['Disabled', 'false']
+                ], params[:enabled]), {}, { class: "select select-bordered select-sm" } %>
+              </div>
+
+              <div class="form-control">
+                <%= filter_form.submit "Filter", class: "btn btn-primary btn-sm" %>
+                <%= link_to "Clear", admin_mcp_configurations_path, class: "btn btn-ghost btn-sm" %>
+              </div>
+            <% end %>
+          </div>
+
+          <!-- Divider -->
+          <div class="divider my-0"></div>
+
+          <!-- Bulk Actions -->
+          <div class="flex justify-between items-center mb-4">
+            <div class="flex items-center gap-4">
+              <label class="label cursor-pointer">
+                <input type="checkbox" id="select-all" class="checkbox checkbox-sm" />
+                <span class="label-text ml-2">Select All</span>
+              </label>
+              
+              <div id="bulk-actions" class="flex gap-2" style="display: none;">
+                <%= form.select :bulk_action, options_for_select([
+                  ['Enable Selected', 'enable'],
+                  ['Disable Selected', 'disable'],
+                  ['Test Connections', 'test_connections'],
+                  ['Discover Tools', 'discover_tools'],
+                  ['Delete Selected', 'delete']
+                ]), { prompt: 'Choose action...' }, { class: "select select-bordered select-sm" } %>
+                
+                <%= form.submit "Execute", class: "btn btn-warning btn-sm", 
+                    onclick: "return confirm('Are you sure you want to perform this bulk action?')" %>
+              </div>
+            </div>
+            
+            <div id="selection-count" class="text-sm opacity-70" style="display: none;">
+              <span id="selected-count">0</span> configurations selected
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>
+                    <!-- Select all checkbox is handled by JavaScript -->
+                  </th>
+                  <th>Name</th>
+                  <th>Type</th>
+                  <th>Owner</th>
+                  <th>Status</th>
+                  <th>Created</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @mcp_configurations.each do |config| %>
+                  <tr>
+                    <td>
+                      <input type="checkbox" name="config_ids[]" value="<%= config.id %>" 
+                             class="checkbox checkbox-sm config-checkbox" />
+                    </td>
+                    <td>
+                      <div class="font-semibold text-sm">
+                        <%= link_to config.name, admin_mcp_configuration_path(config), 
+                            class: "link link-primary" %>
+                      </div>
+                      <% if config.metadata.present? && config.metadata['description'].present? %>
+                        <div class="text-xs opacity-70"><%= config.metadata['description'] %></div>
+                      <% end %>
+                    </td>
+                    <td>
+                      <div class="badge badge-<%= config.server_type == 'stdio' ? 'primary' : 'secondary' %> badge-sm">
+                        <%= config.server_type.upcase %>
+                      </div>
+                    </td>
+                    <td class="text-sm">
+                      <% if config.owner %>
+                        <%= config.owner.email if config.owner.respond_to?(:email) %>
+                      <% else %>
+                        <span class="opacity-70">System</span>
+                      <% end %>
+                    </td>
+                    <td>
+                      <div class="badge badge-<%= config.enabled? ? 'success' : 'ghost' %> badge-sm">
+                        <%= config.enabled? ? 'Enabled' : 'Disabled' %>
+                      </div>
+                    </td>
+                    <td class="text-xs opacity-70">
+                      <%= config.created_at.strftime('%m/%d/%Y') %>
+                    </td>
+                    <td>
+                      <div class="dropdown dropdown-end">
+                        <div tabindex="0" role="button" class="btn btn-ghost btn-xs">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                          </svg>
+                        </div>
+                        <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                          <li>
+                            <%= link_to admin_mcp_configuration_path(config) do %>
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                              </svg>
+                              View Details
+                            <% end %>
+                          </li>
+                          <li>
+                            <%= link_to edit_admin_mcp_configuration_path(config) do %>
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              Edit
+                            <% end %>
+                          </li>
+                          <li>
+                            <%= link_to monitoring_admin_mcp_configuration_path(config) do %>
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                              </svg>
+                              Monitoring
+                            <% end %>
+                          </li>
+                          <li>
+                            <%= link_to test_connection_admin_mcp_configuration_path(config), 
+                                data: { turbo_method: :post }, class: "text-info" do %>
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+                              </svg>
+                              Test Connection
+                            <% end %>
+                          </li>
+                          <li>
+                            <%= link_to discover_tools_admin_mcp_configuration_path(config), 
+                                data: { turbo_method: :post }, class: "text-warning" do %>
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                              Discover Tools
+                            <% end %>
+                          </li>
+                          <li class="border-t">
+                            <%= link_to admin_mcp_configuration_path(config), 
+                                data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to delete this configuration?" },
+                                class: "text-error" do %>
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                              Delete
+                            <% end %>
+                          </li>
+                        </ul>
+                      </div>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <% if @mcp_configurations.respond_to?(:total_pages) && @mcp_configurations.total_pages > 1 %>
+            <div class="flex justify-center mt-6">
+              <%= paginate @mcp_configurations, theme: 'twitter_bootstrap_4' %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  <% else %>
+    <!-- Empty State with Filters -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <!-- Filters Section -->
+        <div class="pb-4">
+          <%= form_with url: admin_mcp_configurations_path, method: :get, local: true, class: "flex flex-wrap gap-4 items-end" do |filter_form| %>
+            <div class="form-control">
+              <%= filter_form.label :search, "Search", class: "label" %>
+              <%= filter_form.text_field :search, value: params[:search], placeholder: "Configuration name...", class: "input input-bordered input-sm w-64" %>
+            </div>
+
+            <div class="form-control">
+              <%= filter_form.label :server_type, "Server Type", class: "label" %>
+              <%= filter_form.select :server_type, options_for_select([
+                ['All Types', ''],
+                ['HTTP', 'http'],
+                ['SSE', 'sse'],
+                ['WebSocket', 'websocket'],
+                ['Stdio', 'stdio']
+              ], params[:server_type]), {}, { class: "select select-bordered select-sm" } %>
+            </div>
+
+            <div class="form-control">
+              <%= filter_form.label :enabled, "Status", class: "label" %>
+              <%= filter_form.select :enabled, options_for_select([
+                ['All', ''],
+                ['Enabled', 'true'],
+                ['Disabled', 'false']
+              ], params[:enabled]), {}, { class: "select select-bordered select-sm" } %>
+            </div>
+
+            <div class="form-control">
+              <%= filter_form.submit "Filter", class: "btn btn-primary btn-sm" %>
+              <%= link_to "Clear", admin_mcp_configurations_path, class: "btn btn-ghost btn-sm" %>
+            </div>
+          <% end %>
+        </div>
+
+        <!-- Divider -->
+        <div class="divider my-0"></div>
+
+        <!-- Empty State Content -->
+        <div class="text-center py-16">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto opacity-50 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h6l2 2h6a2 2 0 012 2v4a2 2 0 01-2 2H5z" />
+          </svg>
+          
+          <h3 class="text-xl font-semibold mb-2">No MCP Configurations Found</h3>
+          <p class="opacity-70 mb-6">
+            Get started by creating your first MCP configuration to connect external tools and services.
+          </p>
+          
+          <%= link_to "Create Configuration", new_admin_mcp_configuration_path, class: "btn btn-primary" %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const selectAll = document.getElementById('select-all');
+  const checkboxes = document.querySelectorAll('.config-checkbox');
+  const bulkActions = document.getElementById('bulk-actions');
+  const selectionCount = document.getElementById('selection-count');
+  const selectedCountSpan = document.getElementById('selected-count');
+
+  function updateBulkActions() {
+    const checkedBoxes = document.querySelectorAll('.config-checkbox:checked');
+    const count = checkedBoxes.length;
+    
+    if (count > 0) {
+      bulkActions.style.display = 'flex';
+      selectionCount.style.display = 'block';
+      selectedCountSpan.textContent = count;
+    } else {
+      bulkActions.style.display = 'none';
+      selectionCount.style.display = 'none';
+    }
+    
+    // Update select all checkbox state
+    selectAll.indeterminate = count > 0 && count < checkboxes.length;
+    selectAll.checked = count === checkboxes.length && count > 0;
+  }
+
+  selectAll.addEventListener('change', function() {
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = selectAll.checked;
+    });
+    updateBulkActions();
+  });
+
+  checkboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', updateBulkActions);
+  });
+
+  // Initial update
+  updateBulkActions();
+});
+</script>

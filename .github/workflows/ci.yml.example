@@ -1,0 +1,91 @@
+# Example GitHub Actions CI/CD workflow
+# Copy this to .github/workflows/ci.yml and customize as needed
+
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: rails_template_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 3.2
+        bundler-cache: true
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'yarn'
+
+    - name: Install JavaScript dependencies
+      run: yarn install
+
+    - name: Set up database
+      env:
+        DATABASE_URL: postgresql://postgres:password@localhost:5432/rails_template_test
+        RAILS_ENV: test
+      run: |
+        bundle exec rails db:create
+        bundle exec rails db:schema:load
+
+    - name: Run tests
+      env:
+        DATABASE_URL: postgresql://postgres:password@localhost:5432/rails_template_test
+        REDIS_URL: redis://localhost:6379/0
+        RAILS_ENV: test
+      run: |
+        bundle exec rails test
+        bundle exec rails test:system
+
+    - name: Run RuboCop
+      run: bundle exec rubocop
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # Add your deployment steps here
+    # Examples:
+    # - Deploy to Heroku
+    # - Deploy to Railway
+    # - Deploy to AWS/GCP/Azure
+    # - Build and push Docker image

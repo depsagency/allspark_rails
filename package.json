@@ -1,0 +1,48 @@
+{
+  "name": "all-spark",
+  "dependencies": {
+    "@hotwired/stimulus": "^3.2.2",
+    "@hotwired/turbo-rails": "^8.0.13",
+    "@rails/actioncable": "^8.0.200",
+    "@rails/activestorage": "^8.0.200",
+    "@rails/request.js": "^0.0.12",
+    "@tailwindcss/aspect-ratio": "^0.4.2",
+    "@tailwindcss/typography": "^0.5.16",
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/xterm": "^5.5.0",
+    "@xyflow/react": "^12.3.5",
+    "autoprefixer": "^10.4.21",
+    "chart.js": "^4.5.0",
+    "dagre": "^0.8.5",
+    "daisyui": "^5.0.35",
+    "heroicons": "^2.2.0",
+    "jquery": "^3.7.1",
+    "mermaid": "^11.4.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwind-scrollbar": "^4.0.2",
+    "tailwindcss": "^4.1.7",
+    "tailwindcss-displaymodes": "^1.0.8",
+    "tinymce": "^7.9.0"
+  },
+  "scripts": {
+    "build": "node esbuild.config.mjs && yarn build:reactflow",
+    "build:css": "npx @tailwindcss/cli -i ./app/assets/stylesheets/application.css -o ./app/assets/builds/application.css --minify && cat ./app/assets/stylesheets/prose_complete.css >> ./app/assets/builds/application.css",
+    "build:reactflow": "cp node_modules/@xyflow/react/dist/style.css app/assets/builds/reactflow.css",
+    "test:crm": "node test_crm_app.js"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.7",
+    "esbuild": "^0.25.5",
+    "esbuild-plugin-copy": "^2.1.1",
+    "esbuild-rails": "^1.0.7",
+    "postcss": "^8.5.3",
+    "puppeteer": "^22.15.0",
+    "workbox-cli": "^7.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "yarn": "^1.22.0"
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+}

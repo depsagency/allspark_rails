@@ -1,0 +1,182 @@
+<div class="container mx-auto px-4 py-8">
+  <!-- Flash messages -->
+  <% flash.each do |type, message| %>
+    <div class="alert <%= type == 'notice' ? 'alert-success' : 'alert-error' %> mb-4">
+      <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+      <span><%= message %></span>
+    </div>
+  <% end %>
+
+  <!-- Edit Profile Form -->
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="card-title text-3xl font-bold">Edit Profile</h1>
+        <%= link_to "← Back to Profile", user_path(@user), class: "btn btn-ghost" %>
+      </div>
+
+      <%= form_with model: @user, local: true, multipart: true, class: "space-y-6" do |form| %>
+        <!-- Error handling -->
+        <% if @user.errors.any? %>
+          <div class="alert alert-error">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <div>
+              <h3 class="font-bold">Please fix the following errors:</h3>
+              <ul class="list-disc list-inside mt-2">
+                <% @user.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Avatar Upload -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text font-medium">Profile Picture</span>
+          </label>
+          <div class="flex items-center gap-4">
+            <!-- Current avatar preview -->
+            <div class="avatar">
+              <div class="w-16 h-16 rounded-full">
+                <% if @user.avatar.attached? %>
+                  <%= image_tag @user.avatar, alt: @user.display_name, class: "w-full h-full object-cover" %>
+                <% else %>
+                  <div class="bg-primary text-primary-content flex items-center justify-center w-full h-full text-xl font-bold">
+                    <%= @user.initials %>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+            
+            <!-- File input -->
+            <%= form.file_field :avatar, 
+                class: "file-input file-input-bordered w-full max-w-xs",
+                accept: "image/*" %>
+          </div>
+          <label class="label">
+            <span class="label-text-alt">Upload a new profile picture (optional)</span>
+          </label>
+        </div>
+
+        <!-- Basic Information -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="form-control">
+            <%= form.label :first_name, class: "label" do %>
+              <span class="label-text font-medium">First Name</span>
+            <% end %>
+            <%= form.text_field :first_name, 
+                class: "input input-bordered w-full",
+                placeholder: "Enter your first name" %>
+          </div>
+
+          <div class="form-control">
+            <%= form.label :last_name, class: "label" do %>
+              <span class="label-text font-medium">Last Name</span>
+            <% end %>
+            <%= form.text_field :last_name, 
+                class: "input input-bordered w-full",
+                placeholder: "Enter your last name" %>
+          </div>
+        </div>
+
+        <!-- Admin-only Role Selection -->
+        <% if current_user.admin? %>
+          <div class="form-control">
+            <%= form.label :role, class: "label" do %>
+              <span class="label-text font-medium">User Role</span>
+            <% end %>
+            <%= form.select :role, 
+                options_for_select([
+                  ['User', 'default'],
+                  ['System Admin', 'system_admin']
+                ], @user.role),
+                {},
+                class: "select select-bordered w-full" %>
+            <label class="label">
+              <span class="label-text-alt text-warning">⚠️ Be careful when changing user roles</span>
+            </label>
+          </div>
+        <% end %>
+
+        <!-- Bio -->
+        <div class="form-control">
+          <%= form.label :bio, class: "label" do %>
+            <span class="label-text font-medium">Bio</span>
+          <% end %>
+          <%= form.text_area :bio, 
+              class: "textarea textarea-bordered h-32 resize-vertical",
+              rows: 6,
+              placeholder: "Tell us a bit about yourself..." %>
+          <label class="label">
+            <span class="label-text-alt">Maximum 500 characters</span>
+          </label>
+        </div>
+
+        <!-- Website -->
+        <div class="form-control">
+          <%= form.label :website, class: "label" do %>
+            <span class="label-text font-medium">Website</span>
+          <% end %>
+          <%= form.url_field :website, 
+              class: "input input-bordered w-full",
+              placeholder: "https://yourwebsite.com" %>
+          <label class="label">
+            <span class="label-text-alt">Include http:// or https://</span>
+          </label>
+        </div>
+
+        <!-- Social Links -->
+        <div class="divider">Social Links</div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <% User::SOCIAL_PLATFORMS.each do |platform, config| %>
+            <div class="form-control w-full">
+              <%= form.label "#{platform}_handle", class: "label" do %>
+                <span class="label-text font-medium">
+                  <%= platform.to_s.humanize %>
+                </span>
+              <% end %>
+              
+              <% if config[:type] == :username %>
+                <label class="input input-bordered flex items-center gap-2">
+                  <span class="text-base-content/50">@</span>
+                  <%= form.text_field "#{platform}_handle", 
+                      class: "grow border-0 focus:outline-none bg-transparent",
+                      placeholder: config[:placeholder],
+                      value: @user.send("#{platform}_handle") %>
+                </label>
+                <label class="label">
+                  <span class="label-text-alt">Just the username, without @</span>
+                </label>
+              <% else %>
+                <label class="input input-bordered flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-base-content/50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                  </svg>
+                  <%= form.text_field "#{platform}_handle", 
+                      class: "grow border-0 focus:outline-none bg-transparent",
+                      placeholder: config[:placeholder],
+                      value: @user.send("#{platform}_handle") %>
+                </label>
+                <label class="label">
+                  <span class="label-text-alt">Full URL to your <%= platform.to_s.downcase %> profile</span>
+                </label>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex flex-col sm:flex-row gap-4 pt-6">
+          <%= form.submit "Save Changes", 
+              class: "btn btn-primary flex-1 sm:flex-none sm:w-auto",
+              data: { disable_with: "Saving..." } %>
+          <%= link_to "Cancel", user_path(@user), 
+              class: "btn btn-outline flex-1 sm:flex-none sm:w-auto" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

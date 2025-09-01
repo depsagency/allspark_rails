@@ -1,0 +1,392 @@
+<% content_for :title, "#{@mcp_server.name} - MCP Server Details" %>
+
+<div class="container mx-auto px-4 py-6">
+  <!-- Header Section -->
+  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
+    <div>
+      <div class="breadcrumbs text-sm mb-2">
+        <ul>
+          <li><%= link_to "Admin", "#", class: "text-primary" %></li>
+          <li><%= link_to "MCP Servers", admin_mcp_servers_path, class: "text-primary" %></li>
+          <li><%= @mcp_server.name %></li>
+        </ul>
+      </div>
+      <h1 class="text-3xl font-bold text-gray-900 mb-2"><%= @mcp_server.name %></h1>
+      <p class="text-gray-600">Model Context Protocol Server Details</p>
+    </div>
+    
+    <div class="mt-4 lg:mt-0 flex gap-2">
+      <%= button_to test_connection_admin_mcp_server_path(@mcp_server), 
+          method: :post,
+          class: "btn btn-secondary",
+          form: { class: "inline" } do %>
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+        </svg>
+        Test Connection
+      <% end %>
+      
+      <%= button_to discover_tools_admin_mcp_server_path(@mcp_server), 
+          method: :post,
+          class: "btn btn-info",
+          form: { class: "inline" } do %>
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+        Discover Tools
+      <% end %>
+      
+      <%= link_to edit_admin_mcp_server_path(@mcp_server), 
+          class: "btn btn-primary" do %>
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+        </svg>
+        Edit Server
+      <% end %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Main Information Column -->
+    <div class="lg:col-span-2 space-y-6">
+      <!-- Server Details Card -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title mb-4">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path>
+            </svg>
+            Server Configuration
+          </h2>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="label font-semibold">Name</label>
+              <div class="text-lg"><%= @mcp_server.name %></div>
+            </div>
+            
+            <div>
+              <label class="label font-semibold">Status</label>
+              <% case @mcp_server.status %>
+              <% when 'active' %>
+                <div class="badge badge-success badge-lg">Active</div>
+              <% when 'inactive' %>
+                <div class="badge badge-warning badge-lg">Inactive</div>
+              <% when 'error' %>
+                <div class="badge badge-error badge-lg">Error</div>
+              <% end %>
+            </div>
+            
+            <div>
+              <label class="label font-semibold">Endpoint</label>
+              <div class="text-sm font-mono bg-base-200 p-2 rounded">
+                <%= @mcp_server.endpoint %>
+              </div>
+            </div>
+            
+            <div>
+              <label class="label font-semibold">Protocol Version</label>
+              <div class="badge badge-outline">v<%= @mcp_server.protocol_version %></div>
+            </div>
+            
+            <div>
+              <label class="label font-semibold">Authentication</label>
+              <div class="badge badge-info"><%= @mcp_server.auth_type.humanize %></div>
+            </div>
+            
+            <div>
+              <label class="label font-semibold">Scope</label>
+              <% if @mcp_server.user_id.present? %>
+                <div class="badge badge-info">User-specific</div>
+                <div class="text-sm text-gray-600 mt-1">
+                  Owner: <%= @mcp_server.user.email %>
+                </div>
+              <% else %>
+                <div class="badge badge-primary">System-wide</div>
+                <div class="text-sm text-gray-600 mt-1">
+                  Available to all users
+                </div>
+              <% end %>
+            </div>
+          </div>
+          
+          <div class="mt-4">
+            <label class="label font-semibold">Created</label>
+            <div class="text-sm text-gray-600">
+              <%= @mcp_server.created_at.strftime("%B %d, %Y at %I:%M %p") %>
+              (<%= time_ago_in_words(@mcp_server.created_at) %> ago)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Available Tools Card -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title mb-4">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            Available Tools
+            <div class="badge badge-neutral ml-2"><%= @available_tools.size %></div>
+          </h2>
+          
+          <% if @available_tools.any? %>
+            <div class="grid gap-3">
+              <% @available_tools.each do |tool| %>
+                <div class="border border-base-300 rounded-lg p-4">
+                  <div class="flex justify-between items-start mb-2">
+                    <h3 class="font-semibold text-lg"><%= tool['name'] %></h3>
+                    <% if tool['category'] %>
+                      <div class="badge badge-outline"><%= tool['category'] %></div>
+                    <% end %>
+                  </div>
+                  
+                  <% if tool['description'] %>
+                    <p class="text-gray-600 text-sm mb-3"><%= tool['description'] %></p>
+                  <% end %>
+                  
+                  <% if tool['inputSchema'] && tool['inputSchema']['properties'] %>
+                    <div class="collapse collapse-arrow border border-base-300 rounded">
+                      <input type="checkbox" />
+                      <div class="collapse-title text-sm font-medium">
+                        Parameters (<%= tool['inputSchema']['properties'].size %>)
+                      </div>
+                      <div class="collapse-content">
+                        <div class="grid gap-2">
+                          <% tool['inputSchema']['properties'].each do |param_name, param_info| %>
+                            <div class="flex justify-between items-center text-sm">
+                              <span class="font-mono font-medium"><%= param_name %></span>
+                              <div class="flex gap-2">
+                                <span class="badge badge-xs"><%= param_info['type'] || 'any' %></span>
+                                <% if tool['inputSchema']['required']&.include?(param_name) %>
+                                  <span class="badge badge-error badge-xs">required</span>
+                                <% end %>
+                              </div>
+                            </div>
+                            <% if param_info['description'] %>
+                              <div class="text-xs text-gray-500 ml-2 mb-2">
+                                <%= param_info['description'] %>
+                              </div>
+                            <% end %>
+                          <% end %>
+                        </div>
+                      </div>
+                    </div>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <div class="text-center py-8">
+              <svg class="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              <h3 class="text-lg font-medium text-gray-900 mb-2">No tools available</h3>
+              <p class="text-gray-500 mb-4">No tools have been discovered for this server yet.</p>
+              <%= button_to discover_tools_admin_mcp_server_path(@mcp_server), 
+                  method: :post,
+                  class: "btn btn-primary btn-sm",
+                  form: { class: "inline" } do %>
+                Discover Tools Now
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title mb-4">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Recent Activity
+          </h2>
+          
+          <% if @audit_logs.any? %>
+            <div class="overflow-x-auto">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>User</th>
+                    <th>Tool</th>
+                    <th>Status</th>
+                    <th>Response Time</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @audit_logs.each do |log| %>
+                    <tr>
+                      <td class="text-sm">
+                        <%= log.executed_at.strftime("%m/%d %H:%M") %>
+                      </td>
+                      <td class="text-sm">
+                        <%= log.user.email %>
+                      </td>
+                      <td class="text-sm font-mono">
+                        <%= log.tool_name %>
+                      </td>
+                      <td>
+                        <% case log.status %>
+                        <% when 'success' %>
+                          <div class="badge badge-success badge-xs">Success</div>
+                        <% when 'failure' %>
+                          <div class="badge badge-error badge-xs">Failed</div>
+                        <% when 'timeout' %>
+                          <div class="badge badge-warning badge-xs">Timeout</div>
+                        <% end %>
+                      </td>
+                      <td class="text-sm">
+                        <% if log.response_time_ms %>
+                          <%= log.response_time_ms %>ms
+                        <% else %>
+                          -
+                        <% end %>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="mt-4">
+              <%= link_to monitoring_admin_mcp_server_path(@mcp_server), 
+                  class: "btn btn-outline btn-sm" do %>
+                View Full Analytics
+              <% end %>
+            </div>
+          <% else %>
+            <div class="text-center py-4">
+              <p class="text-gray-500">No recent activity recorded.</p>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar Column -->
+    <div class="space-y-6">
+      <!-- Health Status Card -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title mb-4">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+            </svg>
+            Health Status
+          </h2>
+          
+          <div class="space-y-3">
+            <div class="flex justify-between items-center">
+              <span class="text-sm font-medium">Overall Health</span>
+              <% if @health_status[:healthy] %>
+                <div class="badge badge-success">Healthy</div>
+              <% else %>
+                <div class="badge badge-error">Unhealthy</div>
+              <% end %>
+            </div>
+            
+            <div class="flex justify-between items-center">
+              <span class="text-sm font-medium">Consecutive Failures</span>
+              <div class="badge badge-neutral">
+                <%= @health_status[:consecutive_failures] %>
+              </div>
+            </div>
+            
+            <% if @health_status[:last_check] %>
+              <div class="flex justify-between items-center">
+                <span class="text-sm font-medium">Last Check</span>
+                <span class="text-sm text-gray-600">
+                  <%= time_ago_in_words(@health_status[:last_check]) %> ago
+                </span>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Connection Statistics -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title mb-4">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path>
+            </svg>
+            Connections
+          </h2>
+          
+          <div class="stats stats-vertical w-full">
+            <div class="stat px-0">
+              <div class="stat-title">Active</div>
+              <div class="stat-value text-primary text-2xl">
+                <%= @connection_stats[:active_connections] %>
+              </div>
+            </div>
+            
+            <div class="stat px-0">
+              <div class="stat-title">Healthy</div>
+              <div class="stat-value text-success text-2xl">
+                <%= @connection_stats[:healthy_connections] %>
+              </div>
+            </div>
+            
+            <div class="stat px-0">
+              <div class="stat-title">Avg Idle Time</div>
+              <div class="stat-value text-lg">
+                <%= (@connection_stats[:avg_idle_time] / 60).round(1) %>m
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title mb-4">Quick Actions</h2>
+          
+          <div class="space-y-2">
+            <%= button_to test_connection_admin_mcp_server_path(@mcp_server), 
+                method: :post,
+                class: "btn btn-outline btn-sm w-full justify-start",
+                form: { class: "w-full" } do %>
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+              </svg>
+              Test Connection
+            <% end %>
+            
+            <%= button_to discover_tools_admin_mcp_server_path(@mcp_server), 
+                method: :post,
+                class: "btn btn-outline btn-sm w-full justify-start",
+                form: { class: "w-full" } do %>
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              </svg>
+              Refresh Tools
+            <% end %>
+            
+            <%= link_to monitoring_admin_mcp_server_path(@mcp_server), 
+                class: "btn btn-outline btn-sm w-full justify-start" do %>
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+              </svg>
+              View Analytics
+            <% end %>
+            
+            <%= link_to edit_admin_mcp_server_path(@mcp_server), 
+                class: "btn btn-outline btn-sm w-full justify-start" do %>
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+              Edit Configuration
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

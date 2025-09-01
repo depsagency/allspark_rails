@@ -1,0 +1,178 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl font-bold">Execution Details</h1>
+      <p class="text-base-content/70 mt-2">
+        <%= @execution.task %>
+      </p>
+    </div>
+    
+    <div class="flex gap-2">
+      <%= link_to "Back to Team", agents_team_path(@execution.agent_team), class: "btn btn-ghost" %>
+    </div>
+  </div>
+
+  <!-- Execution Summary -->
+  <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
+    <div class="stats shadow">
+      <div class="stat">
+        <div class="stat-title">Status</div>
+        <div class="stat-value text-lg">
+          <span class="badge badge-<%= @execution.completed? ? 'success' : @execution.failed? ? 'error' : @execution.pending? ? 'ghost' : 'warning' %> badge-lg">
+            <%= @execution.status.capitalize %>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats shadow">
+      <div class="stat">
+        <div class="stat-title">Duration</div>
+        <div class="stat-value text-lg">
+          <%= @execution.duration ? "#{@execution.duration.round(2)}s" : "N/A" %>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats shadow">
+      <div class="stat">
+        <div class="stat-title">Steps</div>
+        <div class="stat-value text-lg">
+          <%= @execution.result_data&.dig('results')&.size || 0 %> / 
+          <%= @execution.result_data&.dig('plan', 'steps')&.size || 0 %>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats shadow">
+      <div class="stat">
+        <div class="stat-title">Created</div>
+        <div class="stat-value text-lg">
+          <%= @execution.created_at.strftime("%b %d, %H:%M") %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <% if @execution.error_message.present? %>
+    <div class="alert alert-error mb-6">
+      <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+      <span><%= @execution.error_message %></span>
+    </div>
+  <% end %>
+
+  <% if @execution.result_data.present? %>
+    <!-- Execution Plan -->
+    <% if @execution.result_data['plan'] && @execution.result_data['plan']['steps'] %>
+      <div class="card bg-base-100 shadow-xl mb-6">
+        <div class="card-body">
+          <h2 class="card-title">Execution Plan</h2>
+          <div class="overflow-x-auto">
+            <table class="table table-zebra">
+              <thead>
+                <tr>
+                  <th>Step</th>
+                  <th>Agent</th>
+                  <th>Action</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% @execution.result_data['plan']['steps'].each_with_index do |step, index| %>
+                  <% result = @execution.result_data['results']&.[](index) %>
+                  <tr>
+                    <td><%= index + 1 %></td>
+                    <td>
+                      <span class="badge badge-ghost badge-sm"><%= step['agent'] %></span>
+                    </td>
+                    <td><%= step['action'] %></td>
+                    <td>
+                      <% if result %>
+                        <span class="badge badge-<%= result['status'] == 'completed' ? 'success' : 'error' %> badge-sm">
+                          <%= result['status'] %>
+                        </span>
+                      <% else %>
+                        <span class="badge badge-ghost badge-sm">Not executed</span>
+                      <% end %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Step Results -->
+    <% if @execution.result_data['results'] && @execution.result_data['results'].any? %>
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h2 class="card-title mb-4">Step-by-Step Results</h2>
+          
+          <div class="space-y-4">
+            <% @execution.result_data['results'].each_with_index do |result, index| %>
+              <div class="card bg-base-200">
+                <div class="card-body">
+                  <div class="flex justify-between items-start mb-2">
+                    <h3 class="font-bold">
+                      Step <%= index + 1 %>
+                      <% if result['step'] %>
+                        : <%= result['step']['action'] %>
+                      <% end %>
+                    </h3>
+                    <span class="badge badge-<%= result['status'] == 'completed' ? 'success' : 'error' %>">
+                      <%= result['status'] %>
+                    </span>
+                  </div>
+                  
+                  <div class="grid grid-cols-1 gap-2 text-sm">
+                    <% if result['agent'] %>
+                      <div>
+                        <span class="font-semibold">Agent:</span> <%= result['agent'] %>
+                      </div>
+                    <% end %>
+                    
+                    <% if result['response'] %>
+                      <div>
+                        <span class="font-semibold">Response:</span>
+                        <div class="mt-2 p-4 bg-base-100 rounded-lg overflow-x-auto">
+                          <pre class="whitespace-pre-wrap text-sm"><%= result['response'] %></pre>
+                        </div>
+                      </div>
+                    <% end %>
+                    
+                    <% if result['error'] %>
+                      <div>
+                        <span class="font-semibold">Error:</span>
+                        <span class="text-error"><%= result['error'] %></span>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Raw Data -->
+    <div class="collapse collapse-arrow bg-base-200 mt-6">
+      <input type="checkbox" />
+      <div class="collapse-title text-xl font-medium">
+        Raw Execution Data (JSON)
+      </div>
+      <div class="collapse-content">
+        <div class="overflow-x-auto">
+          <pre class="text-sm"><%= JSON.pretty_generate(@execution.result_data) %></pre>
+        </div>
+      </div>
+    </div>
+  <% else %>
+    <div class="alert alert-info">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <span>No execution data available</span>
+    </div>
+  <% end %>
+</div>

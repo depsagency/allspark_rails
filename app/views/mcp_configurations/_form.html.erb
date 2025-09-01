@@ -1,0 +1,238 @@
+<%= form_with(model: configuration, local: true, html: { class: "space-y-6" }) do |form| %>
+  <% if configuration.errors.any? %>
+    <div class="alert alert-error">
+      <div>
+        <h3 class="font-bold">Please fix the following errors:</h3>
+        <ul class="mt-2 list-disc list-inside">
+          <% configuration.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+  <% end %>
+  
+  <!-- Basic Information -->
+  <div class="card bg-base-100 shadow">
+    <div class="card-body">
+      <h2 class="card-title mb-4">Basic Information</h2>
+      
+      <div class="form-control">
+        <%= form.label :name, class: "label" do %>
+          <span class="label-text">Configuration Name</span>
+          <span class="label-text-alt text-error">*</span>
+        <% end %>
+        <%= form.text_field :name, class: "input input-bordered w-full", 
+            placeholder: "e.g., My Linear Integration", required: true %>
+      </div>
+      
+      <div class="form-control">
+        <%= form.label :enabled, class: "label cursor-pointer" do %>
+          <span class="label-text">Enable this configuration</span>
+          <%= form.check_box :enabled, class: "toggle toggle-primary" %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Server Configuration -->
+  <div class="card bg-base-100 shadow">
+    <div class="card-body">
+      <h2 class="card-title mb-4">Server Configuration</h2>
+      
+      <div class="form-control">
+        <%= form.label :server_type, class: "label" do %>
+          <span class="label-text">Server Type</span>
+        <% end %>
+        <%= form.text_field :server_type, class: "input input-bordered w-full", 
+            readonly: true, disabled: true %>
+        <label class="label">
+          <span class="label-text-alt">Server type cannot be changed after creation</span>
+        </label>
+      </div>
+      
+      <div class="divider"></div>
+      
+      <% case configuration.server_type %>
+      <% when 'stdio' %>
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Command</span>
+          </label>
+          <%= text_field_tag "mcp_configuration[server_config][command]", 
+              configuration.server_config['command'],
+              class: "input input-bordered w-full" %>
+        </div>
+        
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Arguments</span>
+          </label>
+          <%= text_field_tag "mcp_configuration[server_config][args]", 
+              configuration.server_config['args']&.to_json,
+              class: "input input-bordered w-full",
+              placeholder: '["arg1", "arg2"]' %>
+          <label class="label">
+            <span class="label-text-alt">Enter as JSON array</span>
+          </label>
+        </div>
+        
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Environment Variables</span>
+          </label>
+          <%= text_area_tag "mcp_configuration[server_config][env]", 
+              configuration.server_config['env']&.to_json,
+              class: "textarea textarea-bordered w-full",
+              rows: 3 %>
+          <label class="label">
+            <span class="label-text-alt">Enter as JSON object. Sensitive values will be encrypted.</span>
+          </label>
+        </div>
+        
+      <% when 'http', 'sse' %>
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text"><%= configuration.server_type == 'http' ? 'Endpoint' : 'URL' %></span>
+          </label>
+          <%= text_field_tag "mcp_configuration[server_config][#{configuration.server_type == 'http' ? 'endpoint' : 'url'}]",
+              configuration.server_config[configuration.server_type == 'http' ? 'endpoint' : 'url'],
+              class: "input input-bordered w-full" %>
+        </div>
+        
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Headers</span>
+          </label>
+          <%= text_area_tag "mcp_configuration[server_config][headers]",
+              configuration.server_config['headers']&.to_json,
+              class: "textarea textarea-bordered w-full",
+              rows: 3,
+              placeholder: '{"Authorization": "Bearer YOUR_TOKEN"}' %>
+          <label class="label">
+            <span class="label-text-alt">Enter as JSON object. Sensitive headers will be encrypted.</span>
+          </label>
+        </div>
+        
+      <% when 'websocket' %>
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">WebSocket Endpoint</span>
+          </label>
+          <%= text_field_tag "mcp_configuration[server_config][endpoint]",
+              configuration.server_config['endpoint'],
+              class: "input input-bordered w-full",
+              placeholder: "wss://api.example.com/mcp" %>
+        </div>
+        
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">Headers</span>
+          </label>
+          <%= text_area_tag "mcp_configuration[server_config][headers]",
+              configuration.server_config['headers']&.to_json,
+              class: "textarea textarea-bordered w-full",
+              rows: 3 %>
+          <label class="label">
+            <span class="label-text-alt">Enter as JSON object. Sensitive headers will be encrypted.</span>
+          </label>
+        </div>
+      <% end %>
+    </div>
+  </div>
+  
+  <!-- Metadata (Optional) -->
+  <div class="card bg-base-100 shadow">
+    <div class="card-body">
+      <h2 class="card-title mb-4">Additional Settings (Optional)</h2>
+      
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text">Metadata</span>
+        </label>
+        <%= text_area_tag "mcp_configuration[metadata]",
+            configuration.metadata&.to_json,
+            class: "textarea textarea-bordered w-full",
+            rows: 3,
+            placeholder: '{"key": "value"}' %>
+        <label class="label">
+          <span class="label-text-alt">Additional configuration data as JSON</span>
+        </label>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Actions -->
+  <div class="flex justify-between">
+    <%= link_to "Cancel", mcp_configurations_path, class: "btn btn-ghost" %>
+    <div class="space-x-2">
+      <button type="button" class="btn btn-outline" onclick="testConfiguration()">
+        Test Configuration
+      </button>
+      <%= form.submit class: "btn btn-primary" %>
+    </div>
+  </div>
+<% end %>
+
+<script>
+function testConfiguration() {
+  // Gather form data
+  const formData = new FormData(document.querySelector('form'));
+  const configData = {
+    name: formData.get('mcp_configuration[name]'),
+    server_type: formData.get('mcp_configuration[server_type]') || '<%= configuration.server_type %>',
+    server_config: {}
+  };
+  
+  // Parse server config fields
+  const serverConfigFields = document.querySelectorAll('[name^="mcp_configuration[server_config]"]');
+  serverConfigFields.forEach(field => {
+    const key = field.name.match(/\[([^\]]+)\]$/)[1];
+    let value = field.value;
+    
+    // Try to parse JSON values
+    if (value && (field.type === 'textarea' || key === 'args')) {
+      try {
+        value = JSON.parse(value);
+      } catch(e) {
+        // Keep as string if not valid JSON
+      }
+    }
+    
+    if (value) {
+      configData.server_config[key] = value;
+    }
+  });
+  
+  // Show loading state
+  const testButton = event.target;
+  testButton.disabled = true;
+  testButton.textContent = 'Testing...';
+  
+  // Make test request
+  fetch('/api/v1/mcp_configurations/test', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
+    },
+    body: JSON.stringify({ mcp_configuration: configData })
+  })
+  .then(response => response.json())
+  .then(data => {
+    testButton.disabled = false;
+    testButton.textContent = 'Test Configuration';
+    
+    if (data.success) {
+      alert(`Test successful! ${data.message}`);
+    } else {
+      alert(`Test failed: ${data.message}`);
+    }
+  })
+  .catch(error => {
+    testButton.disabled = false;
+    testButton.textContent = 'Test Configuration';
+    alert('Test failed: Network error');
+  });
+}
+</script>

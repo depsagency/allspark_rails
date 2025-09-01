@@ -1,0 +1,189 @@
+<!-- Metadata Fields for Knowledge Documents -->
+<div class="divider">Organization & Tags</div>
+
+<!-- Tags -->
+<div class="form-control mb-6">
+  <%= f.label :tags_string, class: "label" do %>
+    <span class="label-text">Tags</span>
+    <span class="label-text-alt">Comma-separated list</span>
+  <% end %>
+  <%= f.text_field :tags_string, 
+      value: @knowledge_document.tags.join(', '),
+      class: "input input-bordered w-full", 
+      placeholder: "e.g., api, documentation, tutorial, v2" %>
+  <label class="label">
+    <span class="label-text-alt">Tags help organize and find documents quickly</span>
+  </label>
+  
+  <% if @knowledge_document.persisted? && @knowledge_document.suggest_tags.any? %>
+    <div class="mt-2">
+      <p class="text-sm opacity-70 mb-1">Suggested tags:</p>
+      <div class="flex flex-wrap gap-1">
+        <% @knowledge_document.suggest_tags.each do |tag| %>
+          <button type="button" 
+                  class="badge badge-outline badge-sm cursor-pointer hover:badge-primary"
+                  onclick="addSuggestedTag('<%= tag %>')">
+            + <%= tag %>
+          </button>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+  <!-- Category -->
+  <div class="form-control">
+    <%= f.label :category, class: "label" do %>
+      <span class="label-text">Category</span>
+    <% end %>
+    <%= f.text_field :category,
+        value: @knowledge_document.category,
+        class: "input input-bordered w-full",
+        placeholder: "e.g., Technical Docs, User Guides",
+        list: "categories-list" %>
+    <datalist id="categories-list">
+      <% (@available_categories || []).each do |category| %>
+        <option value="<%= category %>">
+      <% end %>
+    </datalist>
+  </div>
+
+  <!-- Project -->
+  <div class="form-control">
+    <%= f.label :project, class: "label" do %>
+      <span class="label-text">Project</span>
+    <% end %>
+    <%= f.text_field :project,
+        value: @knowledge_document.project,
+        class: "input input-bordered w-full",
+        placeholder: "e.g., Mobile App, API v2",
+        list: "projects-list" %>
+    <datalist id="projects-list">
+      <% (@available_projects || []).each do |project| %>
+        <option value="<%= project %>">
+      <% end %>
+    </datalist>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+  <!-- Visibility -->
+  <div class="form-control">
+    <%= f.label :visibility, class: "label" do %>
+      <span class="label-text">Visibility</span>
+    <% end %>
+    <%= f.select :visibility,
+        options_for_select([
+          ["Private (Only me)", "private"],
+          ["Team (All team members)", "team"],
+          ["Public (Everyone)", "public"],
+          ["Restricted (Specific users)", "restricted"]
+        ], @knowledge_document.visibility),
+        {},
+        class: "select select-bordered w-full" %>
+  </div>
+
+  <!-- Priority -->
+  <div class="form-control">
+    <%= f.label :priority, class: "label" do %>
+      <span class="label-text">Priority</span>
+    <% end %>
+    <%= f.select :priority,
+        options_for_select([
+          ["Low", "low"],
+          ["Normal", "normal"],
+          ["High", "high"],
+          ["Critical", "critical"]
+        ], @knowledge_document.priority),
+        {},
+        class: "select select-bordered w-full" %>
+  </div>
+</div>
+
+<!-- Custom Attributes -->
+<div class="form-control mb-6">
+  <label class="label">
+    <span class="label-text">Custom Attributes</span>
+    <span class="label-text-alt">Key-value pairs for additional metadata</span>
+  </label>
+  
+  <div id="custom-attributes-container" class="space-y-2">
+    <% (@knowledge_document.custom_attributes || {}).each do |key, value| %>
+      <div class="flex gap-2 custom-attribute-row">
+        <input type="text" 
+               name="knowledge_document[custom_attributes][<%= key %>][key]" 
+               value="<%= key %>"
+               class="input input-bordered input-sm flex-1" 
+               placeholder="Key">
+        <input type="text" 
+               name="knowledge_document[custom_attributes][<%= key %>][value]" 
+               value="<%= value %>"
+               class="input input-bordered input-sm flex-1" 
+               placeholder="Value">
+        <button type="button" 
+                class="btn btn-ghost btn-sm text-error"
+                onclick="removeCustomAttribute(this)">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    <% end %>
+  </div>
+  
+  <button type="button" 
+          class="btn btn-outline btn-sm mt-2"
+          onclick="addCustomAttribute()">
+    + Add Custom Attribute
+  </button>
+</div>
+
+<script>
+function addSuggestedTag(tag) {
+  const tagsInput = document.querySelector('input[name="knowledge_document[tags_string]"]');
+  const currentTags = tagsInput.value.split(',').map(t => t.trim()).filter(t => t);
+  if (!currentTags.includes(tag)) {
+    currentTags.push(tag);
+    tagsInput.value = currentTags.join(', ');
+  }
+}
+
+function addCustomAttribute() {
+  const container = document.getElementById('custom-attributes-container');
+  const timestamp = Date.now();
+  const newRow = document.createElement('div');
+  newRow.className = 'flex gap-2 custom-attribute-row';
+  newRow.innerHTML = `
+    <input type="text" 
+           name="knowledge_document[custom_attributes][new_${timestamp}][key]" 
+           class="input input-bordered input-sm flex-1" 
+           placeholder="Key">
+    <input type="text" 
+           name="knowledge_document[custom_attributes][new_${timestamp}][value]" 
+           class="input input-bordered input-sm flex-1" 
+           placeholder="Value">
+    <button type="button" 
+            class="btn btn-ghost btn-sm text-error"
+            onclick="removeCustomAttribute(this)">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+  `;
+  container.appendChild(newRow);
+}
+
+function removeCustomAttribute(button) {
+  button.closest('.custom-attribute-row').remove();
+}
+
+// Initialize datalists with existing values
+document.addEventListener('DOMContentLoaded', function() {
+  // Pre-populate category and project inputs if they have values
+  const categoryInput = document.querySelector('input[name="knowledge_document[category]"]');
+  const projectInput = document.querySelector('input[name="knowledge_document[project]"]');
+  
+  // These will be populated from controller data
+});
+</script>

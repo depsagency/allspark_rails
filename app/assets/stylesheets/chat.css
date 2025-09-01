@@ -1,0 +1,243 @@
+/* Chat Component Styles */
+
+.chat-container {
+  min-height: 0;
+}
+
+.chat-sidebar {
+  min-width: 20rem;
+  max-width: 24rem;
+}
+
+.chat-thread-list {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-thread-item {
+  transition: background-color 0.2s ease;
+}
+
+.chat-thread-item.active {
+  @apply bg-base-200;
+}
+
+.chat-thread-item.has-unread {
+  @apply font-semibold;
+}
+
+.chat-thread {
+  max-height: 24rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  padding: 1rem;
+}
+
+/* DaisyUI chat animations */
+.chat {
+  animation: fadeIn 0.3s ease;
+}
+
+.chat-end .chat-bubble {
+  animation: slideInRight 0.3s ease;
+}
+
+.chat-start .chat-bubble {
+  animation: slideInLeft 0.3s ease;
+}
+
+.chat-typing-indicators {
+  min-height: 2rem;
+  animation: fadeIn 0.3s ease;
+}
+
+.chat-input {
+  background-color: var(--b1);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Typing indicator dots */
+.typing-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.typing-dots span {
+  width: 0.5rem;
+  height: 0.5rem;
+  background-color: currentColor;
+  border-radius: 50%;
+  animation: typingDot 1.4s infinite;
+}
+
+.typing-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typingDot {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  30% {
+    transform: translateY(-0.5rem);
+    opacity: 1;
+  }
+}
+
+/* Scrollbar styling */
+.chat-messages::-webkit-scrollbar {
+  width: 0.5rem;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: var(--b2);
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: var(--b3);
+  border-radius: 0.25rem;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background: var(--bc);
+  opacity: 0.5;
+}
+
+/* Chat bubble iMessage-style colors */
+.chat-bubble {
+  background-color: #e5e5ea !important;
+  color: #000000 !important;
+}
+
+/* User messages - iMessage blue */
+.chat-bubble-primary {
+  background-color: #007aff !important;
+  color: #ffffff !important;
+}
+
+/* AI/Assistant messages - iMessage green */
+.chat-bubble-secondary {
+  background-color: #34c759 !important;
+  color: #ffffff !important;
+}
+
+.chat-bubble-accent {
+  background-color: #ff9500 !important;
+  color: #ffffff !important;
+}
+
+.chat-bubble-info {
+  background-color: #5856d6 !important;
+  color: #ffffff !important;
+}
+
+/* Ensure prose content inherits the bubble text color */
+.chat-bubble .prose {
+  color: inherit !important;
+}
+
+.chat-bubble .prose * {
+  color: inherit !important;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .chat-bubble {
+    background-color: #3a3a3c !important;
+    color: #ffffff !important;
+  }
+  
+  .chat-bubble-primary {
+    background-color: #0a84ff !important;
+  }
+  
+  .chat-bubble-secondary {
+    background-color: #30d158 !important;
+  }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .chat-sidebar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    z-index: 10;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .chat-sidebar.hidden {
+    transform: translateX(-100%);
+  }
+  
+  .chat-container {
+    position: relative;
+  }
+}
+
+/* Interrupt button styles */
+.interrupt-button {
+  margin-left: 0.5rem;
+  animation: pulseWarning 1.5s infinite;
+}
+
+.interrupt-button.hidden {
+  display: none;
+}
+
+@keyframes pulseWarning {
+  0% {
+    box-shadow: 0 0 0 0 rgba(251, 146, 60, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(251, 146, 60, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(251, 146, 60, 0);
+  }
+}

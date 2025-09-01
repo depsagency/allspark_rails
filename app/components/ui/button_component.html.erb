@@ -1,0 +1,33 @@
+<% if href %>
+  <a href="<%= href %>" class="<%= button_classes %> <%= (show_icon? || show_loading_spinner?) ? 'inline-flex items-center gap-2' : '' %>" <%= html_attributes(button_attributes) %>>
+    <% if show_loading_spinner? %>
+      <span class="loading loading-spinner loading-xs"></span>
+    <% end %>
+    
+    <% if show_icon? && icon_position == 'left' %>
+      <%= render_button_icon(icon) %>
+    <% end %>
+    
+    <%= content %>
+    
+    <% if show_icon? && icon_position == 'right' %>
+      <%= render_button_icon(icon) %>
+    <% end %>
+  </a>
+<% else %>
+  <button type="<%= type %>" class="<%= button_classes %> <%= (show_icon? || show_loading_spinner?) ? 'inline-flex items-center gap-2' : '' %>" <%= html_attributes(button_attributes) %>>
+    <% if show_loading_spinner? %>
+      <span class="loading loading-spinner loading-xs"></span>
+    <% end %>
+    
+    <% if show_icon? && icon_position == 'left' %>
+      <%= render_button_icon(icon) %>
+    <% end %>
+    
+    <%= content %>
+    
+    <% if show_icon? && icon_position == 'right' %>
+      <%= render_button_icon(icon) %>
+    <% end %>
+  </button>
+<% end %>

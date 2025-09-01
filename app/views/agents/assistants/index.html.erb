@@ -1,0 +1,70 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-3xl font-bold">AI Assistants</h1>
+    <div class="flex gap-2">
+      <%= link_to "Teams", agents_teams_path, class: "btn btn-ghost" %>
+      <%= link_to "Monitoring", agents_monitoring_index_path, class: "btn btn-ghost" %>
+      <%= link_to "New Assistant", new_agents_assistant_path, class: "btn btn-primary" %>
+    </div>
+  </div>
+
+  <% if @assistants.any? %>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <% @assistants.each do |assistant| %>
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title">
+              <%= assistant.name %>
+              <% if assistant.active? %>
+                <div class="badge badge-success">Active</div>
+              <% else %>
+                <div class="badge badge-ghost">Inactive</div>
+              <% end %>
+            </h2>
+            
+            <% if assistant.instructions.present? %>
+              <p class="text-sm opacity-70">
+                <%= truncate(assistant.instructions, length: 100) %>
+              </p>
+            <% end %>
+            
+            <div class="mt-4">
+              <% if assistant.tools.any? %>
+                <div class="flex flex-wrap gap-2 mb-4">
+                  <% assistant.tools.each do |tool| %>
+                    <div class="badge badge-outline">
+                      <%= tool['type'].humanize %>
+                    </div>
+                  <% end %>
+                </div>
+              <% end %>
+              
+              <div class="text-xs opacity-50">
+                <% if assistant.model_provider.present? %>
+                  Provider: <%= assistant.model_provider %>
+                <% else %>
+                  Using default LLM
+                <% end %>
+              </div>
+            </div>
+            
+            <div class="card-actions justify-end mt-4">
+              <%= link_to "Chat", agents_assistant_path(assistant), class: "btn btn-primary btn-sm" %>
+              <%= link_to "Edit", edit_agents_assistant_path(assistant), class: "btn btn-ghost btn-sm" %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="hero bg-base-200 rounded-lg p-12">
+      <div class="hero-content text-center">
+        <div class="max-w-md">
+          <h2 class="text-2xl font-bold mb-4">No Assistants Yet</h2>
+          <p class="mb-6">Create your first AI assistant to start chatting with intelligent agents.</p>
+          <%= link_to "Create Assistant", new_agents_assistant_path, class: "btn btn-primary" %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

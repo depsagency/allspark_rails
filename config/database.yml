@@ -1,0 +1,110 @@
+# PostgreSQL. Versions 9.3 and up are supported.
+#
+# Install the pg driver:
+#   gem install pg
+# On macOS with Homebrew:
+#   gem install pg -- --with-pg-config=/usr/local/bin/pg_config
+# On macOS with MacPorts:
+#   gem install pg -- --with-pg-config=/opt/local/lib/postgresql84/bin/pg_config
+# On Windows:
+#   gem install pg
+#       Choose the win32 build.
+#       Install PostgreSQL and put its /bin directory on your path.
+#
+# Configure Using Gemfile
+# gem "pg"
+#
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  # For details on connection pooling, see Rails configuration guide
+  # https://guides.rubyonrails.org/configuring.html#database-pooling
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+
+development:
+  <% if ENV["DATABASE_URL"].present? %>
+  url: <%= ENV["DATABASE_URL"] %>
+  <% else %>
+  <<: *default
+  database: all_spark_development
+  # If you have a local PostgreSQL user, you can specify it here
+  # username: myuser
+  # password: mypassword
+  host: localhost
+  <% end %>
+
+# Warning: The database defined as "test" will be erased and
+# re-generated from your development database when you run "rake".
+# Do not set this db to the same as development or production.
+test:
+  <% if ENV["DATABASE_URL"].present? %>
+  url: <%= ENV["DATABASE_URL"].sub(/\/[^\/]+$/, '/all_spark_test') %>
+  <% else %>
+  <<: *default
+  database: all_spark_test
+  # username: myuser
+  # password: mypassword
+  host: localhost
+  <% end %>
+
+# As with config/credentials.yml, you never want to store sensitive information
+# like your database password in the repository. If your database password
+# is not in the repository, you can use the following to read it from an
+# environment variable:
+#
+#   production:
+#     <<: *default
+#     password: <%= ENV["MYAPP_DATABASE_PASSWORD"] %>
+#
+# You can also use a URL to specify the database configuration:
+#
+#   production:
+#     url: <%= ENV["DATABASE_URL"] %>
+#
+# Read https://guides.rubyonrails.org/configuring.html#configuring-a-database
+# for a full overview on how database configuration works.
+#
+production:
+  <% if ENV["DATABASE_URL"].present? %>
+  # For Heroku deployment with single database
+  primary:
+    url: <%= ENV["DATABASE_URL"] %>
+  cache:
+    url: <%= ENV["DATABASE_URL"] %>
+    migrations_paths: db/cache_migrate
+  queue:
+    url: <%= ENV["DATABASE_URL"] %>
+    migrations_paths: db/queue_migrate
+  cable:
+    url: <%= ENV["DATABASE_URL"] %>
+    migrations_paths: db/cable_migrate
+  <% else %>
+  # For multi-database setup (non-Heroku)
+  primary:
+    <<: *default
+    database: all_spark_production
+    username: <%= ENV["DATABASE_USERNAME"] %>
+    password: <%= ENV["DATABASE_PASSWORD"] %>
+    host: <%= ENV.fetch("DATABASE_HOST", "localhost") %>
+  cache:
+    <<: *default
+    database: all_spark_cache_production
+    username: <%= ENV["DATABASE_USERNAME"] %>
+    password: <%= ENV["DATABASE_PASSWORD"] %>
+    host: <%= ENV.fetch("DATABASE_HOST", "localhost") %>
+    migrations_paths: db/cache_migrate
+  queue:
+    <<: *default
+    database: all_spark_queue_production
+    username: <%= ENV["DATABASE_USERNAME"] %>
+    password: <%= ENV["DATABASE_PASSWORD"] %>
+    host: <%= ENV.fetch("DATABASE_HOST", "localhost") %>
+    migrations_paths: db/queue_migrate
+  cable:
+    <<: *default
+    database: all_spark_cable_production
+    username: <%= ENV["DATABASE_USERNAME"] %>
+    password: <%= ENV["DATABASE_PASSWORD"] %>
+    host: <%= ENV.fetch("DATABASE_HOST", "localhost") %>
+    migrations_paths: db/cable_migrate
+  <% end %>

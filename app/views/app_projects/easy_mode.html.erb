@@ -1,0 +1,125 @@
+<div class="min-h-screen bg-base-100">
+  <div class="container mx-auto px-4 py-8 max-w-4xl">
+    <!-- Header -->
+    <div class="text-center mb-12">
+      <h1 class="text-5xl font-bold mb-4">Easy Mode Project Creation</h1>
+      <p class="text-xl text-base-content/70 mb-8">
+        Describe your project idea in your own words. Our AI will help structure it into a comprehensive project blueprint.
+      </p>
+    </div>
+
+    <!-- Easy Mode Form -->
+    <%= form_with model: @app_project, url: wizard_process_easy_mode_app_projects_path, local: true, 
+                  class: "space-y-8", data: { turbo: false } do |form| %>
+      
+      <!-- Project Name -->
+      <div class="form-control">
+        <%= form.label :name, "Project Name", class: "label" %>
+        <%= form.text_field :name, 
+            class: "input input-bordered input-lg w-full", 
+            placeholder: "My Amazing App",
+            required: true,
+            autofocus: true %>
+        <label class="label">
+          <span class="label-text-alt">Give your project a memorable name</span>
+        </label>
+      </div>
+
+      <!-- Project Description -->
+      <div class="form-control">
+        <%= form.label :description, "Project Description", class: "label" %>
+        <%= form.text_area :description, 
+            rows: 12,
+            class: "textarea textarea-bordered text-lg leading-relaxed w-full", 
+            placeholder: "Tell us everything about your project idea...\n\nWhat problem does it solve?\nWho will use it?\nWhat features do you envision?\nWhat makes it unique?\n\nDon't worry about structure - just write naturally!",
+            required: true %>
+        <label class="label">
+          <span class="label-text-alt">The more details you provide, the better our AI can help structure your project</span>
+        </label>
+      </div>
+
+      <!-- Benefits Section -->
+      <div class="alert alert-info">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <div>
+          <h3 class="font-bold">AI-Powered Project Structuring</h3>
+          <div class="text-sm mt-1">
+            Our AI will analyze your description and automatically fill out all 10 project questionnaire fields:
+            <ul class="list-disc list-inside mt-2 ml-4">
+              <li>Application Vision & Problem Statement</li>
+              <li>Target Users & Personas</li>
+              <li>User Journeys & Workflows</li>
+              <li>Core Features & Functionality</li>
+              <li>Technical Requirements & Stack</li>
+              <li>And 5 more detailed sections...</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-col sm:flex-row gap-4 pt-4">
+        <%= form.submit "Generate Project Structure", 
+            class: "btn btn-primary btn-lg flex-1",
+            data: { 
+              disable_with: "Processing with AI...",
+              confirm: "Ready to process your project description with AI? This will create a new project and structure it automatically."
+            } %>
+        
+        <%= link_to "Skip to Manual Entry", 
+            wizard_app_projects_path(skip_easy_mode: true), 
+            class: "btn btn-outline btn-lg flex-1" %>
+      </div>
+
+      <!-- Help Text -->
+      <div class="text-center text-sm text-base-content/60 mt-8">
+        <p>
+          <strong>Tip:</strong> Include details about your target users, key features, technical preferences, 
+          and any specific requirements. The AI will organize these into a structured format.
+        </p>
+      </div>
+    <% end %>
+
+    <!-- Example Section -->
+    <div class="divider mt-12 mb-8">Example</div>
+    
+    <div class="collapse collapse-arrow bg-base-200">
+      <input type="checkbox" />
+      <div class="collapse-title text-xl font-medium">
+        See an example project description
+      </div>
+      <div class="collapse-content">
+        <div class="prose max-w-none">
+          <h4>Project Name: TaskFlow Pro</h4>
+          <p class="whitespace-pre-wrap">I want to build a project management tool specifically for freelancers and small creative agencies. 
+
+The main problem it solves is that existing tools like Asana or Trello are too complex and expensive for solo freelancers or small teams. They need something simpler but still powerful.
+
+My target users are:
+- Freelance designers, developers, and writers
+- Small agencies with 2-10 people
+- Creative professionals who juggle multiple client projects
+
+Key features I envision:
+- Simple kanban boards for each project
+- Time tracking built into each task
+- Invoice generation based on tracked time
+- Client portal where clients can view progress
+- Mobile app for updating tasks on the go
+- Integration with popular tools like Google Calendar and Todoist
+
+Technical requirements:
+- Should work on web and mobile
+- Real-time updates when team members make changes
+- Secure client access with permissions
+- File uploads for project assets
+- Export capabilities for reports
+
+What makes it unique is the focus on freelancers - combining project management with time tracking and invoicing in one simple tool. Most competitors focus on either project management OR invoicing, not both.
+
+I'm concerned about making it simple enough for non-technical users while still being powerful. Also worried about the cost of real-time features and file storage.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

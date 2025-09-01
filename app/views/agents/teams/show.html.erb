@@ -1,0 +1,357 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl font-bold"><%= @team.name %></h1>
+      <% if @team.purpose.present? %>
+        <p class="text-base-content/70 mt-2"><%= @team.purpose %></p>
+      <% end %>
+    </div>
+    
+    <div class="flex gap-2">
+      <%= link_to "Edit", edit_agents_team_path(@team), class: "btn btn-ghost" %>
+      <%= link_to "All Teams", agents_teams_path, class: "btn btn-ghost" %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Main Content -->
+    <div class="lg:col-span-2 space-y-6">
+      <!-- Workflows Section -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="card-title">Workflows</h3>
+            <%= link_to "+ New Workflow", new_agents_team_workflow_path(@team), 
+                class: "btn btn-primary btn-sm" %>
+          </div>
+          
+          <% if @team.workflows.any? %>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <% @team.workflows.order(created_at: :desc).limit(4).each do |workflow| %>
+                <div class="card card-compact bg-base-200">
+                  <div class="card-body">
+                    <div class="flex justify-between items-start">
+                      <h4 class="font-semibold"><%= workflow.name %></h4>
+                      <div class="badge badge-<%= workflow.status == 'active' ? 'success' : workflow.status == 'draft' ? 'warning' : 'ghost' %> badge-sm">
+                        <%= workflow.status %>
+                      </div>
+                    </div>
+                    <p class="text-sm opacity-70"><%= workflow.description %></p>
+                    <div class="card-actions justify-end mt-2">
+                      <%= link_to "Edit", edit_agents_team_workflow_path(@team, workflow), 
+                          class: "btn btn-ghost btn-xs" %>
+                      <% if workflow.status == 'active' %>
+                        <%= link_to "Run", agents_team_workflow_path(@team, workflow), 
+                            class: "btn btn-primary btn-xs" %>
+                      <% else %>
+                        <%= link_to "View", agents_team_workflow_path(@team, workflow), 
+                            class: "btn btn-ghost btn-xs" %>
+                      <% end %>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+            
+            <% if @team.workflows.count > 4 %>
+              <div class="text-center mt-4">
+                <%= link_to "View all workflows →", agents_team_workflows_path(@team), 
+                    class: "link link-primary text-sm" %>
+              </div>
+            <% end %>
+          <% else %>
+            <div class="text-center py-8">
+              <p class="text-base-content/60 mb-4">No workflows created yet</p>
+              <%= link_to "Create your first workflow", new_agents_team_workflow_path(@team), 
+                  class: "btn btn-primary" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Execute Task -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h3 class="card-title">Execute Task</h3>
+          
+          <%= form_with url: execute_agents_team_path(@team), method: :post, local: true do |form| %>
+            <div class="form-control">
+              <%= form.text_area :task, 
+                  rows: 3,
+                  class: "textarea textarea-bordered",
+                  placeholder: "Describe the task you want the team to complete..." %>
+            </div>
+            
+            <div class="form-control mt-4">
+              <%= form.submit "Execute Task", class: "btn btn-primary" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Current Execution Progress (if active) -->
+      <% if params[:execution_id] %>
+        <% current_execution = @team.agent_team_executions.find_by(id: params[:execution_id]) %>
+        <% if current_execution && current_execution.running? %>
+          <div class="card bg-base-100 shadow-xl" 
+               data-controller="team-execution"
+               data-team-execution-execution-id-value="<%= current_execution.id %>">
+            <div class="card-body">
+              <h3 class="card-title">Current Execution Progress</h3>
+              
+              <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                  <p class="font-medium"><%= truncate(current_execution.task, length: 100) %></p>
+                  <div class="badge badge-warning" data-team-execution-target="status">
+                    <%= current_execution.status %>
+                  </div>
+                </div>
+                
+                <div class="text-sm opacity-70" data-team-execution-target="progress">
+                  Initializing...
+                </div>
+                
+                <div class="loading loading-dots loading-md"></div>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
+
+      <!-- Recent Executions -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h3 class="card-title">Recent Executions</h3>
+          
+          <% if @executions.any? %>
+            <div class="space-y-4">
+              <% @executions.each do |execution| %>
+                <div class="border-l-4 border-<%= execution.completed? ? 'success' : execution.failed? ? 'error' : execution.pending? ? 'ghost' : 'warning' %> pl-4">
+                  <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                      <p class="font-medium"><%= truncate(execution.task, length: 100) %></p>
+                      <div class="text-sm opacity-70 mt-1">
+                        <%= time_ago_in_words(execution.created_at) %> ago
+                        <% if execution.duration %>
+                          • <%= execution.duration.round(1) %>s
+                        <% end %>
+                      </div>
+                    </div>
+                    <div class="badge badge-<%= execution.completed? ? 'success' : execution.failed? ? 'error' : execution.pending? ? 'ghost' : 'warning' %>">
+                      <%= execution.status %>
+                    </div>
+                  </div>
+                  
+                  <% if execution.result_data.present? %>
+                    <div class="mt-2 text-sm">
+                      <% if execution.result_data['plan'] && execution.result_data['plan']['steps'] %>
+                        <span class="opacity-70">Total steps:</span> <%= execution.result_data['plan']['steps'].size %>
+                      <% end %>
+                      <% if execution.result_data['results'] %>
+                        <br>
+                        <span class="opacity-70">Steps completed:</span> <%= execution.result_data['results'].size %>
+                      <% end %>
+                      <% if execution.result_data['status'] %>
+                        <br>
+                        <span class="opacity-70">Final status:</span> <%= execution.result_data['status'] %>
+                      <% end %>
+                      
+                      <% # Show execution details %>
+                      <details class="mt-2">
+                        <summary class="cursor-pointer font-semibold opacity-80 hover:opacity-100">View full execution details</summary>
+                        
+                        <% # Show plan %>
+                        <% if execution.result_data['plan'] && execution.result_data['plan']['steps'] && execution.result_data['plan']['steps'].any? %>
+                          <div class="mt-3">
+                            <h5 class="font-semibold opacity-70 mb-1">Execution Plan:</h5>
+                            <ol class="list-decimal list-inside space-y-1 ml-2">
+                              <% execution.result_data['plan']['steps'].each do |step| %>
+                                <li class="text-xs">
+                                  <span class="badge badge-ghost badge-xs"><%= step['agent'] %></span>
+                                  <%= step['action'] %>
+                                </li>
+                              <% end %>
+                            </ol>
+                          </div>
+                        <% end %>
+                        
+                        <% # Show results %>
+                        <% if execution.result_data['results'] && execution.result_data['results'].any? %>
+                          <div class="mt-3">
+                            <h5 class="font-semibold opacity-70 mb-1">Step Results:</h5>
+                            <div class="space-y-2">
+                              <% execution.result_data['results'].each_with_index do |result, index| %>
+                                <div class="collapse collapse-arrow bg-base-200">
+                                  <input type="checkbox" name="result-<%= execution.id %>-<%= index %>" />
+                                  <div class="collapse-title text-xs font-medium">
+                                    Step <%= index + 1 %>: 
+                                    <span class="badge badge-<%= result['status'] == 'completed' ? 'success' : 'error' %> badge-xs">
+                                      <%= result['status'] %>
+                                    </span>
+                                    <% if result['step'] %>
+                                      - <%= truncate(result['step']['action'], length: 50) %>
+                                    <% end %>
+                                  </div>
+                                  <div class="collapse-content">
+                                    <div class="text-xs space-y-1">
+                                      <% if result['agent'] %>
+                                        <p><strong>Agent:</strong> <%= result['agent'] %></p>
+                                      <% end %>
+                                      <% if result['response'] %>
+                                        <div>
+                                          <strong>Response:</strong>
+                                          <div class="mt-1 p-2 bg-base-100 rounded overflow-x-auto">
+                                            <pre class="whitespace-pre-wrap"><%= result['response'] %></pre>
+                                          </div>
+                                        </div>
+                                      <% end %>
+                                      <% if result['error'] %>
+                                        <div>
+                                          <strong>Error:</strong>
+                                          <span class="text-error"><%= result['error'] %></span>
+                                        </div>
+                                      <% end %>
+                                    </div>
+                                  </div>
+                                </div>
+                              <% end %>
+                            </div>
+                          </div>
+                        <% end %>
+                        
+                        <% # Show raw data %>
+                        <details class="mt-3">
+                          <summary class="cursor-pointer text-xs opacity-60 hover:opacity-100">View raw JSON data</summary>
+                          <div class="mt-1 p-2 bg-base-300 rounded overflow-x-auto">
+                            <pre class="text-xs"><%= JSON.pretty_generate(execution.result_data) %></pre>
+                          </div>
+                        </details>
+                      </details>
+                      
+                      <div class="mt-3">
+                        <%= link_to "View Full Details →", agents_team_execution_path(execution), 
+                            class: "btn btn-ghost btn-xs" %>
+                      </div>
+                    </div>
+                  <% end %>
+                  
+                  <% if execution.error_message.present? %>
+                    <div class="alert alert-error mt-2">
+                      <span class="text-sm"><%= execution.error_message %></span>
+                    </div>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="text-center py-8 opacity-70">No executions yet</p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+      <!-- Team Configuration -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h3 class="card-title text-lg">Configuration</h3>
+          
+          <div class="space-y-3">
+            <div>
+              <label class="label">
+                <span class="label-text font-semibold">Status</span>
+              </label>
+              <% if @team.active? %>
+                <div class="badge badge-success">Active</div>
+              <% else %>
+                <div class="badge badge-ghost">Inactive</div>
+              <% end %>
+            </div>
+            
+            <div>
+              <label class="label">
+                <span class="label-text font-semibold">Coordination Mode</span>
+              </label>
+              <div class="text-sm">
+                <%= @team.coordination_mode || 'sequential' %>
+              </div>
+            </div>
+            
+            <div>
+              <label class="label">
+                <span class="label-text font-semibold">Max Iterations</span>
+              </label>
+              <div class="text-sm">
+                <%= @team.max_iterations || 10 %>
+              </div>
+            </div>
+            
+            <div>
+              <label class="label">
+                <span class="label-text font-semibold">Timeout</span>
+              </label>
+              <div class="text-sm">
+                <%= @team.timeout_seconds || 300 %> seconds
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Team Members -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h3 class="card-title text-lg">Team Members</h3>
+          
+          <div class="space-y-2">
+            <% @team.assistants.each do |assistant| %>
+              <div class="flex items-center justify-between p-2 bg-base-200 rounded">
+                <div>
+                  <div class="font-medium"><%= assistant.name %></div>
+                  <div class="text-xs opacity-70">
+                    <%= assistant.tools.size %> tools
+                  </div>
+                </div>
+                <%= link_to "View", agents_assistant_path(assistant), 
+                    class: "btn btn-ghost btn-xs" %>
+              </div>
+            <% end %>
+            
+            <% if @team.assistants.empty? %>
+              <p class="text-sm opacity-70">No agents assigned</p>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Capabilities Summary -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h3 class="card-title text-lg">Team Capabilities</h3>
+          
+          <% capabilities = @team.capabilities %>
+          
+          <div class="space-y-2">
+            <div class="text-sm">
+              <span class="font-semibold"><%= capabilities[:agents] %></span> agents
+            </div>
+            
+            <% if capabilities[:tools].any? %>
+              <div>
+                <div class="text-sm font-semibold mb-1">Available Tools:</div>
+                <div class="flex flex-wrap gap-1">
+                  <% capabilities[:tools].each do |tool| %>
+                    <div class="badge badge-primary badge-sm">
+                      <%= tool.humanize %>
+                    </div>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

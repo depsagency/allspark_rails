@@ -1,0 +1,233 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-3xl font-bold">System Health Details</h1>
+    <%= link_to "← Back to Monitoring", agents_monitoring_index_path, class: "btn btn-ghost" %>
+  </div>
+
+  <!-- Overall Status -->
+  <div class="card bg-base-100 shadow-xl mb-8">
+    <div class="card-body">
+      <h2 class="card-title">Overall System Status</h2>
+      <div class="flex items-center gap-4">
+        <div class="text-4xl">
+          <% case @health[:status] %>
+          <% when 'healthy' %>
+            <span class="text-success">✓</span>
+          <% when 'degraded' %>
+            <span class="text-warning">⚠</span>
+          <% else %>
+            <span class="text-error">✗</span>
+          <% end %>
+        </div>
+        <div>
+          <div class="text-2xl font-bold">
+            <%= @health[:status].capitalize %>
+          </div>
+          <div class="text-sm opacity-70">
+            Last checked: <%= @health[:timestamp].strftime("%Y-%m-%d %H:%M:%S %Z") %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Component Health Grid -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    
+    <!-- LLM Providers -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h3 class="card-title flex justify-between">
+          LLM Providers
+          <span class="badge badge-<%= @health[:checks][:llm][:status] == 'healthy' ? 'success' : 'error' %>">
+            <%= @health[:checks][:llm][:status] %>
+          </span>
+        </h3>
+        
+        <div class="space-y-3 mt-4">
+          <% @health[:checks][:llm][:providers].each do |provider, status| %>
+            <div class="flex justify-between items-center p-3 bg-base-200 rounded">
+              <div class="flex items-center gap-2">
+                <% case provider %>
+                <% when 'openai' %>
+                  <span class="text-2xl">🤖</span>
+                <% when 'claude' %>
+                  <span class="text-2xl">🧠</span>
+                <% when 'gemini' %>
+                  <span class="text-2xl">💎</span>
+                <% else %>
+                  <span class="text-2xl">🔧</span>
+                <% end %>
+                <span class="font-semibold capitalize"><%= provider %></span>
+              </div>
+              
+              <% if status == 'available' %>
+                <div class="badge badge-success gap-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-4 h-4 stroke-current"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  Available
+                </div>
+              <% elsif status.start_with?('error:') %>
+                <div class="tooltip" data-tip="<%= status.sub('error: ', '') %>">
+                  <div class="badge badge-error">Error</div>
+                </div>
+              <% else %>
+                <div class="badge badge-ghost">Unavailable</div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tools -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h3 class="card-title flex justify-between">
+          Agent Tools
+          <span class="badge badge-<%= @health[:checks][:tools][:status] == 'healthy' ? 'success' : 'warning' %>">
+            <%= @health[:checks][:tools][:status] %>
+          </span>
+        </h3>
+        
+        <div class="space-y-3 mt-4">
+          <% @health[:checks][:tools][:tools].each do |tool_name, tool_info| %>
+            <div class="flex justify-between items-center p-3 bg-base-200 rounded">
+              <div class="flex items-center gap-2">
+                <% case tool_name %>
+                <% when :calculator %>
+                  <span class="text-2xl">🧮</span>
+                <% when :ruby_code %>
+                  <span class="text-2xl">💻</span>
+                <% when :web_search %>
+                  <span class="text-2xl">🔍</span>
+                <% when :chat %>
+                  <span class="text-2xl">💬</span>
+                <% else %>
+                  <span class="text-2xl">🔧</span>
+                <% end %>
+                <span class="font-semibold"><%= tool_name.to_s.humanize %></span>
+              </div>
+              
+              <% if tool_info[:status] == 'operational' %>
+                <div class="badge badge-success">Operational</div>
+              <% else %>
+                <div class="tooltip" data-tip="<%= tool_info[:error] %>">
+                  <div class="badge badge-error">Error</div>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Assistants -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h3 class="card-title flex justify-between">
+          Assistants
+          <span class="badge badge-<%= @health[:checks][:assistants][:status] == 'healthy' ? 'success' : 'error' %>">
+            <%= @health[:checks][:assistants][:status] %>
+          </span>
+        </h3>
+        
+        <div class="stats stats-vertical shadow mt-4">
+          <div class="stat">
+            <div class="stat-title">Total Assistants</div>
+            <div class="stat-value"><%= @health[:checks][:assistants][:total_assistants] %></div>
+            <div class="stat-desc">
+              <%= @health[:checks][:assistants][:active_assistants] %> active
+            </div>
+          </div>
+          
+          <div class="stat">
+            <div class="stat-title">Recent Activity</div>
+            <div class="stat-value text-lg">
+              <%= @health[:checks][:assistants][:recent_runs] %> runs
+            </div>
+            <div class="stat-desc">Last hour</div>
+          </div>
+          
+          <div class="stat">
+            <div class="stat-title">Failure Rate</div>
+            <div class="stat-value text-lg <%= @health[:checks][:assistants][:failure_rate] > 10 ? 'text-error' : 'text-success' %>">
+              <%= @health[:checks][:assistants][:failure_rate] %>%
+            </div>
+            <div class="stat-desc">
+              <%= @health[:checks][:assistants][:failed_runs] %> failed runs
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Background Jobs -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h3 class="card-title flex justify-between">
+          Background Jobs
+          <span class="badge badge-<%= @health[:checks][:background_jobs][:status] == 'healthy' ? 'success' : 'error' %>">
+            <%= @health[:checks][:background_jobs][:status] %>
+          </span>
+        </h3>
+        
+        <div class="space-y-4 mt-4">
+          <!-- Redis Status -->
+          <div class="flex justify-between items-center p-3 bg-base-200 rounded">
+            <div class="flex items-center gap-2">
+              <span class="text-2xl">📡</span>
+              <span class="font-semibold">Redis Connection</span>
+            </div>
+            <div class="badge badge-<%= @health[:checks][:background_jobs][:redis] == 'connected' ? 'success' : 'error' %>">
+              <%= @health[:checks][:background_jobs][:redis] %>
+            </div>
+          </div>
+
+          <!-- Queue Stats -->
+          <div class="stats stats-vertical shadow">
+            <div class="stat">
+              <div class="stat-title">Queue Size</div>
+              <div class="stat-value text-2xl">
+                <%= @health[:checks][:background_jobs][:queue_size] %>
+              </div>
+              <div class="stat-desc">Pending jobs</div>
+            </div>
+            
+            <div class="stat">
+              <div class="stat-title">Scheduled</div>
+              <div class="stat-value text-2xl">
+                <%= @health[:checks][:background_jobs][:scheduled_size] %>
+              </div>
+              <div class="stat-desc">Future jobs</div>
+            </div>
+            
+            <div class="stat">
+              <div class="stat-title">Retries</div>
+              <div class="stat-value text-2xl <%= @health[:checks][:background_jobs][:retry_size] > 0 ? 'text-warning' : '' %>">
+                <%= @health[:checks][:background_jobs][:retry_size] %>
+              </div>
+              <div class="stat-desc">Failed jobs</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Raw Data -->
+  <div class="card bg-base-100 shadow-xl mt-8">
+    <div class="card-body">
+      <h3 class="card-title">Raw Health Check Data</h3>
+      <div class="mockup-code">
+        <pre><code><%= JSON.pretty_generate(@health) %></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="mt-8 flex gap-4">
+    <%= link_to "Refresh", health_agents_monitoring_index_path, class: "btn btn-primary" %>
+    <%= link_to "Download JSON", health_agents_monitoring_index_path(format: :json), 
+        class: "btn btn-outline", download: "health-check-#{Time.current.to_i}.json" %>
+  </div>
+</div>

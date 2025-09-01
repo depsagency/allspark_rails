@@ -1,0 +1,9 @@
+<%= link_to url, class: link_classes, **options do %>
+  <% if has_icon? %>
+    <span class="mr-2"><%= icon %></span>
+  <% end %>
+  <%= text %>
+  <% if has_badge? %>
+    <span class="<%= badge_classes %>"><%= badge %></span>
+  <% end %>
+<% end %>

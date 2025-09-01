@@ -1,0 +1,96 @@
+# Production Dockerfile for AllSpark
+# Optimized for Kamal deployment with multi-stage build
+
+# Stage 1: Dependencies
+FROM ruby:3.2-slim AS dependencies
+
+# Install build dependencies
+RUN apt-get update -qq && \
+    apt-get install -y \
+    build-essential \
+    libpq-dev \
+    libyaml-dev \
+    git \
+    curl \
+    ca-certificates \
+    gnupg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js 18
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs && \
+    corepack enable
+
+WORKDIR /app
+
+# Copy dependency files
+COPY Gemfile Gemfile.lock ./
+COPY package.json yarn.lock ./
+
+# Install Ruby dependencies
+RUN bundle config set --local deployment 'true' && \
+    bundle config set --local without 'development test' && \
+    bundle install --jobs=4 --retry=3 && \
+    bundle clean --force
+
+# Install Node dependencies
+RUN yarn install --frozen-lockfile --production=false && \
+    yarn cache clean
+
+# Stage 2: Assets
+FROM dependencies AS assets
+
+# Copy application code
+COPY . .
+
+# Precompile assets
+RUN SECRET_KEY_BASE=dummy RAILS_ENV=production bundle exec rails assets:precompile && \
+    rm -rf tmp/cache
+
+# Stage 3: Final production image
+FROM ruby:3.2-slim AS production
+
+# Install runtime dependencies only
+RUN apt-get update -qq && \
+    apt-get install -y \
+    libpq5 \
+    curl \
+    imagemagick \
+    libvips42 \
+    file \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN useradd -m -u 1000 -s /bin/bash app
+
+WORKDIR /app
+
+# Copy built artifacts from previous stages
+COPY --from=dependencies /usr/local/bundle /usr/local/bundle
+COPY --from=assets --chown=app:app /app /app
+
+# Create necessary directories
+RUN mkdir -p /app/tmp/pids /app/tmp/cache /app/tmp/sockets /app/log && \
+    chown -R app:app /app/tmp /app/log
+
+# Switch to non-root user
+USER app
+
+# Set Rails environment
+ENV RAILS_ENV=production \
+    RAILS_LOG_TO_STDOUT=true \
+    RAILS_SERVE_STATIC_FILES=true \
+    BUNDLE_APP_CONFIG=/usr/local/bundle \
+    BUNDLE_PATH=/usr/local/bundle \
+    GEM_HOME=/usr/local/bundle \
+    PATH=/usr/local/bundle/bin:$PATH
+
+# Expose port
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:3000/up || exit 1
+
+# Default command with proper signal handling
+CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]

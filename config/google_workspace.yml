@@ -1,0 +1,67 @@
+development:
+  project_id: "your-dev-project"
+  service_accounts:
+    email_processor:
+      key_path: "config/keys/dev-email-processor.json"
+      impersonate_user: "admin@dev.yourdomain.com"
+      scopes:
+        - "https://www.googleapis.com/auth/gmail.modify"
+        - "https://www.googleapis.com/auth/drive.file"
+        - "https://www.googleapis.com/auth/calendar"
+      description: "Processes emails, manages Drive files and calendar events"
+    
+    calendar_agent:
+      key_path: "config/keys/dev-calendar-agent.json"
+      impersonate_user: "admin@dev.yourdomain.com"
+      scopes:
+        - "https://www.googleapis.com/auth/calendar"
+        - "https://www.googleapis.com/auth/calendar.events"
+      description: "Manages calendar events and scheduling"
+    
+    drive_processor:
+      key_path: "config/keys/dev-drive-processor.json"
+      impersonate_user: "admin@dev.yourdomain.com"
+      scopes:
+        - "https://www.googleapis.com/auth/drive"
+        - "https://www.googleapis.com/auth/drive.file"
+      description: "Manages Drive files and folder operations"
+
+test:
+  project_id: "test-project"
+  service_accounts:
+    email_processor:
+      key_path: "config/keys/test-email-processor.json"
+      impersonate_user: "admin@test.yourdomain.com"
+      scopes:
+        - "https://www.googleapis.com/auth/gmail.modify"
+        - "https://www.googleapis.com/auth/drive.file"
+        - "https://www.googleapis.com/auth/calendar"
+      description: "Test email processor"
+
+production:
+  project_id: "your-prod-project"
+  service_accounts:
+    email_processor:
+      key_path: "config/keys/prod-email-processor.json"
+      impersonate_user: "admin@yourdomain.com"
+      scopes:
+        - "https://www.googleapis.com/auth/gmail.modify"
+        - "https://www.googleapis.com/auth/drive.file"
+        - "https://www.googleapis.com/auth/calendar"
+      description: "Production email processor, manages Drive files and calendar events"
+    
+    calendar_agent:
+      key_path: "config/keys/prod-calendar-agent.json"
+      impersonate_user: "admin@yourdomain.com"
+      scopes:
+        - "https://www.googleapis.com/auth/calendar"
+        - "https://www.googleapis.com/auth/calendar.events"
+      description: "Production calendar management"
+    
+    drive_processor:
+      key_path: "config/keys/prod-drive-processor.json"
+      impersonate_user: "admin@yourdomain.com"
+      scopes:
+        - "https://www.googleapis.com/auth/drive"
+        - "https://www.googleapis.com/auth/drive.file"
+      description: "Production Drive file management"

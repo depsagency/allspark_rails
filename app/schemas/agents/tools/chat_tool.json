@@ -1,0 +1,18 @@
+{
+  "name": "chat",
+  "description": "Send a message to a chat thread",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "message": {
+        "type": "string",
+        "description": "The message content to send"
+      },
+      "thread_id": {
+        "type": "string",
+        "description": "The ID of the chat thread (optional if set during initialization)"
+      }
+    },
+    "required": ["message"]
+  }
+}

@@ -1,0 +1,148 @@
+<div class="task-browser">
+  <% if @app_project.generated_tasks.present? %>
+    <div class="mb-4 flex justify-between items-center">
+      <h3 class="text-lg font-semibold">Development Tasks</h3>
+      <div class="flex gap-2">
+        <select class="select select-bordered select-sm" id="phase-filter">
+          <option value="">All Phases</option>
+          <option value="phase-1">Phase 1: Foundation</option>
+          <option value="phase-2">Phase 2: Core Infrastructure</option>
+          <option value="phase-3">Phase 3: Feature Development</option>
+          <option value="phase-4">Phase 4: Integrations</option>
+          <option value="phase-5">Phase 5: Testing</option>
+          <option value="phase-6">Phase 6: Polish & Deployment</option>
+        </select>
+        <select class="select select-bordered select-sm" id="priority-filter">
+          <option value="">All Priorities</option>
+          <option value="high">High Priority</option>
+          <option value="medium">Medium Priority</option>
+          <option value="low">Low Priority</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="space-y-4 max-h-96 overflow-y-auto" id="task-list">
+      <% task_sections = parse_task_sections(@app_project.generated_tasks) %>
+      <% task_sections.each_with_index do |section, section_index| %>
+        <div class="collapse collapse-arrow bg-base-200" data-phase="phase-<%= section_index + 1 %>">
+          <input type="checkbox" class="collapse-toggle" <%= 'checked' if section_index == 0 %>>
+          <div class="collapse-title text-lg font-medium">
+            <div class="flex justify-between items-center">
+              <span><%= section[:title] %></span>
+              <div class="flex gap-2">
+                <span class="badge badge-outline badge-sm"><%= section[:tasks].count %> tasks</span>
+                <span class="badge badge-primary badge-sm"><%= section[:estimated_hours] %>h</span>
+              </div>
+            </div>
+          </div>
+          <div class="collapse-content">
+            <div class="space-y-3 pt-2">
+              <% section[:tasks].each do |task| %>
+                <div class="card bg-base-100 shadow-sm border border-gray-200" data-priority="<%= task[:priority]&.downcase %>">
+                  <div class="card-body p-4">
+                    <div class="flex justify-between items-start mb-2">
+                      <h4 class="font-semibold text-sm"><%= task[:id] %>: <%= task[:title] %></h4>
+                      <div class="flex gap-1">
+                        <% if task[:priority] %>
+                          <%= render Ui::BadgeComponent.new(
+                                variant: task[:priority].downcase == 'high' ? :error : 
+                                        task[:priority].downcase == 'medium' ? :warning : :ghost,
+                                size: :sm
+                              ) do %>
+                            <%= task[:priority] %>
+                          <% end %>
+                        <% end %>
+                        <% if task[:hours] %>
+                          <span class="badge badge-outline badge-sm"><%= task[:hours] %>h</span>
+                        <% end %>
+                      </div>
+                    </div>
+                    
+                    <% if task[:description] %>
+                      <p class="text-sm text-gray-600 mb-2"><%= task[:description] %></p>
+                    <% end %>
+                    
+                    <% if task[:dependencies]&.any? %>
+                      <div class="mb-2">
+                        <span class="text-xs text-gray-500">Dependencies:</span>
+                        <div class="flex flex-wrap gap-1 mt-1">
+                          <% task[:dependencies].each do |dep| %>
+                            <span class="badge badge-ghost badge-xs"><%= dep %></span>
+                          <% end %>
+                        </div>
+                      </div>
+                    <% end %>
+                    
+                    <% if task[:technical_notes] %>
+                      <div class="text-xs text-gray-500 italic">
+                        💡 <%= task[:technical_notes] %>
+                      </div>
+                    <% end %>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="mt-4 text-center">
+      <button class="btn btn-outline btn-sm" onclick="expandAllTasks()">Expand All</button>
+      <button class="btn btn-outline btn-sm ml-2" onclick="collapseAllTasks()">Collapse All</button>
+    </div>
+  <% else %>
+    <div class="text-center py-8">
+      <div class="text-4xl mb-4">📝</div>
+      <h3 class="text-lg font-semibold mb-2">No Tasks Generated Yet</h3>
+      <p class="text-gray-600 mb-4">Complete the questionnaire and generate your PRD to see development tasks.</p>
+    </div>
+  <% end %>
+</div>
+
+<script>
+// Task browser functionality
+document.addEventListener('DOMContentLoaded', function() {
+  const phaseFilter = document.getElementById('phase-filter')
+  const priorityFilter = document.getElementById('priority-filter')
+  
+  if (phaseFilter && priorityFilter) {
+    phaseFilter.addEventListener('change', filterTasks)
+    priorityFilter.addEventListener('change', filterTasks)
+  }
+  
+  function filterTasks() {
+    const selectedPhase = phaseFilter.value
+    const selectedPriority = priorityFilter.value
+    
+    // Show/hide phase sections
+    const phaseSections = document.querySelectorAll('[data-phase]')
+    phaseSections.forEach(section => {
+      const phaseMatch = !selectedPhase || section.dataset.phase === selectedPhase
+      section.style.display = phaseMatch ? 'block' : 'none'
+    })
+    
+    // Show/hide individual tasks based on priority
+    const tasks = document.querySelectorAll('[data-priority]')
+    tasks.forEach(task => {
+      const priorityMatch = !selectedPriority || task.dataset.priority === selectedPriority
+      task.style.display = priorityMatch ? 'block' : 'none'
+    })
+  }
+})
+
+function expandAllTasks() {
+  const toggles = document.querySelectorAll('.collapse-toggle')
+  toggles.forEach(toggle => {
+    toggle.checked = true
+  })
+}
+
+function collapseAllTasks() {
+  const toggles = document.querySelectorAll('.collapse-toggle')
+  toggles.forEach(toggle => {
+    toggle.checked = false
+  })
+}
+</script>
+

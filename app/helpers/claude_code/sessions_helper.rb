@@ -1,0 +1,2 @@
+module ClaudeCode::SessionsHelper
+end

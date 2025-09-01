@@ -1,0 +1,50 @@
+# frozen_string_literal: true
+
+class <%= @full_component_name %> < BaseComponent
+  # Component options
+  option :variant, default: -> { :<%= @variants.first %> }
+  option :size, default: -> { :md }
+  option :disabled, default: -> { false }
+  option :css_class, optional: true
+  option :data, default: -> { {} }
+
+  # Content options
+  option :text, optional: true
+
+  <% if @with_stimulus -%>
+  # Stimulus integration
+  option :stimulus_controller, default: -> { "<%= stimulus_controller_name %>" }
+  <% end -%>
+
+  private
+
+  def component_classes
+    classes = ['<%= file_name.gsub('_', '-') %>']
+    
+    # Add variant classes
+    classes << "<%= file_name.gsub('_', '-') %>--#{variant}"
+    
+    # Add size classes
+    classes << "<%= file_name.gsub('_', '-') %>--#{size}"
+    
+    # Add state classes
+    classes << '<%= file_name.gsub('_', '-') %>--disabled' if disabled
+    
+    # Add custom classes
+    classes << css_class if css_class.present?
+    
+    classes.join(' ')
+  end
+
+  def component_data
+    data_attrs = data.dup
+    <% if @with_stimulus -%>
+    data_attrs[:controller] = stimulus_controller
+    <% end -%>
+    data_attrs
+  end
+
+  def display_content
+    text.presence || content
+  end
+end

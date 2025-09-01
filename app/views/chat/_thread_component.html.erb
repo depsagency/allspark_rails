@@ -1,0 +1,45 @@
+<div class="h-[600px] flex flex-col">
+  <!-- Messages area -->
+  <div class="flex-1 overflow-y-auto p-4 space-y-4" id="messages-container">
+    <% thread.messages.includes(:user).order(:created_at).each do |message| %>
+      <div class="chat <%= message.user == current_user ? 'chat-end' : 'chat-start' %>">
+        <div class="chat-image avatar">
+          <div class="w-10 rounded-full bg-<%= message.user == current_user ? 'primary' : 'neutral' %> text-<%= message.user == current_user ? 'primary' : 'neutral' %>-content">
+            <div class="flex items-center justify-center h-full text-sm font-semibold">
+              <%= message.user.initials %>
+            </div>
+          </div>
+        </div>
+        <div class="chat-header">
+          <%= message.user.display_name %>
+          <time class="text-xs opacity-50"><%= message.created_at.strftime("%H:%M") %></time>
+        </div>
+        <div class="chat-bubble">
+          <% if message.metadata&.dig('agent') %>
+            <div class="prose prose-sm max-w-none">
+              <%= sanitize(markdown(message.content)) %>
+            </div>
+          <% else %>
+            <%= message.content %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+  
+  <!-- Input area -->
+  <div class="border-t border-base-300 p-4">
+    <%= form_with url: chat_thread_messages_path(thread), method: :post, 
+                  data: { controller: "chat", 
+                          chat_thread_id_value: thread.id,
+                          chat_user_id_value: current_user.id,
+                          chat_user_name_value: current_user.display_name },
+                  class: "flex gap-2" do |f| %>
+      <%= text_field_tag :content, nil, 
+                         class: "input input-bordered flex-1",
+                         placeholder: "Type a message...",
+                         data: { chat_target: "input" } %>
+      <%= submit_tag "Send", class: "btn btn-primary" %>
+    <% end %>
+  </div>
+</div>

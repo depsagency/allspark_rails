@@ -1,0 +1,35 @@
+<div class="<%= container_classes %>">
+  <!-- Hidden field for unchecked state -->
+  <input type="hidden" name="<%= hidden_field_name %>" value="0">
+  
+  <label for="<%= checkbox_id %>" class="<%= label_classes %>">
+    <input type="checkbox" class="<%= checkbox_classes %>" <%= html_attributes(checkbox_attributes) %>>
+    
+    <% if has_label? || has_description? %>
+      <div class="flex-1">
+        <% if has_label? %>
+          <span class="label-text font-medium">
+            <%= label %>
+            <% if required %>
+              <span class="text-error">*</span>
+            <% end %>
+          </span>
+        <% end %>
+        
+        <% if has_description? %>
+          <div class="label-text-alt text-base-content/60 mt-1">
+            <%= description %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </label>
+  
+  <% if has_error? %>
+    <label class="label">
+      <span class="label-text-alt text-error" id="<%= error_text_id %>">
+        <%= error %>
+      </span>
+    </label>
+  <% end %>
+</div>

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DevTools Error Integration Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 4px; }
+        .iframe-container { border: 2px solid #333; margin: 20px 0; }
+        .logs { background: #1e1e1e; color: #00ff00; padding: 15px; font-family: monospace; font-size: 12px; max-height: 400px; overflow-y: auto; border-radius: 4px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .status.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button { padding: 10px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛠️ DevTools Error Integration Test</h1>
+        <p>This page tests Rails error capture and DevTools integration for the AllSpark Builder.</p>
+        
+        <div class="status info">
+            <strong>Status:</strong> <span id="status">Initializing...</span>
+        </div>
+        
+        <div class="test-section">
+            <h2>Error Capture Test</h2>
+            <p>The iframe below loads target.localhost with a test error. When ErrorPageEnhancer is working, it will inject JavaScript that sends error details via postMessage.</p>
+            
+            <div class="iframe-container">
+                <iframe id="error-frame" 
+                        src="https://target.localhost/test_error" 
+                        width="100%" 
+                        height="400" 
+                        style="border: 1px solid #ccc;">
+                </iframe>
+            </div>
+            
+            <div style="margin: 10px 0;">
+                <button onclick="testError()">🔄 Test Error Capture</button>
+                <button onclick="test404()">🔍 Test 404 Error</button>
+                <button onclick="clearLogs()">🧹 Clear Logs</button>
+                <button onclick="showErrorData()">📊 Show Error Data</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📋 Message Log</h2>
+            <div class="logs" id="message-log">
+[SYSTEM] DevTools Error Integration Test initialized
+[SYSTEM] Listening for postMessage events from iframe...
+[SYSTEM] Expected message type: 'rails-error' from ErrorPageEnhancer
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📈 Test Results</h2>
+            <div id="test-results">
+                <div class="status info">
+                    <strong>Waiting for test results...</strong><br>
+                    Click "Test Error Capture" to trigger a Rails error and see if ErrorPageEnhancer is working.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const messageLog = document.getElementById('message-log');
+        const statusEl = document.getElementById('status');
+        const testResults = document.getElementById('test-results');
+        let receivedRailsError = false;
+        let errorData = null;
+        
+        function logMessage(message, type = 'INFO') {
+            const timestamp = new Date().toISOString();
+            const logEntry = `[${timestamp}] [${type}] ${message}\n`;
+            messageLog.textContent += logEntry;
+            messageLog.scrollTop = messageLog.scrollHeight;
+        }
+        
+        function clearLogs() {
+            messageLog.textContent = '[SYSTEM] Logs cleared\n';
+        }
+        
+        function testError() {
+            logMessage('Triggering test error in iframe...', 'TEST');
+            const iframe = document.getElementById('error-frame');
+            iframe.src = 'https://target.localhost/test_error?' + Date.now();
+        }
+        
+        function test404() {
+            logMessage('Triggering 404 error in iframe...', 'TEST');
+            const iframe = document.getElementById('error-frame');
+            iframe.src = 'https://target.localhost/nonexistent_page_' + Date.now();
+        }
+        
+        function showErrorData() {
+            if (errorData) {
+                logMessage('=== CAPTURED ERROR DATA ===', 'DATA');
+                logMessage(JSON.stringify(errorData, null, 2), 'DATA');
+                logMessage('=== END ERROR DATA ===', 'DATA');
+            } else {
+                logMessage('No error data captured yet', 'WARNING');
+            }
+        }
+        
+        function updateStatus(message, type = 'info') {
+            statusEl.textContent = message;
+            statusEl.parentElement.className = `status ${type}`;
+        }
+        
+        function updateTestResults(success, message) {
+            const resultClass = success ? 'success' : 'error';
+            testResults.innerHTML = `
+                <div class="status ${resultClass}">
+                    <strong>${success ? '✅ SUCCESS' : '❌ ERROR'}:</strong><br>
+                    ${message}
+                </div>
+            `;
+        }
+        
+        // Listen for postMessage events from iframe
+        window.addEventListener('message', function(event) {
+            logMessage(`Received message from origin: ${event.origin}`, 'MESSAGE');
+            
+            if (event.data && event.data.type === 'rails-error') {
+                receivedRailsError = true;
+                errorData = event.data.data;
+                
+                logMessage('🎉 RAILS ERROR CAPTURED! 🎉', 'SUCCESS');
+                logMessage(`Error Class: ${errorData.error_class}`, 'SUCCESS');
+                logMessage(`Message: ${errorData.message}`, 'SUCCESS');
+                logMessage(`Status: ${errorData.status}`, 'SUCCESS');
+                logMessage(`Path: ${errorData.path}`, 'SUCCESS');
+                
+                if (errorData.backtrace) {
+                    logMessage(`Backtrace (first 3 lines):`, 'SUCCESS');
+                    errorData.backtrace.slice(0, 3).forEach((line, i) => {
+                        logMessage(`  ${i + 1}: ${line}`, 'SUCCESS');
+                    });
+                }
+                
+                updateStatus('ErrorPageEnhancer is working!', 'success');
+                updateTestResults(true, 
+                    `ErrorPageEnhancer successfully captured Rails error:<br>
+                     • Error Class: ${errorData.error_class}<br>
+                     • Status Code: ${errorData.status}<br>
+                     • Message: ${errorData.message}<br>
+                     • Path: ${errorData.path}<br>
+                     This error data can now be sent to Claude Code for analysis.`
+                );
+                
+            } else if (event.data) {
+                logMessage(`Other message type: ${event.data.type || 'unknown'}`, 'INFO');
+                logMessage(`Data: ${JSON.stringify(event.data)}`, 'INFO');
+            } else {
+                logMessage('Received message with no data', 'WARNING');
+            }
+        });
+        
+        // Initialize status
+        updateStatus('Ready to test error capture', 'info');
+        logMessage('Test page fully loaded and ready', 'SYSTEM');
+        logMessage('Try clicking "Test Error Capture" to trigger a Rails error', 'SYSTEM');
+        
+        // Auto-test after 3 seconds
+        setTimeout(() => {
+            logMessage('Auto-triggering test error in 2 seconds...', 'SYSTEM');
+            setTimeout(testError, 2000);
+        }, 3000);
+        
+        // Check for results after 10 seconds
+        setTimeout(() => {
+            if (!receivedRailsError) {
+                updateStatus('No Rails errors captured yet', 'error');
+                updateTestResults(false, 
+                    `ErrorPageEnhancer may not be configured correctly:<br>
+                     • Check that the target application has been restarted<br>
+                     • Verify ErrorPageEnhancer middleware is loaded<br>
+                     • Check browser console for any script errors<br>
+                     • Ensure CORS is properly configured`
+                );
+            }
+        }, 10000);
+    </script>
+</body>
+</html>

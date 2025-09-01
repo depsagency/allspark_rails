@@ -1,0 +1,54 @@
+template:
+  name: "AllSpark Base Template"
+  archetype: "base"
+  version: "1.0.0"
+  
+features:
+  authentication: true
+  ai_assistants: true
+  knowledge_base: true
+  workflows: true
+  chat: true
+  app_project_builder: true
+  mcp_servers: true
+  
+dependencies:
+  rails: "~> 8.0"
+  ruby: ">= 3.2"
+  postgresql: ">= 15"
+  redis: ">= 7"
+  
+generators:
+  default_scaffold: "daisy_ui"
+  api_format: "json"
+  service_objects: true
+  ai_models: true
+  
+ai_optimization:
+  claude_md: true
+  structured_prompts: true
+  context_files:
+    - "CLAUDE.md"
+    - "AllSpark.md"
+    - "docs/README.md"
+    
+ui_framework:
+  name: "DaisyUI"
+  version: "4.0+"
+  theme: "corporate"
+  dark_mode: true
+  
+testing:
+  framework: "minitest"
+  browser_testing: true
+  self_healing: true
+  
+deployment:
+  docker: true
+  heroku: true
+  digital_ocean: true
+  
+monitoring:
+  error_tracking: false
+  analytics: false
+  performance: false

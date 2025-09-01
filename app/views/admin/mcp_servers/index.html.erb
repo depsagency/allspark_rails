@@ -1,0 +1,346 @@
+<% content_for :title, "MCP Servers Administration" %>
+
+<div class="container mx-auto px-4 py-6">
+  <!-- Header Section -->
+  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
+    <div>
+      <h1 class="text-3xl font-bold text-gray-900 mb-2">MCP Servers</h1>
+      <p class="text-gray-600">Manage system-wide Model Context Protocol servers</p>
+    </div>
+    
+    <div class="mt-4 lg:mt-0 flex gap-2">
+      <%= link_to analytics_admin_mcp_servers_path, class: "btn btn-secondary" do %>
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+        </svg>
+        Analytics
+      <% end %>
+      
+      <%= link_to new_admin_mcp_server_path, 
+          class: "btn btn-primary" do %>
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        Add MCP Server
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Health Statistics Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <div class="stats shadow">
+      <div class="stat">
+        <div class="stat-title">Total Servers</div>
+        <div class="stat-value text-primary"><%= @health_stats[:total] %></div>
+      </div>
+    </div>
+    
+    <div class="stats shadow">
+      <div class="stat">
+        <div class="stat-title">Active</div>
+        <div class="stat-value text-success"><%= @health_stats[:active] %></div>
+      </div>
+    </div>
+    
+    <div class="stats shadow">
+      <div class="stat">
+        <div class="stat-title">Inactive</div>
+        <div class="stat-value text-warning"><%= @health_stats[:inactive] %></div>
+      </div>
+    </div>
+    
+    <div class="stats shadow">
+      <div class="stat">
+        <div class="stat-title">Health %</div>
+        <div class="stat-value <%= @health_stats[:health_percentage] >= 80 ? 'text-success' : 'text-error' %>">
+          <%= @health_stats[:health_percentage] %>%
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters and Search -->
+  <div class="card bg-base-100 shadow-xl mb-6">
+    <div class="card-body">
+      <%= form_with url: admin_mcp_servers_path, method: :get, local: true, class: "flex flex-wrap gap-4" do |form| %>
+        <div class="flex-1 min-w-64">
+          <%= form.text_field :search, 
+              placeholder: "Search by name or endpoint...", 
+              value: params[:search],
+              class: "input input-bordered w-full" %>
+        </div>
+        
+        <div class="flex-none">
+          <%= form.select :status, 
+              options_for_select([
+                ['All Statuses', ''],
+                ['Active', 'active'],
+                ['Inactive', 'inactive'],
+                ['Error', 'error']
+              ], params[:status]),
+              {}, 
+              { class: "select select-bordered" } %>
+        </div>
+        
+        <div class="flex-none">
+          <%= form.select :auth_type, 
+              options_for_select([
+                ['All Auth Types', ''],
+                ['No Auth', 'no_auth'],
+                ['API Key', 'api_key'],
+                ['OAuth', 'oauth'],
+                ['Bearer Token', 'bearer_token']
+              ], params[:auth_type]),
+              {}, 
+              { class: "select select-bordered" } %>
+        </div>
+        
+        <div class="flex-none">
+          <%= form.submit "Filter", class: "btn btn-primary" %>
+          <%= link_to "Clear", admin_mcp_servers_path, class: "btn btn-ghost" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Bulk Actions -->
+  <% if @mcp_servers.any? %>
+    <%= form_with url: bulk_action_admin_mcp_servers_path, method: :post, 
+        local: true, id: "bulk-action-form", class: "mb-4" do |form| %>
+      <div class="flex items-center gap-4 p-4 bg-base-200 rounded-lg">
+        <div class="flex-none">
+          <label class="cursor-pointer label">
+            <input type="checkbox" id="select-all" class="checkbox checkbox-primary" />
+            <span class="label-text ml-2">Select All</span>
+          </label>
+        </div>
+        
+        <div class="flex-1">
+          <%= form.select :bulk_action, 
+              options_for_select([
+                ['Choose Action...', ''],
+                ['Activate Selected', 'activate'],
+                ['Deactivate Selected', 'deactivate'],
+                ['Test Connections', 'test_connections'],
+                ['Discover Tools', 'discover_tools'],
+                ['Delete Selected', 'delete']
+              ]),
+              {}, 
+              { class: "select select-bordered", id: "bulk-action-select" } %>
+        </div>
+        
+        <div class="flex-none">
+          <%= form.submit "Execute", 
+              class: "btn btn-secondary", 
+              id: "bulk-action-btn", 
+              disabled: true,
+              data: { confirm: "Are you sure you want to execute this bulk action?" } %>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+
+  <!-- Servers Table -->
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body p-0">
+      <div class="overflow-x-auto">
+        <table class="table table-zebra w-full">
+          <thead>
+            <tr>
+              <th class="w-12">
+                <input type="checkbox" class="checkbox checkbox-primary" disabled />
+              </th>
+              <th>Name</th>
+              <th>Endpoint</th>
+              <th>Auth Type</th>
+              <th>Status</th>
+              <th>Scope</th>
+              <th>Tools</th>
+              <th>Last Used</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if @mcp_servers.any? %>
+              <% @mcp_servers.each do |server| %>
+                <tr>
+                  <td>
+                    <input type="checkbox" 
+                           class="checkbox checkbox-primary server-checkbox" 
+                           name="server_ids[]" 
+                           value="<%= server.id %>"
+                           form="bulk-action-form" />
+                  </td>
+                  
+                  <td>
+                    <div class="flex items-center gap-3">
+                      <div class="font-bold"><%= server.name %></div>
+                      <div class="text-sm text-gray-500">v<%= server.protocol_version %></div>
+                    </div>
+                  </td>
+                  
+                  <td>
+                    <div class="text-sm text-gray-600 max-w-xs truncate">
+                      <%= server.endpoint %>
+                    </div>
+                  </td>
+                  
+                  <td>
+                    <div class="badge badge-outline">
+                      <%= server.auth_type.humanize %>
+                    </div>
+                  </td>
+                  
+                  <td>
+                    <% case server.status %>
+                    <% when 'active' %>
+                      <div class="badge badge-success">Active</div>
+                    <% when 'inactive' %>
+                      <div class="badge badge-warning">Inactive</div>
+                    <% when 'error' %>
+                      <div class="badge badge-error">Error</div>
+                    <% end %>
+                  </td>
+                  
+                  <td>
+                    <% if server.user_id.present? %>
+                      <div class="badge badge-info">User</div>
+                      <div class="text-xs text-gray-500"><%= server.user.email %></div>
+                    <% else %>
+                      <div class="badge badge-primary">System</div>
+                    <% end %>
+                  </td>
+                  
+                  <td>
+                    <% tool_count = server.available_tools.size rescue 0 %>
+                    <div class="badge badge-neutral"><%= tool_count %> tools</div>
+                  </td>
+                  
+                  <td>
+                    <% last_audit = server.mcp_audit_logs.recent.first %>
+                    <% if last_audit %>
+                      <div class="text-sm text-gray-600">
+                        <%= time_ago_in_words(last_audit.executed_at) %> ago
+                      </div>
+                    <% else %>
+                      <div class="text-sm text-gray-400">Never</div>
+                    <% end %>
+                  </td>
+                  
+                  <td>
+                    <div class="flex gap-2">
+                      <%= link_to admin_mcp_server_path(server), 
+                          class: "btn btn-sm btn-ghost" do %>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                      <% end %>
+                      
+                      <%= link_to edit_admin_mcp_server_path(server), 
+                          class: "btn btn-sm btn-ghost" do %>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                      <% end %>
+                      
+                      <%= link_to admin_mcp_server_path(server), 
+                          method: :delete, 
+                          data: { confirm: "Are you sure you want to delete '#{server.name}'?" },
+                          class: "btn btn-sm btn-ghost text-error" do %>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
+                      <% end %>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+            <% else %>
+              <tr>
+                <td colspan="9" class="text-center py-12">
+                  <div class="flex flex-col items-center gap-4">
+                    <svg class="w-16 h-16 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <div>
+                      <h3 class="text-lg font-medium text-gray-900 mb-2">No MCP servers found</h3>
+                      <p class="text-gray-500 mb-4">
+                        <% if params[:search].present? || params[:status].present? || params[:auth_type].present? %>
+                          No servers match your current filters.
+                        <% else %>
+                          Get started by adding your first MCP server.
+                        <% end %>
+                      </p>
+                      <%= link_to new_admin_mcp_server_path, 
+                          class: "btn btn-primary" do %>
+                        Add First MCP Server
+                      <% end %>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <% if @mcp_servers.respond_to?(:current_page) %>
+    <div class="flex justify-center mt-6">
+      <%= paginate @mcp_servers %>
+    </div>
+  <% end %>
+</div>
+
+<!-- JavaScript for bulk actions -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const selectAllCheckbox = document.getElementById('select-all');
+  const serverCheckboxes = document.querySelectorAll('.server-checkbox');
+  const bulkActionSelect = document.getElementById('bulk-action-select');
+  const bulkActionBtn = document.getElementById('bulk-action-btn');
+  
+  // Select all functionality
+  selectAllCheckbox?.addEventListener('change', function() {
+    serverCheckboxes.forEach(checkbox => {
+      checkbox.checked = this.checked;
+    });
+    updateBulkActionButton();
+  });
+  
+  // Individual checkbox changes
+  serverCheckboxes.forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+      // Update select all checkbox
+      const checkedCount = document.querySelectorAll('.server-checkbox:checked').length;
+      selectAllCheckbox.checked = checkedCount === serverCheckboxes.length;
+      selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < serverCheckboxes.length;
+      
+      updateBulkActionButton();
+    });
+  });
+  
+  // Bulk action select change
+  bulkActionSelect?.addEventListener('change', updateBulkActionButton);
+  
+  function updateBulkActionButton() {
+    const checkedCount = document.querySelectorAll('.server-checkbox:checked').length;
+    const actionSelected = bulkActionSelect?.value !== '';
+    
+    bulkActionBtn.disabled = !(checkedCount > 0 && actionSelected);
+  }
+  
+  // Confirmation for delete actions
+  bulkActionBtn?.addEventListener('click', function(e) {
+    if (bulkActionSelect.value === 'delete') {
+      const checkedCount = document.querySelectorAll('.server-checkbox:checked').length;
+      if (!confirm(`Are you sure you want to delete ${checkedCount} selected servers? This action cannot be undone.`)) {
+        e.preventDefault();
+      }
+    }
+  });
+});
+</script>

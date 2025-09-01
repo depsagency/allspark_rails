@@ -1,0 +1,9 @@
+# Test fixtures for app_projects
+one:
+  id: 6f935deb-6d01-4363-9e25-7e44167271c4
+  name: Test Project
+  slug: test-project
+  status: draft
+  user: one
+  created_at: <%= 1.week.ago %>
+  updated_at: <%= 1.week.ago %>

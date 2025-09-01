@@ -1,0 +1,151 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'json'
+require 'open3'
+require 'date'
+
+class DependabotStatus
+  def run
+    check_requirements
+    
+    puts "📊 Dependabot Status Report"
+    puts "="*50
+    
+    prs = fetch_dependabot_prs
+    
+    if prs.empty?
+      puts "✅ No open Dependabot PRs"
+      return
+    end
+    
+    analyze_prs(prs)
+    show_summary(prs)
+    show_recommendations(prs)
+  end
+  
+  private
+  
+  def check_requirements
+    unless system("which gh > /dev/null 2>&1")
+      puts "❌ GitHub CLI (gh) is required but not installed."
+      exit 1
+    end
+  end
+  
+  def fetch_dependabot_prs
+    cmd = "gh pr list --author 'app/dependabot' --json number,title,headRefName,mergeable,statusCheckRollup,createdAt,labels --limit 50"
+    stdout, stderr, status = Open3.capture3(cmd)
+    
+    unless status.success?
+      puts "❌ Failed to fetch PRs: #{stderr}"
+      exit 1
+    end
+    
+    JSON.parse(stdout)
+  end
+  
+  def analyze_prs(prs)
+    # Group by package ecosystem
+    grouped = prs.group_by do |pr|
+      case pr['title']
+      when /bundle|gem/i
+        'Ruby'
+      when /npm|yarn|javascript/i
+        'JavaScript'
+      when /docker/i
+        'Docker'
+      when /github.actions/i
+        'GitHub Actions'
+      else
+        'Other'
+      end
+    end
+    
+    puts "\n📦 PRs by Ecosystem:"
+    grouped.each do |ecosystem, ecosystem_prs|
+      puts "  #{ecosystem}: #{ecosystem_prs.length}"
+    end
+    
+    # Group by status
+    status_groups = prs.group_by { |pr| get_pr_status(pr) }
+    
+    puts "\n✅ PRs by Status:"
+    status_groups.each do |status, status_prs|
+      emoji = status_emoji(status)
+      puts "  #{emoji} #{status}: #{status_prs.length}"
+    end
+    
+    # Show aging PRs
+    old_prs = prs.select do |pr|
+      created_at = DateTime.parse(pr['createdAt'])
+      (DateTime.now - created_at).to_i > 7
+    end
+    
+    if old_prs.any?
+      puts "\n⏰ PRs older than 7 days:"
+      old_prs.each do |pr|
+        age = (DateTime.now - DateTime.parse(pr['createdAt'])).to_i
+        puts "  PR ##{pr['number']}: #{pr['title']} (#{age} days old)"
+      end
+    end
+  end
+  
+  def get_pr_status(pr)
+    return 'pending' if pr['statusCheckRollup'].nil? || pr['statusCheckRollup'].empty?
+    
+    all_success = pr['statusCheckRollup'].all? { |check| check['conclusion'] == 'SUCCESS' }
+    any_failure = pr['statusCheckRollup'].any? { |check| check['conclusion'] == 'FAILURE' }
+    
+    if all_success
+      'ready'
+    elsif any_failure
+      'failed'
+    else
+      'running'
+    end
+  end
+  
+  def status_emoji(status)
+    case status
+    when 'ready' then '✅'
+    when 'failed' then '❌'
+    when 'running' then '⏳'
+    else '❓'
+    end
+  end
+  
+  def show_summary(prs)
+    puts "\n📋 Detailed PR List:"
+    puts "-"*50
+    
+    prs.sort_by { |pr| DateTime.parse(pr['createdAt']) }.each do |pr|
+      status = get_pr_status(pr)
+      emoji = status_emoji(status)
+      age = (DateTime.now - DateTime.parse(pr['createdAt'])).to_i
+      
+      puts "#{emoji} PR ##{pr['number']}: #{pr['title']}"
+      puts "   Age: #{age} days | Status: #{status}"
+      
+      if pr['labels'] && pr['labels'].any?
+        labels = pr['labels'].map { |l| l['name'] }.join(', ')
+        puts "   Labels: #{labels}"
+      end
+      
+      puts ""
+    end
+  end
+  
+  def show_recommendations(prs)
+    ready_prs = prs.select { |pr| get_pr_status(pr) == 'ready' }
+    
+    if ready_prs.any?
+      puts "\n💡 Recommendations:"
+      puts "#{ready_prs.length} PRs are ready to merge!"
+      puts "Run: bin/merge-dependabot"
+    end
+  end
+end
+
+# Run the script
+DependabotStatus.new.run

@@ -1,0 +1,66 @@
+# frozen_string_literal: true
+
+# @label <%= human_name %>
+class <%= @component_name %>Preview < Lookbook::Preview
+  # @label Default
+  # @param text text "<%= human_name %> Text"
+  # @param variant select { choices: [<%= @variants.map { |v| "#{v}" }.join(', ') %>] }
+  # @param size select { choices: [xs, sm, md, lg] }
+  # @param disabled toggle
+  def default(text: "<%= human_name %>", variant: :<%= @variants.first %>, size: :md, disabled: false)
+    render <%= @full_component_name %>.new(
+      text: text,
+      variant: variant.to_sym,
+      size: size.to_sym,
+      disabled: disabled
+    )
+  end
+
+  # @label All Variants
+  def all_variants
+    render <%= @full_component_name %>.new(
+      text: "All Variants Demo",
+      variant: :<%= @variants.first %>
+    )
+  end
+
+  # @label All Sizes
+  def all_sizes
+    render <%= @full_component_name %>.new(
+      text: "All Sizes Demo",
+      variant: :<%= @variants.first %>,
+      size: :md
+    )
+  end
+
+  # @label Disabled State
+  def disabled_state
+    render <%= @full_component_name %>.new(
+      text: "Disabled <%= human_name %>",
+      variant: :<%= @variants.first %>,
+      disabled: true
+    )
+  end
+
+  <% if @with_stimulus -%>
+  # @label Interactive Demo
+  def interactive
+    render <%= @full_component_name %>.new(
+      text: "Interactive <%= human_name %>",
+      variant: :<%= @variants.first %>,
+      data: { 
+        action: "click-><%= stimulus_controller_name %>#click"
+      }
+    )
+  end
+  <% end -%>
+
+  # @label Custom Styling
+  def custom_styling
+    render <%= @full_component_name %>.new(
+      text: "Custom Styled <%= human_name %>",
+      variant: :<%= @variants.first %>,
+      css_class: "shadow-lg border-2 border-dashed"
+    )
+  end
+end

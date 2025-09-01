@@ -1,0 +1,215 @@
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold mb-8">Agent Monitoring Dashboard</h1>
+  
+  <!-- Health Status -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h3 class="card-title text-lg">System Status</h3>
+        <div class="text-3xl font-bold">
+          <% case @health_status[:status] %>
+          <% when 'healthy' %>
+            <span class="text-success">✓ Healthy</span>
+          <% when 'degraded' %>
+            <span class="text-warning">⚠ Degraded</span>
+          <% else %>
+            <span class="text-error">✗ Unhealthy</span>
+          <% end %>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h3 class="card-title text-lg">Total Runs (7d)</h3>
+        <div class="text-3xl font-bold"><%= @metrics[:total_runs] %></div>
+        <div class="text-sm opacity-70">
+          <%= @metrics[:successful_runs] %> successful
+        </div>
+      </div>
+    </div>
+    
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h3 class="card-title text-lg">Success Rate</h3>
+        <div class="text-3xl font-bold">
+          <% success_rate = @metrics[:total_runs] > 0 ? (@metrics[:successful_runs].to_f / @metrics[:total_runs] * 100).round(1) : 0 %>
+          <%= success_rate %>%
+        </div>
+        <div class="text-sm opacity-70">
+          <%= @metrics[:failed_runs] %> failures
+        </div>
+      </div>
+    </div>
+    
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h3 class="card-title text-lg">Avg Duration</h3>
+        <div class="text-3xl font-bold">
+          <%= (@metrics[:average_duration] / 1000.0).round(1) %>s
+        </div>
+        <div class="text-sm opacity-70">
+          per successful run
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Charts Row -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Activity Chart -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h3 class="card-title">Activity (Last 7 Days)</h3>
+        <div class="space-y-2">
+          <% @metrics[:runs_by_day].each do |date, count| %>
+            <div class="flex items-center gap-2">
+              <div class="text-sm w-24"><%= date.strftime("%b %d") %></div>
+              <div class="flex-1">
+                <div class="bg-base-200 rounded-full h-6">
+                  <div class="bg-primary rounded-full h-6 flex items-center justify-end pr-2" 
+                       style="width: <%= @metrics[:runs_by_day].values.max.to_i > 0 ? (count.to_f / @metrics[:runs_by_day].values.max * 100).round : 0 %>%">
+                    <span class="text-xs text-primary-content"><%= count %></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Top Assistants -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h3 class="card-title">Most Active Assistants</h3>
+        <div class="space-y-2">
+          <% @metrics[:top_assistants].each do |name, count| %>
+            <div class="flex justify-between items-center">
+              <span class="font-medium"><%= name %></span>
+              <div class="badge badge-primary"><%= count %> runs</div>
+            </div>
+          <% end %>
+          
+          <% if @metrics[:top_assistants].empty? %>
+            <p class="text-sm opacity-70">No activity in the last 7 days</p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- System Health Details -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- LLM Providers -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h3 class="card-title">LLM Providers</h3>
+        <div class="space-y-2">
+          <% @health_status[:checks][:llm][:providers].each do |provider, status| %>
+            <div class="flex justify-between items-center">
+              <span class="font-medium capitalize"><%= provider %></span>
+              <% if status == 'available' %>
+                <div class="badge badge-success">Available</div>
+              <% elsif status.start_with?('error:') %>
+                <div class="badge badge-error">Error</div>
+              <% else %>
+                <div class="badge badge-ghost">Unavailable</div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Background Jobs -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h3 class="card-title">Background Jobs</h3>
+        <div class="space-y-2">
+          <div class="flex justify-between">
+            <span>Redis</span>
+            <div class="badge <%= @health_status[:checks][:background_jobs][:redis] == 'connected' ? 'badge-success' : 'badge-error' %>">
+              <%= @health_status[:checks][:background_jobs][:redis] %>
+            </div>
+          </div>
+          <div class="flex justify-between">
+            <span>Queue Size</span>
+            <span class="font-mono"><%= @health_status[:checks][:background_jobs][:queue_size] %></span>
+          </div>
+          <div class="flex justify-between">
+            <span>Scheduled</span>
+            <span class="font-mono"><%= @health_status[:checks][:background_jobs][:scheduled_size] %></span>
+          </div>
+          <div class="flex justify-between">
+            <span>Retries</span>
+            <span class="font-mono"><%= @health_status[:checks][:background_jobs][:retry_size] %></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Recent Runs -->
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+      <div class="flex justify-between items-center mb-2">
+        <h3 class="card-title">Recent Agent Runs</h3>
+        <%= link_to "View All Runs →", agents_runs_path, class: "btn btn-ghost btn-sm" %>
+      </div>
+      <p class="text-sm opacity-70">Click on any row to view details</p>
+      
+      <div class="overflow-x-auto mt-4">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Assistant</th>
+              <th>Status</th>
+              <th>Duration</th>
+              <th>Started</th>
+              <th>Tools Used</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @recent_runs.each do |run| %>
+              <tr class="hover cursor-pointer" onclick="window.location='<%= agents_run_path(run) %>'">
+                <td><%= run.assistant.name %></td>
+                <td>
+                  <div class="badge badge-<%= run.completed? ? 'success' : run.failed? ? 'error' : 'warning' %> badge-sm">
+                    <%= run.status %>
+                  </div>
+                </td>
+                <td>
+                  <% if run.duration_seconds %>
+                    <%= run.duration_seconds.round(1) %>s
+                  <% else %>
+                    -
+                  <% end %>
+                </td>
+                <td><%= time_ago_in_words(run.created_at) %> ago</td>
+                <td>
+                  <% if run.tools_called&.any? %>
+                    <%= run.tools_called.join(', ') %>
+                  <% else %>
+                    <span class="opacity-50">None</span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+        
+        <% if @recent_runs.empty? %>
+          <p class="text-center py-8 opacity-70">No recent runs</p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Quick Actions -->
+  <div class="mt-8 flex gap-4">
+    <%= link_to "View All Errors", errors_agents_monitoring_index_path, class: "btn btn-outline" %>
+    <%= link_to "Health Details", health_agents_monitoring_index_path, class: "btn btn-outline" %>
+    <%= link_to "Assistants", agents_assistants_path, class: "btn btn-primary" %>
+  </div>
+</div>

@@ -1,0 +1,124 @@
+---
+# Kamal Deployment Configuration Template
+# Copy this file to config/deploy.yml and update with your values
+
+service: YOUR_APP_NAME
+image: YOUR_DOCKER_USERNAME/YOUR_APP_NAME
+
+servers:
+  web:
+    hosts:
+      - YOUR_SERVER_IP_HERE
+  worker:
+    hosts:
+      - YOUR_SERVER_IP_HERE
+    cmd: bundle exec sidekiq
+
+proxy:
+  ssl: true
+  host: YOUR_DOMAIN_HERE
+  app_port: 3000
+
+registry:
+  username: YOUR_DOCKER_USERNAME
+  password:
+  - KAMAL_REGISTRY_PASSWORD
+
+builder:
+  arch: amd64
+
+env:
+  secret:
+  - RAILS_MASTER_KEY
+  - SECRET_KEY_BASE
+  - DATABASE_URL
+  - SIDEKIQ_REDIS_URL
+  # LLM Provider secrets
+  - LLM_PROVIDER
+  - OPENROUTER_API_KEY
+  - OPENROUTER_MODEL
+  - OPENAI_API_KEY
+  - CLAUDE_API_KEY
+  - GEMINI_API_KEY
+  # Email secrets (if configured)
+  - SMTP_HOST
+  - SMTP_PORT
+  - SMTP_USERNAME
+  - SMTP_PASSWORD
+  # External service secrets (if configured)
+  - STRIPE_PUBLISHABLE_KEY
+  - STRIPE_SECRET_KEY
+  - GOOGLE_SEARCH_API_KEY
+  - GOOGLE_SEARCH_ENGINE_ID
+  - AWS_ACCESS_KEY_ID
+  - AWS_SECRET_ACCESS_KEY
+  - SENTRY_DSN
+  clear:
+    RAILS_ENV: production
+    RAILS_SERVE_STATIC_FILES: 'true'
+    RAILS_LOG_TO_STDOUT: 'true'
+    APP_HOST: YOUR_DOMAIN_HERE
+    REDIS_URL: redis://YOUR_APP_NAME-redis:6379/0
+    # Application settings
+    APP_NAME: 'YOUR_APP_NAME'
+    APP_URL: https://YOUR_DOMAIN_HERE
+    RAILS_HOSTS: YOUR_DOMAIN_HERE
+    # Email settings
+    MAIL_FROM: noreply@YOUR_DOMAIN_HERE
+    # LLM settings
+    LLM_FALLBACK_PROVIDERS: ''
+    LLM_CACHE_ENABLED: 'true'
+    LLM_MAX_RETRIES: '3'
+    LLM_TIMEOUT: '30'
+    # Feature flags
+    ENABLE_REGISTRATION: 'true'
+    ENABLE_SOCIAL_LOGIN: 'false'
+    MAINTENANCE_MODE: 'false'
+    # Security
+    FORCE_SSL: 'true'
+    # MCP Bridge settings
+    MCP_BRIDGE_ENABLED: 'true'
+    MCP_BRIDGE_MAX_PROCESSES: '10'
+    MCP_BRIDGE_PROCESS_TIMEOUT: '30'
+    MCP_BRIDGE_HEALTH_CHECK_INTERVAL: '30'
+    MCP_BRIDGE_PROCESS_IDLE_TIMEOUT: '300'
+    MCP_BRIDGE_LOG_LEVEL: 'info'
+    # AWS settings (if using S3)
+    AWS_REGION: 'us-east-1'
+    AWS_BUCKET: 'YOUR_APP_NAME-production'
+
+volumes:
+- YOUR_APP_NAME_storage:/rails/storage
+- YOUR_APP_NAME_uploads:/rails/public/uploads
+
+accessories:
+  db:
+    image: pgvector/pgvector:pg16
+    host: YOUR_SERVER_IP_HERE
+    port: 5432
+    env:
+      clear:
+        POSTGRES_USER: YOUR_APP_NAME
+        POSTGRES_DB: YOUR_APP_NAME_production
+      secret:
+      - POSTGRES_PASSWORD
+    volumes:
+    - YOUR_APP_NAME_postgres:/var/lib/postgresql/data
+  redis:
+    image: redis:7-alpine
+    host: YOUR_SERVER_IP_HERE
+    port: 6379
+    cmd: redis-server --save 60 1 --loglevel warning
+    volumes:
+    - YOUR_APP_NAME_redis:/data
+
+aliases:
+  console: app exec -i --reuse "bin/rails console"
+  shell: app exec -i --reuse "bash"
+  logs: app logs -f
+  dbc: app exec -i --reuse "bin/rails dbconsole"
+  migrate: app exec "bin/rails db:migrate"
+  seed: app exec "bin/rails db:seed"
+
+ssh:
+  user: root

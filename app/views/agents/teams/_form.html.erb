@@ -1,0 +1,76 @@
+<%= form_with model: team, url: team.persisted? ? agents_team_path(team) : agents_teams_path, class: "space-y-6" do |form| %>
+  <% if team.errors.any? %>
+    <div class="alert alert-error">
+      <h3 class="font-bold">Please fix the following errors:</h3>
+      <ul class="list-disc list-inside">
+        <% team.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-control">
+    <%= form.label :name, class: "label" %>
+    <%= form.text_field :name, class: "input input-bordered", required: true %>
+  </div>
+
+  <div class="form-control">
+    <%= form.label :purpose, class: "label" %>
+    <%= form.text_area :purpose, rows: 4, class: "textarea textarea-bordered", 
+        placeholder: "Describe the team's purpose and goals..." %>
+  </div>
+
+  <div class="form-control">
+    <%= form.label :workflow, class: "label" %>
+    <%= form.text_area :workflow, rows: 6, class: "textarea textarea-bordered font-mono text-sm", 
+        placeholder: "Define the team's workflow in YAML format..." %>
+    <label class="label">
+      <span class="label-text-alt">Use YAML format to define team workflow and coordination</span>
+    </label>
+  </div>
+
+  <div class="form-control">
+    <%= form.label :active, class: "label cursor-pointer" do %>
+      <span class="label-text">Active</span>
+      <%= form.check_box :active, class: "toggle toggle-primary" %>
+    <% end %>
+  </div>
+
+  <div class="divider">Team Members</div>
+
+  <div class="form-control">
+    <label class="label">
+      <span class="label-text">Select Assistants</span>
+      <span class="label-text-alt">Choose which assistants are part of this team</span>
+    </label>
+    <div class="space-y-2 max-h-60 overflow-y-auto p-4 bg-base-200 rounded-lg">
+      <% current_user.assistants.active.each do |assistant| %>
+        <label class="flex items-center space-x-3 cursor-pointer hover:bg-base-300 p-2 rounded">
+          <%= check_box_tag "team[assistant_ids][]", assistant.id, 
+              team.assistants.include?(assistant), 
+              class: "checkbox checkbox-primary", 
+              id: "assistant_#{assistant.id}" %>
+          <div class="flex-1">
+            <div class="font-medium"><%= assistant.name %></div>
+            <% if assistant.instructions.present? %>
+              <div class="text-sm opacity-70"><%= truncate(assistant.instructions, length: 60) %></div>
+            <% end %>
+          </div>
+          <% if assistant.tools.any? %>
+            <div class="flex gap-1">
+              <% assistant.tools.each do |tool| %>
+                <div class="badge badge-xs"><%= tool['type'] %></div>
+              <% end %>
+            </div>
+          <% end %>
+        </label>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="form-actions flex gap-2">
+    <%= form.submit class: "btn btn-primary" %>
+    <%= link_to "Cancel", :back, class: "btn btn-ghost" %>
+  </div>
+<% end %>

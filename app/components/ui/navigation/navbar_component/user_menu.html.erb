@@ -1,0 +1,33 @@
+<div class="dropdown dropdown-end">
+  <label tabindex="0" class="btn btn-ghost btn-circle avatar" aria-label="User menu">
+    <div class="w-10 rounded-full">
+      <% if has_avatar_image? %>
+        <img src="<%= user_avatar %>" alt="<%= user_display_name %>" class="w-10 h-10 rounded-full">
+      <% else %>
+        <div class="avatar placeholder">
+          <div class="bg-neutral-focus text-neutral-content rounded-full w-10 h-10 flex items-center justify-center">
+            <span class="text-xs font-bold text-center leading-none"><%= user_initials %></span>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </label>
+  
+  <ul tabindex="0" class="menu menu-sm dropdown-content mt-3 p-2 shadow bg-base-100 rounded-box w-52 z-50">
+    <% if show_name %>
+      <li class="menu-title">
+        <span class="font-semibold"><%= user_display_name %></span>
+      </li>
+      <li><hr class="my-1"></li>
+    <% end %>
+    
+    <% if content_block %>
+      <%= content_block.call %>
+    <% else %>
+      <li><%= link_to "Profile", user_path(user) %></li>
+      <li><a href="#">Settings</a></li>
+      <li><hr class="my-1"></li>
+      <li><%= link_to "Logout", destroy_user_session_path, data: { "turbo-method": :delete } %></li>
+    <% end %>
+  </ul>
+</div>

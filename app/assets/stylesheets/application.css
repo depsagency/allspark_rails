@@ -1,0 +1,169 @@
+@import "tailwindcss";
+/* XTerm styles are imported via JavaScript */
+@plugin "@tailwindcss/typography";
+@plugin "@tailwindcss/aspect-ratio";
+@plugin "tailwindcss-displaymodes";
+@plugin 'tailwind-scrollbar';
+@plugin "daisyui" {
+  themes: all;
+}
+
+@source "../../../public/*.html";
+@source "../../../app/helpers/**/*.rb";
+@source "../../../app/javascript/**/*.js";
+@source "../../../app/views/**/*.{html,html.erb,erb,haml,slim}";
+
+/* Scrollbar css */
+
+.scrollbar-rounded {
+  @apply scrollbar-thin scrollbar-thumb-primary hover:scrollbar-thumb-primary active:scrollbar-thumb-primary scrollbar-track-base-200
+}
+
+/* Start Tiny MCE Editor Override css */
+
+.tox {
+  color: var(--color-base-content) !important;
+}
+
+.tox-tinymce {
+  border: var(--border) solid #0000 !important;
+  border-color: color-mix(in oklab, var(--color-base-content) 20%, #0000) !important;
+}
+
+.tox .tox-edit-area__iframe,
+.tox:not(.tox-tinymce-inline) .tox-editor-header,
+.tox .tox-toolbar__primary,
+.tox .tox-toolbar-overlord {
+  background-color: var(--color-base-100)  !important;
+  color: var(--color-base-content) !important;
+}
+
+.tox .tox-menubar {
+  background: repeating-linear-gradient(transparent 0 1px, transparent 1px 39px) center top 39px / 100% calc(100% - 39px) no-repeat;
+  background-color: var(--color-base-100)  !important;
+}
+
+.tox :not(svg):not(rect) {
+  color: var(--color-base-content) !important;
+}
+
+.tox .tox-statusbar {
+  background-color: var(--color-base-100) !important;
+  border-top: 1px solid var(--color-base-100) !important;
+}
+
+.tox-promotion {
+  display: none !important;
+}
+
+.tox .tox-mbtn, .tox-tbtn {
+  background-color: var(--color-base-200) !important;
+  color: var(--color-base-content) !important;
+}
+
+.tox-tbtn svg {
+  fill: var(--color-base-content) !important;
+}
+
+.tox .tox-editor-header {
+  border-bottom: 1px solid var(--color-base-200) !important;
+}
+
+.tox .tox-tbtn:hover {
+  background-color: var(--color-base-300) !important;
+}
+
+/* End of Tiny MCE Editor Override css */
+
+/* Import XTerm.js styles */
+/* @import "./xterm.css"; DISABLED FOR DEBUGGING */
+
+/* Import Chat styles */
+@import "./chat.css";
+
+/* Prose/Markdown styling overrides for better readability */
+/* These must come after all other imports to ensure proper specificity */
+
+/* Override prose color variables for better contrast */
+.prose {
+  --tw-prose-code: oklch(var(--color-base-content));
+  --tw-prose-pre-code: oklch(var(--color-base-content));
+  --tw-prose-pre-bg: oklch(var(--color-base-200));
+}
+
+/* Fix inline code and highlighted text contrast */
+.prose code {
+  color: oklch(var(--color-base-content)) !important;
+  background-color: oklch(var(--color-base-200)) !important;
+  padding: 0.125rem 0.25rem !important;
+  border-radius: 0.25rem !important;
+}
+
+/* Remove backticks added by typography plugin */
+.prose code::before,
+.prose code::after {
+  content: none !important;
+}
+
+/* Fix code blocks */
+.prose pre {
+  background-color: oklch(var(--color-base-200)) !important;
+  color: oklch(var(--color-base-content)) !important;
+}
+
+.prose pre code {
+  background-color: transparent !important;
+  color: oklch(var(--color-base-content)) !important;
+  padding: 0 !important;
+}
+
+/* Fix highlighted/marked text */
+.prose mark {
+  background-color: oklch(var(--color-warning)) !important;
+  color: oklch(var(--color-warning-content)) !important;
+  padding: 0 0.125rem !important;
+  border-radius: 0.25rem !important;
+}
+
+/* Fix kbd elements */
+.prose kbd {
+  background-color: oklch(var(--color-base-300)) !important;
+  color: oklch(var(--color-base-content)) !important;
+  border-color: oklch(var(--color-base-content) / 0.2) !important;
+}
+
+/* Fix inline code in chat bubbles */
+.chat-bubble code {
+  background-color: oklch(var(--color-base-300)) !important;
+  color: oklch(var(--color-base-content)) !important;
+  padding: 0.125rem 0.25rem !important;
+  border-radius: 0.25rem !important;
+  font-size: 0.875rem !important;
+}
+
+/* Fix code blocks in chat bubbles */
+.chat-bubble pre {
+  background-color: oklch(var(--color-base-300)) !important;
+  color: oklch(var(--color-base-content)) !important;
+  padding: 0.5rem !important;
+  border-radius: 0.25rem !important;
+  margin: 0.5rem 0 !important;
+  overflow-x: auto !important;
+}
+
+.chat-bubble pre code {
+  background-color: transparent !important;
+  padding: 0 !important;
+}
+
+/* Special handling for different chat bubble variants */
+.chat-bubble-primary code,
+.chat-bubble-secondary code,
+.chat-bubble-accent code,
+.chat-bubble-info code,
+.chat-bubble-success code,
+.chat-bubble-warning code,
+.chat-bubble-error code {
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  color: currentColor !important;
+}

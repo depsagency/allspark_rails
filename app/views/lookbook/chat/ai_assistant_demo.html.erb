@@ -1,0 +1,254 @@
+<div class="min-h-[600px] bg-base-100 rounded-lg shadow-xl p-4">
+  <!-- Header with AI Assistant Toggle -->
+  <div class="flex justify-between items-center mb-4 pb-4 border-b border-base-300">
+    <div>
+      <h2 class="text-xl font-bold">AI Assistant Demo Thread</h2>
+      <p class="text-sm text-base-content/70">
+        2 participants
+      </p>
+    </div>
+    
+    <div class="flex items-center gap-2">
+      <div class="badge badge-primary badge-outline" id="ai-status-badge">
+        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+        </svg>
+        AI Active
+      </div>
+      <button id="toggle-ai-btn" class="btn btn-warning btn-sm">
+        Disable AI Assistant
+      </button>
+    </div>
+  </div>
+
+  <!-- AI Status Alert -->
+  <div class="alert alert-info mb-4" id="ai-alert">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    <span>AI Assistant is active and will respond to messages in this thread</span>
+  </div>
+
+  <!-- Messages Container -->
+  <div class="h-[400px] overflow-y-auto mb-4 space-y-3" id="messages-container">
+    <!-- Initial messages -->
+    <div class="chat chat-start">
+      <div class="chat-image avatar">
+        <div class="w-10 rounded-full bg-base-300 flex items-center justify-center">
+          <span class="text-lg font-semibold">D</span>
+        </div>
+      </div>
+      <div class="chat-header">
+        Demo User
+        <time class="text-xs opacity-50">10:00</time>
+      </div>
+      <div class="chat-bubble">
+        Hello, I need help with understanding how to use this application.
+      </div>
+    </div>
+
+    <div class="chat chat-start">
+      <div class="chat-image avatar">
+        <div class="w-10 rounded-full bg-base-300 flex items-center justify-center">
+          <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
+        </div>
+      </div>
+      <div class="chat-header">
+        AI Assistant
+        <span class="badge badge-primary badge-xs">AI</span>
+        <time class="text-xs opacity-50">10:01</time>
+      </div>
+      <div class="chat-bubble chat-bubble-accent">
+        Hello! I'm your AI assistant. I'd be happy to help you understand how to use this application. What specific features or tasks would you like to know more about?
+      </div>
+    </div>
+
+    <div class="chat chat-end">
+      <div class="chat-image avatar">
+        <div class="w-10 rounded-full bg-base-300 flex items-center justify-center">
+          <span class="text-lg font-semibold">D</span>
+        </div>
+      </div>
+      <div class="chat-header">
+        Demo User
+        <time class="text-xs opacity-50">10:02</time>
+      </div>
+      <div class="chat-bubble chat-bubble-primary">
+        Can you help me calculate the compound interest on $1000 at 5% for 3 years?
+      </div>
+    </div>
+
+    <div class="chat chat-start">
+      <div class="chat-image avatar">
+        <div class="w-10 rounded-full bg-base-300 flex items-center justify-center">
+          <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
+        </div>
+      </div>
+      <div class="chat-header">
+        AI Assistant
+        <span class="badge badge-primary badge-xs">AI</span>
+        <time class="text-xs opacity-50">10:03</time>
+      </div>
+      <div class="chat-bubble chat-bubble-accent">
+        I'll calculate the compound interest for you:<br><br>
+        Principal: $1,000<br>
+        Interest Rate: 5% per year<br>
+        Time: 3 years<br><br>
+        Using the formula A = P(1 + r)^t:<br>
+        A = 1000(1 + 0.05)^3<br>
+        A = 1000(1.05)^3<br>
+        A = 1000 × 1.157625<br>
+        A = $1,157.63<br><br>
+        The compound interest earned is $157.63, and the total amount after 3 years will be $1,157.63.
+      </div>
+    </div>
+  </div>
+
+  <!-- Message Input Form -->
+  <div class="flex gap-2">
+    <input 
+      type="text" 
+      id="message-input"
+      placeholder="Type your message..." 
+      class="input input-bordered flex-1"
+    />
+    <button id="send-btn" class="btn btn-primary">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+      </svg>
+      Send
+    </button>
+  </div>
+
+  <!-- Demo Instructions -->
+  <div class="mt-4 p-4 bg-base-200 rounded-lg">
+    <h3 class="font-semibold mb-2">Interactive Demo:</h3>
+    <ul class="text-sm space-y-1 list-disc list-inside">
+      <li>The AI Assistant is currently <span class="font-semibold text-primary">enabled</span></li>
+      <li>Click the toggle button to enable/disable AI responses</li>
+      <li>Type a message and click Send to see a simulated AI response</li>
+      <li>AI messages are marked with an AI badge and have an accent color</li>
+      <li>In a real implementation, the AI would process messages and respond using configured tools</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+  // Interactive demo functionality
+  (function() {
+    let aiEnabled = true;
+    const toggleBtn = document.getElementById('toggle-ai-btn');
+    const aiAlert = document.getElementById('ai-alert');
+    const aiStatusBadge = document.getElementById('ai-status-badge');
+    const messageInput = document.getElementById('message-input');
+    const sendBtn = document.getElementById('send-btn');
+    const messagesContainer = document.getElementById('messages-container');
+    
+    // Toggle AI functionality
+    toggleBtn.addEventListener('click', function() {
+      aiEnabled = !aiEnabled;
+      if (aiEnabled) {
+        toggleBtn.textContent = 'Disable AI Assistant';
+        toggleBtn.className = 'btn btn-warning btn-sm';
+        aiAlert.style.display = 'flex';
+        aiStatusBadge.style.display = 'inline-flex';
+      } else {
+        toggleBtn.textContent = 'Enable AI Assistant';
+        toggleBtn.className = 'btn btn-primary btn-sm';
+        aiAlert.style.display = 'none';
+        aiStatusBadge.style.display = 'none';
+      }
+    });
+    
+    // Send message functionality
+    function sendMessage() {
+      const content = messageInput.value.trim();
+      if (!content) return;
+      
+      // Add user message
+      const userMessage = createMessage(content, true, false);
+      messagesContainer.appendChild(userMessage);
+      
+      // Clear input
+      messageInput.value = '';
+      
+      // Simulate AI response if enabled
+      if (aiEnabled) {
+        setTimeout(() => {
+          const aiResponse = generateAIResponse(content);
+          const aiMessage = createMessage(aiResponse, false, true);
+          messagesContainer.appendChild(aiMessage);
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }, 1000);
+      }
+      
+      // Scroll to bottom
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+    
+    sendBtn.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+    
+    // Helper functions
+    function createMessage(content, isUser, isAI) {
+      const chatDiv = document.createElement('div');
+      chatDiv.className = 'chat ' + (isUser ? 'chat-end' : 'chat-start');
+      
+      const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      
+      chatDiv.innerHTML = `
+        <div class="chat-image avatar">
+          <div class="w-10 rounded-full bg-base-300 flex items-center justify-center">
+            ${isAI ? 
+              '<svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>' :
+              '<span class="text-lg font-semibold">D</span>'
+            }
+          </div>
+        </div>
+        <div class="chat-header">
+          ${isAI ? 'AI Assistant' : 'Demo User'}
+          ${isAI ? '<span class="badge badge-primary badge-xs">AI</span>' : ''}
+          <time class="text-xs opacity-50">${time}</time>
+        </div>
+        <div class="chat-bubble ${isUser ? 'chat-bubble-primary' : ''} ${isAI ? 'chat-bubble-accent' : ''}">
+          ${content}
+        </div>
+      `;
+      
+      return chatDiv;
+    }
+    
+    function generateAIResponse(userMessage) {
+      const responses = [
+        "I understand your question. Let me help you with that.",
+        "That's an interesting question! Here's what I can tell you...",
+        "I'd be happy to assist you with that. Based on my analysis...",
+        "Great question! Let me break this down for you...",
+        "I can help you with that. Here's what you need to know..."
+      ];
+      
+      // Simple keyword-based responses
+      if (userMessage.toLowerCase().includes('calculate') || userMessage.toLowerCase().includes('math')) {
+        return "I can help you with calculations! Please provide the numbers and operation you'd like me to perform.";
+      } else if (userMessage.toLowerCase().includes('help')) {
+        return "I'm here to help! I can assist with calculations, answer questions, search for information, and help you navigate this application. What would you like to know?";
+      } else if (userMessage.toLowerCase().includes('search')) {
+        return "I can search for information for you. What topic would you like me to search for?";
+      }
+      
+      // Return random response
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+    
+    // Auto-scroll on load
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  })();
+</script>

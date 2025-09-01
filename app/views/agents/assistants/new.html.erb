@@ -1,0 +1,210 @@
+<div class="container mx-auto px-4 py-8 max-w-2xl">
+  <h1 class="text-3xl font-bold mb-8">New AI Assistant</h1>
+
+  <%= form_with model: [:agents, @assistant], local: true do |form| %>
+    <% if @assistant.errors.any? %>
+      <div class="alert alert-error mb-6">
+        <ul>
+          <% @assistant.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <div class="space-y-6">
+          <!-- Name -->
+          <div class="form-control">
+            <%= form.label :name, class: "label" do %>
+              <span class="label-text">Name <span class="text-error">*</span></span>
+            <% end %>
+            <%= form.text_field :name, class: "input input-bordered", required: true %>
+            <label class="label">
+              <span class="label-text-alt">Give your assistant a descriptive name</span>
+            </label>
+          </div>
+
+          <!-- Instructions -->
+          <div class="form-control">
+            <%= form.label :instructions, class: "label" do %>
+              <span class="label-text">Instructions</span>
+            <% end %>
+            <%= form.text_area :instructions, rows: 4, class: "textarea textarea-bordered", 
+                placeholder: "You are a helpful AI assistant..." %>
+            <label class="label">
+              <span class="label-text-alt">Define the assistant's behavior and personality</span>
+            </label>
+          </div>
+
+          <!-- Model Configuration -->
+          <div class="divider">Model Configuration</div>
+
+          <div class="space-y-4" data-controller="model-selector">
+            <!-- Model Provider -->
+            <div class="form-control">
+              <%= form.label :model_provider, "AI Provider", class: "label" do %>
+                <span class="label-text">AI Provider</span>
+              <% end %>
+              <select name="assistant[model_provider]" id="model_provider" class="select select-bordered" 
+                      data-action="change->model-selector#updateModels">
+                <% llm_providers_and_models.each do |key, provider| %>
+                  <option value="<%= key %>" 
+                          data-models="<%= provider[:models].to_json %>"
+                          <%= 'selected' if key == default_provider %>
+                          <%= 'disabled' unless provider_configured?(key) %>>
+                    <%= provider[:name] %>
+                    <%= provider_configured?(key) ? '' : '(Not configured)' %>
+                  </option>
+                <% end %>
+              </select>
+              <label class="label">
+                <span class="label-text-alt">
+                  <% if provider_configured?(default_provider) %>
+                    ✓ API key configured
+                  <% else %>
+                    ⚠️ No API keys configured - please set up in environment variables
+                  <% end %>
+                </span>
+              </label>
+            </div>
+
+            <!-- Model Selection -->
+            <div class="form-control">
+              <%= form.label :llm_model_name, "Model", class: "label" do %>
+                <span class="label-text">Model</span>
+              <% end %>
+              <%= form.select :llm_model_name, 
+                  options_for_select([]),
+                  { prompt: "Select a model..." },
+                  class: "select select-bordered",
+                  data: { "model-selector-target": "modelSelect" } %>
+              <label class="label">
+                <span class="label-text-alt" data-model-selector-target="modelDescription">
+                  Select a provider first
+                </span>
+              </label>
+            </div>
+
+            <!-- Custom Model Input (hidden by default) -->
+            <div class="form-control hidden" data-model-selector-target="customModelInput">
+              <%= form.label :custom_model_name, "Custom Model Name", class: "label" do %>
+                <span class="label-text">Custom Model Name</span>
+              <% end %>
+              <%= form.text_field :custom_model_name, class: "input input-bordered",
+                  placeholder: "e.g., gpt-4-turbo-preview" %>
+              <label class="label">
+                <span class="label-text-alt">Enter a custom model identifier</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Tools -->
+          <div class="divider">Tools & Capabilities</div>
+
+          <div class="form-control">
+            <%= form.label :tool_choice, class: "label" do %>
+              <span class="label-text">Tool Usage</span>
+            <% end %>
+            <%= form.select :tool_choice,
+                options_for_select([
+                  ['Auto (Let AI decide)', 'auto'],
+                  ['None (No tools)', 'none'],
+                  ['Required (Must use tools)', 'required']
+                ], 'auto'),
+                {},
+                class: "select select-bordered" %>
+          </div>
+
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">Available Tools</span>
+            </label>
+            
+            <div class="space-y-3">
+              <label class="label cursor-pointer">
+                <span class="label-text flex items-center gap-2">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                  Calculator
+                  <span class="text-xs opacity-70">Perform mathematical calculations</span>
+                </span>
+                <%= check_box_tag 'tools[]', 'calculator', false, 
+                    class: "checkbox checkbox-primary",
+                    id: "tool_calculator" %>
+              </label>
+
+              <label class="label cursor-pointer">
+                <span class="label-text flex items-center gap-2">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                  </svg>
+                  Ruby Code Interpreter
+                  <span class="text-xs opacity-70">Execute Ruby code safely</span>
+                </span>
+                <%= check_box_tag 'tools[]', 'ruby_code', false, 
+                    class: "checkbox checkbox-primary",
+                    id: "tool_ruby_code" %>
+              </label>
+
+              <label class="label cursor-pointer">
+                <span class="label-text flex items-center gap-2">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  Web Search
+                  <span class="text-xs opacity-70">Search the web for information</span>
+                </span>
+                <%= check_box_tag 'tools[]', 'web_search', false, 
+                    class: "checkbox checkbox-primary",
+                    id: "tool_web_search" %>
+              </label>
+              
+              <label class="label cursor-pointer">
+                <span class="label-text flex items-center gap-2">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                  Knowledge Search (RAG)
+                  <span class="text-xs opacity-70">Search knowledge base documents</span>
+                </span>
+                <%= check_box_tag 'tools[]', 'knowledge_search', false, 
+                    class: "checkbox checkbox-primary",
+                    id: "tool_knowledge_search" %>
+              </label>
+              
+              <label class="label cursor-pointer">
+                <span class="label-text flex items-center gap-2">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  Chat Thread
+                  <span class="text-xs opacity-70">Send messages to chat threads</span>
+                </span>
+                <%= check_box_tag 'tools[]', 'chat', false, 
+                    class: "checkbox checkbox-primary",
+                    id: "tool_chat" %>
+              </label>
+              
+            </div>
+          </div>
+
+          <!-- Active Status -->
+          <div class="form-control">
+            <label class="label cursor-pointer">
+              <span class="label-text">Active</span>
+              <%= form.check_box :active, class: "toggle toggle-primary", checked: true %>
+            </label>
+          </div>
+        </div>
+
+        <div class="card-actions justify-end mt-8">
+          <%= link_to "Cancel", agents_assistants_path, class: "btn btn-ghost" %>
+          <%= form.submit "Create Assistant", class: "btn btn-primary" %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

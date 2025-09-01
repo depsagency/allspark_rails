@@ -1,0 +1,100 @@
+<% content_for :title, "New Project" %>
+
+<div class="container mx-auto px-4 py-8 max-w-2xl">
+  <div class="mb-8">
+    <div class="breadcrumbs text-sm mb-4">
+      <ul>
+        <li><%= link_to "App Builder", app_projects_path %></li>
+        <li>New Project</li>
+      </ul>
+    </div>
+    
+    <h1 class="text-4xl font-bold mb-2">Create New Project</h1>
+    <p class="text-gray-600">Start by giving your project a name, then we'll guide you through the questionnaire.</p>
+  </div>
+
+  <%= form_with(model: @app_project, local: true) do |form| %>
+    <%= render Ui::CardComponent.new(shadow: true) do |card| %>
+      <%= card.with_body do %>
+        <% if @app_project.errors.any? %>
+          <div class="alert alert-error mb-6">
+            <div>
+              <h3 class="font-bold">Please fix the following errors:</h3>
+              <ul class="list-disc list-inside mt-2">
+                <% @app_project.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+            </div>
+          </div>
+        <% end %>
+
+        <div class="form-control mb-6">
+          <%= form.label :name, class: "label" do %>
+            <span class="label-text font-medium text-lg">Project Name</span>
+          <% end %>
+          <%= form.text_field :name, 
+                             placeholder: "e.g., TaskFlow Manager, Social Marketplace, Customer Portal",
+                             class: "input input-bordered input-lg w-full",
+                             required: true %>
+          <div class="label">
+            <span class="label-text-alt">Choose a descriptive name for your application project</span>
+          </div>
+        </div>
+
+        <div class="form-control mb-6">
+          <%= form.label :vision_response, class: "label" do %>
+            <span class="label-text font-medium">Initial Idea (Optional)</span>
+          <% end %>
+          <%= form.text_area :vision_response, 
+                             placeholder: "Briefly describe your app idea... (you can expand on this in the wizard)",
+                             rows: 4,
+                             class: "textarea textarea-bordered w-full" %>
+          <div class="label">
+            <span class="label-text-alt">This will help us customize the questionnaire for you</span>
+          </div>
+        </div>
+      <% end %>
+
+      <%= card.with_actions do %>
+        <div class="flex justify-between w-full">
+          <%= render Ui::ButtonComponent.new(variant: :outline, href: app_projects_path) do %>
+            Cancel
+          <% end %>
+          
+          <%= render Ui::ButtonComponent.new(variant: :primary, type: :submit) do %>
+            Create Project & Start Wizard
+          <% end %>
+        </div>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <!-- Help Section -->
+  <div class="mt-8">
+    <%= render Ui::CardComponent.new(bordered: true, css_class: "bg-blue-50") do |card| %>
+      <%= card.with_body do %>
+        <div class="flex items-start gap-4">
+          <div class="text-3xl">💡</div>
+          <div>
+            <h3 class="font-semibold text-lg mb-2">What happens next?</h3>
+            <ul class="space-y-2 text-gray-700">
+              <li class="flex items-start gap-2">
+                <span class="text-primary">1.</span>
+                <span>You'll answer 10 detailed questions about your app idea</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-primary">2.</span>
+                <span>Our AI will analyze your responses and generate a comprehensive PRD</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-primary">3.</span>
+                <span>You'll receive task lists and Claude Code prompts to start building</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+</div>

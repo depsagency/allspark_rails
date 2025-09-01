@@ -1,0 +1,125 @@
+<div class="container mx-auto px-4 py-8 max-w-2xl">
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-3xl font-bold">Upload Document</h1>
+    <%= link_to "← Back", agents_knowledge_documents_path, class: "btn btn-ghost" %>
+  </div>
+
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+      <%= form_with model: [:agents, @knowledge_document], local: true do |f| %>
+        <% if @knowledge_document.errors.any? %>
+          <div class="alert alert-error mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <h3 class="font-bold">Error!</h3>
+              <ul class="list-disc list-inside">
+                <% @knowledge_document.errors.full_messages.each do |message| %>
+                  <li><%= message %></li>
+                <% end %>
+              </ul>
+            </div>
+          </div>
+        <% end %>
+
+        <div class="form-control mb-6">
+          <%= f.label :title, class: "label" do %>
+            <span class="label-text">Document Title <span class="text-error">*</span></span>
+          <% end %>
+          <%= f.text_field :title, class: "input input-bordered w-full", 
+              placeholder: "e.g., Product Documentation, API Reference, User Guide" %>
+        </div>
+
+        <div class="form-control mb-6">
+          <%= f.label :assistant_id, class: "label" do %>
+            <span class="label-text">Assistant</span>
+            <span class="label-text-alt">Leave blank for global access</span>
+          <% end %>
+          <%= f.select :assistant_id, 
+              options_for_select(
+                [["Global (All Assistants)", nil]] + @assistants.map { |a| [a.name, a.id] },
+                @knowledge_document.assistant_id
+              ),
+              {}, 
+              class: "select select-bordered w-full" %>
+        </div>
+
+        <div class="divider">Document Source</div>
+
+        <div class="form-control mb-6">
+          <%= f.label :file, class: "label" do %>
+            <span class="label-text">Upload File</span>
+            <span class="label-text-alt">TXT, MD, PDF, DOCX, HTML</span>
+          <% end %>
+          <%= f.file_field :file, 
+              class: "file-input file-input-bordered w-full",
+              accept: ".txt,.md,.pdf,.docx,.html" %>
+          <label class="label">
+            <span class="label-text-alt">File will be processed to extract text content</span>
+          </label>
+        </div>
+
+        <div class="divider">OR</div>
+
+        <div class="form-control mb-6">
+          <%= f.label :content, class: "label" do %>
+            <span class="label-text">Paste Content Directly</span>
+          <% end %>
+          <%= f.text_area :content, 
+              class: "textarea textarea-bordered h-48 w-full", 
+              placeholder: "Paste your document content here..." %>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div class="form-control">
+            <%= f.label :source_type, class: "label" do %>
+              <span class="label-text">Source Type</span>
+            <% end %>
+            <%= f.select :source_type,
+                options_for_select([
+                  ["", nil],
+                  ["Documentation", "documentation"],
+                  ["Knowledge Base", "knowledge_base"],
+                  ["FAQ", "faq"],
+                  ["Tutorial", "tutorial"],
+                  ["Reference", "reference"],
+                  ["Other", "other"]
+                ], @knowledge_document.source_type),
+                {},
+                class: "select select-bordered w-full" %>
+          </div>
+
+          <div class="form-control">
+            <%= f.label :source_url, class: "label" do %>
+              <span class="label-text">Source URL</span>
+            <% end %>
+            <%= f.text_field :source_url, 
+                class: "input input-bordered w-full",
+                placeholder: "https://example.com/docs" %>
+          </div>
+        </div>
+
+        <%= render 'metadata_fields', f: f %>
+
+        <div class="alert alert-info mb-6">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <div>
+            <h3 class="font-bold">Processing Information</h3>
+            <div class="text-sm">
+              • Documents are automatically chunked for optimal retrieval<br>
+              • Embeddings are generated for semantic search<br>
+              • Large files are processed in the background
+            </div>
+          </div>
+        </div>
+
+        <div class="form-control mt-6">
+          <%= f.submit "Upload Document", class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

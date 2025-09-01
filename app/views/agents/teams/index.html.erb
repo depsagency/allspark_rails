@@ -1,0 +1,72 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-3xl font-bold">Agent Teams</h1>
+    <div class="flex gap-2">
+      <%= link_to "Assistants", agents_assistants_path, class: "btn btn-ghost" %>
+      <%= link_to "Monitoring", agents_monitoring_index_path, class: "btn btn-ghost" %>
+      <%= link_to "New Team", new_agents_team_path, class: "btn btn-primary" %>
+    </div>
+  </div>
+
+  <% if @teams.any? %>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <% @teams.each do |team| %>
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h2 class="card-title">
+              <%= team.name %>
+              <% if team.active? %>
+                <div class="badge badge-success">Active</div>
+              <% else %>
+                <div class="badge badge-ghost">Inactive</div>
+              <% end %>
+            </h2>
+            
+            <% if team.purpose.present? %>
+              <p class="text-sm opacity-70">
+                <%= truncate(team.purpose, length: 100) %>
+              </p>
+            <% end %>
+            
+            <div class="mt-4">
+              <div class="flex items-center gap-2 mb-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <span class="text-sm"><%= team.assistants.count %> agents</span>
+              </div>
+              
+              <div class="flex flex-wrap gap-1">
+                <% team.assistants.limit(3).each do |assistant| %>
+                  <div class="badge badge-outline badge-sm">
+                    <%= assistant.name %>
+                  </div>
+                <% end %>
+                <% if team.assistants.count > 3 %>
+                  <div class="badge badge-ghost badge-sm">
+                    +<%= team.assistants.count - 3 %> more
+                  </div>
+                <% end %>
+              </div>
+            </div>
+            
+            <div class="card-actions justify-end mt-4">
+              <%= link_to "Manage", agents_team_path(team), class: "btn btn-primary btn-sm" %>
+              <%= link_to "Edit", edit_agents_team_path(team), class: "btn btn-ghost btn-sm" %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="hero bg-base-200 rounded-lg p-12">
+      <div class="hero-content text-center">
+        <div class="max-w-md">
+          <h2 class="text-2xl font-bold mb-4">No Agent Teams Yet</h2>
+          <p class="mb-6">Create teams of AI agents that work together to accomplish complex tasks.</p>
+          <%= link_to "Create First Team", new_agents_team_path, class: "btn btn-primary" %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

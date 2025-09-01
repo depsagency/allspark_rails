@@ -1,0 +1,14 @@
+{
+  "name": "ruby_code",
+  "description": "Execute Ruby code in a sandboxed environment",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "code": {
+        "type": "string",
+        "description": "The Ruby code to execute"
+      }
+    },
+    "required": ["code"]
+  }
+}

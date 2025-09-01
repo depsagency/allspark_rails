@@ -1,0 +1,38 @@
+<div class="chat <%= chat_position_class %>" data-message-id="<%= message.id %>">
+  <% if !system_message? %>
+    <div class="chat-image avatar">
+      <div class="w-10 rounded-full bg-base-300">
+        <div class="flex items-center justify-center h-10 text-sm font-semibold">
+          <%= message_user.initials %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+  
+  <div class="chat-header">
+    <%= message_user.display_name %>
+    <time class="text-xs opacity-50"><%= message.created_at.strftime("%H:%M") %></time>
+  </div>
+  
+  <div class="chat-bubble <%= bubble_color_class %>">
+    <% if has_tool_calls? %>
+      <div class="mb-2">
+        <% message.tool_calls.each do |tool_call| %>
+          <div class="badge badge-outline badge-sm mb-1">
+            🔧 <%= tool_call['function']['name'] %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+    
+    <div class="prose prose-sm max-w-none">
+      <%= formatted_content %>
+    </div>
+  </div>
+  
+  <% if tool_message? && message.tool_call_id.present? %>
+    <div class="chat-footer opacity-50 text-xs">
+      Tool response for: <%= message.tool_call_id %>
+    </div>
+  <% end %>
+</div>

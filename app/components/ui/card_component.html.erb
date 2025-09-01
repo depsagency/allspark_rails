@@ -1,0 +1,19 @@
+<div class="<%= card_classes %>">
+  <%= image if image? %>
+  
+  <% if show_default_body? %>
+    <div class="<%= body_classes %>">
+      <% if title.present? %>
+        <h2 class="card-title"><%= title %></h2>
+      <% end %>
+      
+      <% if content.present? %>
+        <%= content %>
+      <% end %>
+      
+      <%= actions if actions? %>
+    </div>
+  <% else %>
+    <%= body if body? %>
+  <% end %>
+</div>

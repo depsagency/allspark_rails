@@ -1,0 +1,25 @@
+<%#
+  <%= @full_component_name %>
+  
+  A flexible <%= human_name.downcase %> component with DaisyUI styling.
+  
+  Usage:
+    <%%= render <%= @full_component_name %>.new(
+      text: "Example text",
+      variant: :primary,
+      size: :md
+    ) %>
+    
+  Available variants: <%= @variants.join(', ') %>
+  Available sizes: xs, sm, md, lg
+%>
+
+<div
+  class="<%%= component_classes %>"
+  <%% component_data.each do |key, value| -%>
+  data-<%%= key.to_s.dasherize %>="<%%= value %>"
+  <%% end -%>
+  <%%= "disabled" if disabled %>
+>
+  <%%= display_content %>
+</div>

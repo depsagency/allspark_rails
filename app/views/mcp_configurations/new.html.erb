@@ -1,0 +1,240 @@
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+  <div class="mb-8">
+    <%= link_to "← Back to Configurations", mcp_configurations_path, class: "link link-primary" %>
+  </div>
+  
+  <h1 class="text-3xl font-bold mb-8">Add MCP Configuration</h1>
+  
+  <% if @template %>
+    <div class="alert alert-info mb-6">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <div>
+        <h3 class="font-bold">Using <%= @template.name %> Template</h3>
+        <div class="text-sm"><%= @template.description %></div>
+      </div>
+    </div>
+  <% end %>
+  
+  <%= form_with(model: @configuration, local: true, html: { class: "space-y-6" }) do |form| %>
+    <% if @configuration.errors.any? %>
+      <div class="alert alert-error">
+        <div>
+          <h3 class="font-bold">Please fix the following errors:</h3>
+          <ul class="mt-2 list-disc list-inside">
+            <% @configuration.errors.full_messages.each do |message| %>
+              <li><%= message %></li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    <% end %>
+    
+    <!-- Basic Information -->
+    <div class="card bg-base-100 shadow">
+      <div class="card-body">
+        <h2 class="card-title mb-4">Basic Information</h2>
+        
+        <div class="form-control">
+          <%= form.label :name, class: "label" do %>
+            <span class="label-text">Configuration Name</span>
+            <span class="label-text-alt text-error">*</span>
+          <% end %>
+          <%= form.text_field :name, class: "input input-bordered w-full", 
+              placeholder: "e.g., My Linear Integration", required: true %>
+          <label class="label">
+            <span class="label-text-alt">A friendly name to identify this configuration</span>
+          </label>
+        </div>
+        
+        <% unless @template %>
+          <div class="form-control">
+            <%= form.label :server_type, class: "label" do %>
+              <span class="label-text">Server Type</span>
+              <span class="label-text-alt text-error">*</span>
+            <% end %>
+            <%= form.select :server_type, 
+                options_for_select(McpConfiguration.server_types.map { |k,v| [k.humanize, k] }),
+                { prompt: "Select server type..." },
+                class: "select select-bordered w-full",
+                "data-mcp-server-type": true %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+    
+    <!-- Server Configuration -->
+    <div class="card bg-base-100 shadow">
+      <div class="card-body">
+        <h2 class="card-title mb-4">Server Configuration</h2>
+        
+        <% if @template %>
+          <!-- Template-based configuration -->
+          <%= hidden_field_tag :template_key, @template.key %>
+          
+          <% @template.required_fields.each do |field| %>
+            <div class="form-control">
+              <%= label_tag "template_values[#{field}]", field.to_s.humanize, class: "label" do %>
+                <span class="label-text"><%= field.to_s.humanize %></span>
+                <span class="label-text-alt text-error">*</span>
+              <% end %>
+              
+              <% if field.to_s.include?('token') || field.to_s.include?('key') || field.to_s.include?('secret') %>
+                <%= password_field_tag "template_values[#{field}]", nil, 
+                    class: "input input-bordered w-full", 
+                    placeholder: "Enter #{field.to_s.humanize.downcase}",
+                    required: true %>
+              <% elsif field.to_s.include?('url') || field.to_s.include?('endpoint') %>
+                <%= url_field_tag "template_values[#{field}]", nil,
+                    class: "input input-bordered w-full",
+                    placeholder: "https://example.com",
+                    required: true %>
+              <% else %>
+                <%= text_field_tag "template_values[#{field}]", nil,
+                    class: "input input-bordered w-full",
+                    placeholder: "Enter #{field.to_s.humanize.downcase}",
+                    required: true %>
+              <% end %>
+              
+              <% if @template.documentation_url %>
+                <label class="label">
+                  <span class="label-text-alt">
+                    See <%= link_to "documentation", @template.documentation_url, 
+                            target: "_blank", class: "link link-primary" %> 
+                    for how to obtain this value
+                  </span>
+                </label>
+              <% end %>
+            </div>
+          <% end %>
+        <% else %>
+          <!-- Manual configuration -->
+          <div id="server-config-fields">
+            <div class="alert alert-info">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span>Select a server type above to see configuration options</span>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+    
+    <!-- Actions -->
+    <div class="flex justify-between">
+      <%= link_to "Cancel", mcp_configurations_path, class: "btn btn-ghost" %>
+      <%= form.submit "Create Configuration", class: "btn btn-primary" %>
+    </div>
+  <% end %>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const serverTypeSelect = document.querySelector('[data-mcp-server-type]');
+  if (!serverTypeSelect) return;
+  
+  const configFields = document.getElementById('server-config-fields');
+  
+  serverTypeSelect.addEventListener('change', function() {
+    const serverType = this.value;
+    
+    switch(serverType) {
+      case 'stdio':
+        configFields.innerHTML = `
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">Command</span>
+              <span class="label-text-alt text-error">*</span>
+            </label>
+            <input type="text" name="mcp_configuration[server_config][command]" 
+                   class="input input-bordered w-full" 
+                   placeholder="e.g., npx" required>
+          </div>
+          
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">Arguments</span>
+            </label>
+            <input type="text" name="mcp_configuration[server_config][args]" 
+                   class="input input-bordered w-full" 
+                   placeholder='e.g., ["-y", "@modelcontextprotocol/server-example"]'>
+            <label class="label">
+              <span class="label-text-alt">Enter as JSON array</span>
+            </label>
+          </div>
+          
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">Environment Variables</span>
+            </label>
+            <textarea name="mcp_configuration[server_config][env]" 
+                      class="textarea textarea-bordered w-full" 
+                      rows="3"
+                      placeholder='{"API_KEY": "your-key"}'></textarea>
+            <label class="label">
+              <span class="label-text-alt">Enter as JSON object</span>
+            </label>
+          </div>
+        `;
+        break;
+        
+      case 'http':
+      case 'sse':
+        configFields.innerHTML = `
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">${serverType === 'http' ? 'Endpoint' : 'URL'}</span>
+              <span class="label-text-alt text-error">*</span>
+            </label>
+            <input type="url" name="mcp_configuration[server_config][${serverType === 'http' ? 'endpoint' : 'url'}]" 
+                   class="input input-bordered w-full" 
+                   placeholder="https://api.example.com/mcp" required>
+          </div>
+          
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">Headers</span>
+            </label>
+            <textarea name="mcp_configuration[server_config][headers]" 
+                      class="textarea textarea-bordered w-full" 
+                      rows="3"
+                      placeholder='{"Authorization": "Bearer YOUR_TOKEN"}'></textarea>
+            <label class="label">
+              <span class="label-text-alt">Enter as JSON object</span>
+            </label>
+          </div>
+        `;
+        break;
+        
+      case 'websocket':
+        configFields.innerHTML = `
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">WebSocket Endpoint</span>
+              <span class="label-text-alt text-error">*</span>
+            </label>
+            <input type="text" name="mcp_configuration[server_config][endpoint]" 
+                   class="input input-bordered w-full" 
+                   placeholder="wss://api.example.com/mcp" required>
+          </div>
+          
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">Headers</span>
+            </label>
+            <textarea name="mcp_configuration[server_config][headers]" 
+                      class="textarea textarea-bordered w-full" 
+                      rows="3"
+                      placeholder='{"Authorization": "Bearer YOUR_TOKEN"}'></textarea>
+            <label class="label">
+              <span class="label-text-alt">Enter as JSON object</span>
+            </label>
+          </div>
+        `;
+        break;
+    }
+  });
+});
+</script>

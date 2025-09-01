@@ -1,0 +1,161 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl font-bold">Knowledge Search</h1>
+      <p class="text-base-content/70 mt-2">Test your RAG knowledge base search</p>
+    </div>
+    
+    <%= link_to "← Back to Documents", agents_knowledge_documents_path, class: "btn btn-ghost" %>
+  </div>
+
+  <!-- Search Form -->
+  <div class="card bg-base-100 shadow-xl mb-8">
+    <div class="card-body">
+      <%= form_with url: agents_knowledge_search_index_path, method: :get, local: true, class: "space-y-4" do |f| %>
+        <div class="form-control">
+          <%= f.label :query, "Search Query", class: "label" do %>
+            <span class="label-text">What would you like to search for?</span>
+          <% end %>
+          <%= f.text_field :query, 
+              value: @query,
+              class: "input input-bordered input-lg w-full", 
+              placeholder: "e.g., How do I configure authentication?",
+              autofocus: true %>
+        </div>
+        
+        <div class="form-control">
+          <%= f.label :assistant_id, "Assistant Scope", class: "label" do %>
+            <span class="label-text">Search within specific assistant's knowledge base</span>
+          <% end %>
+          <%= f.select :assistant_id,
+              options_for_select(
+                [["All Assistants", ""]] + @assistants.map { |a| [a.name, a.id] },
+                params[:assistant_id]
+              ),
+              {},
+              class: "select select-bordered w-full" %>
+        </div>
+        
+        <div class="form-control">
+          <%= f.submit "Search", class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <% if @query.present? %>
+    <!-- Document Results -->
+    <div class="card bg-base-100 shadow-xl mb-6">
+      <div class="card-body">
+        <h2 class="card-title">Document Results</h2>
+        
+        <% if @document_results&.any? %>
+          <div class="space-y-4">
+            <% @document_results.each do |document| %>
+              <div class="border-l-4 border-primary pl-4">
+                <h3 class="font-semibold text-lg">
+                  <%= link_to document.title, agents_knowledge_document_path(document), 
+                      class: "link link-hover" %>
+                </h3>
+                <% if document.assistant %>
+                  <div class="badge badge-primary badge-sm mb-2"><%= document.assistant.name %></div>
+                <% end %>
+                <p class="text-sm opacity-80">
+                  <%= truncate(document.content, length: 200) %>
+                </p>
+                <div class="text-xs opacity-60 mt-2">
+                  <%= document.knowledge_chunks.count %> chunks • 
+                  Created <%= time_ago_in_words(document.created_at) %> ago
+                </div>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-center opacity-70 py-4">No matching documents found</p>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Chunk Results -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title">Chunk Results</h2>
+        <p class="text-sm opacity-70 mb-4">Most relevant text segments from your knowledge base</p>
+        
+        <% if @chunk_results&.any? %>
+          <div class="space-y-4">
+            <% @chunk_results.each_with_index do |result, index| %>
+              <div class="border-l-4 border-secondary pl-4">
+                <div class="flex justify-between items-start mb-2">
+                  <div>
+                    <h4 class="font-semibold">
+                      <%= link_to result[:chunk].knowledge_document.title, 
+                          agents_knowledge_document_path(result[:chunk].knowledge_document),
+                          class: "link link-hover" %>
+                    </h4>
+                    <p class="text-xs opacity-60">
+                      Chunk #<%= result[:chunk].position + 1 %> • 
+                      Similarity: <%= (result[:similarity] * 100).round(1) %>%
+                    </p>
+                  </div>
+                  <% if result[:chunk].knowledge_document.assistant %>
+                    <div class="badge badge-secondary badge-sm">
+                      <%= result[:chunk].knowledge_document.assistant.name %>
+                    </div>
+                  <% end %>
+                </div>
+                
+                <div class="bg-base-200 rounded-lg p-3 text-sm">
+                  <%= simple_format(result[:chunk].content) %>
+                </div>
+                
+                <% if result[:context] && result[:context].any? %>
+                  <details class="mt-2">
+                    <summary class="text-xs opacity-60 cursor-pointer">Show context</summary>
+                    <div class="mt-2 space-y-2">
+                      <% result[:context].each do |context_chunk| %>
+                        <div class="bg-base-200 rounded p-2 text-xs opacity-80">
+                          <span class="font-semibold">Chunk #<%= context_chunk.position + 1 %>:</span>
+                          <%= truncate(context_chunk.content, length: 150) %>
+                        </div>
+                      <% end %>
+                    </div>
+                  </details>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        <% else %>
+          <p class="text-center opacity-70 py-4">No matching chunks found</p>
+        <% end %>
+      </div>
+    </div>
+
+    <!-- Debug Info -->
+    <% if Rails.env.development? %>
+      <div class="card bg-base-100 shadow-xl mt-6">
+        <div class="card-body">
+          <h3 class="card-title text-sm">Debug Information</h3>
+          <div class="text-xs font-mono opacity-60">
+            <p>Query: <%= @query %></p>
+            <p>Assistant: <%= @assistant&.name || "All" %></p>
+            <p>Document Results: <%= @document_results&.count || 0 %></p>
+            <p>Chunk Results: <%= @chunk_results&.count || 0 %></p>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  <% else %>
+    <!-- Empty State -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body text-center py-16">
+        <div class="text-6xl mb-4">🔍</div>
+        <h2 class="text-2xl font-semibold mb-2">Search Your Knowledge Base</h2>
+        <p class="text-base-content/70">
+          Enter a query above to test the RAG search functionality.<br>
+          The system will search through documents and find the most relevant chunks.
+        </p>
+      </div>
+    </div>
+  <% end %>
+</div>

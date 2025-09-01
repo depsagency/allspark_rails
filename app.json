@@ -1,0 +1,46 @@
+{
+  "name": "AI-Ready Rails 8 Starter",
+  "description": "The fastest way to go from idea to working Rails application with AI superpowers",
+  "repository": "https://github.com/your-username/rails-ai-starter",
+  "logo": "https://example.com/logo.png",
+  "keywords": ["rails", "ai", "openai", "claude", "gemini", "starter", "template"],
+  "stack": "heroku-22",
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    },
+    {
+      "url": "heroku/ruby"
+    }
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    },
+    "worker": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "addons": [
+    {
+      "plan": "heroku-postgresql:essential-0"
+    },
+    {
+      "plan": "heroku-redis:mini"
+    }
+  ],
+  "env": {
+    "RAILS_ENV": "production",
+    "RACK_ENV": "production",
+    "RAILS_LOG_TO_STDOUT": "enabled",
+    "RAILS_SERVE_STATIC_FILES": "enabled",
+    "LLM_PROVIDER": "openai",
+    "WEB_CONCURRENCY": "2",
+    "RAILS_MAX_THREADS": "5"
+  },
+  "scripts": {
+    "postdeploy": "bundle exec rails db:migrate db:seed"
+  }
+}

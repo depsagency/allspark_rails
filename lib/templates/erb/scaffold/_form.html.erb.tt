@@ -1,0 +1,139 @@
+<%%= simple_form_for(@<%= singular_table_name %>, wrapper: :daisyui, html: { class: "space-y-6" }) do |form| %>
+  <!-- Error handling with DaisyUI alert -->
+  <%% if @<%= singular_table_name %>.errors.any? %>
+    <div class="alert alert-error">
+      <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+      <div>
+        <h3 class="font-bold">Please fix the following errors:</h3>
+        <ul class="list-disc list-inside mt-2">
+          <%% @<%= singular_table_name %>.errors.full_messages.each do |message| %>
+            <li><%%= message %></li>
+          <%% end %>
+        </ul>
+      </div>
+    </div>
+  <%% end %>
+
+  <!-- Form fields -->
+  <div class="grid grid-cols-1 gap-6">
+<% attributes.reject(&:password_digest?).each do |attribute| -%>
+<% if attribute.reference? -%>
+    <!-- <%= attribute.human_name %> association field -->
+    <div class="form-control">
+      <%%= form.association :<%= attribute.name %>, 
+          label_html: { class: "label" },
+          input_html: { class: "select select-bordered w-full" },
+          include_blank: "Select a <%= attribute.name.humanize %>" %>
+    </div>
+
+<% elsif attribute.type == :boolean -%>
+    <!-- <%= attribute.human_name %> boolean field -->
+    <div class="form-control">
+      <label class="cursor-pointer label justify-start gap-4">
+        <%%= form.check_box :<%= attribute.name %>, class: "checkbox checkbox-primary" %>
+        <span class="label-text font-medium"><%= attribute.human_name %></span>
+      </label>
+    </div>
+
+<% elsif attribute.type == :text -%>
+    <!-- <%= attribute.human_name %> text area -->
+    <div class="form-control">
+      <%%= form.input :<%= attribute.name %>, 
+          as: :text,
+          label_html: { class: "label" },
+          input_html: { 
+            class: "textarea textarea-bordered h-32 resize-vertical",
+            rows: 6,
+            placeholder: "Enter <%= attribute.human_name.downcase %>..."
+          } %>
+    </div>
+
+<% elsif attribute.type == :datetime -%>
+    <!-- <%= attribute.human_name %> datetime field -->
+    <div class="form-control">
+      <%%= form.input :<%= attribute.name %>, 
+          as: :datetime_local,
+          label_html: { class: "label" },
+          input_html: { class: "input input-bordered w-full" } %>
+    </div>
+
+<% elsif attribute.type == :date -%>
+    <!-- <%= attribute.human_name %> date field -->
+    <div class="form-control">
+      <%%= form.input :<%= attribute.name %>, 
+          as: :date,
+          label_html: { class: "label" },
+          input_html: { class: "input input-bordered w-full" } %>
+    </div>
+
+<% elsif attribute.type == :time -%>
+    <!-- <%= attribute.human_name %> time field -->
+    <div class="form-control">
+      <%%= form.input :<%= attribute.name %>, 
+          as: :time,
+          label_html: { class: "label" },
+          input_html: { class: "input input-bordered w-full" } %>
+    </div>
+
+<% elsif attribute.type == :decimal || attribute.type == :float -%>
+    <!-- <%= attribute.human_name %> number field -->
+    <div class="form-control">
+      <%%= form.input :<%= attribute.name %>, 
+          as: :decimal,
+          label_html: { class: "label" },
+          input_html: { 
+            class: "input input-bordered w-full",
+            step: 0.01,
+            placeholder: "0.00"
+          } %>
+    </div>
+
+<% elsif attribute.type == :integer -%>
+    <!-- <%= attribute.human_name %> integer field -->
+    <div class="form-control">
+      <%%= form.input :<%= attribute.name %>, 
+          as: :integer,
+          label_html: { class: "label" },
+          input_html: { 
+            class: "input input-bordered w-full",
+            placeholder: "Enter <%= attribute.human_name.downcase %>..."
+          } %>
+    </div>
+
+<% elsif attribute.type == :password -%>
+    <!-- <%= attribute.human_name %> password field -->
+    <div class="form-control">
+      <%%= form.input :<%= attribute.name %>, 
+          as: :password,
+          label_html: { class: "label" },
+          input_html: { 
+            class: "input input-bordered w-full",
+            placeholder: "Enter <%= attribute.human_name.downcase %>..."
+          } %>
+    </div>
+
+<% else -%>
+    <!-- <%= attribute.human_name %> text field -->
+    <div class="form-control">
+      <%%= form.input :<%= attribute.name %>, 
+          label_html: { class: "label" },
+          input_html: { 
+            class: "input input-bordered w-full",
+            placeholder: "Enter <%= attribute.human_name.downcase %>..."
+          } %>
+    </div>
+
+<% end -%>
+<% end -%>
+  </div>
+
+  <!-- Form actions -->
+  <div class="flex flex-col sm:flex-row gap-4 pt-6">
+    <%%= form.button :submit, 
+        class: "btn btn-primary flex-1 sm:flex-none sm:w-auto",
+        data: { disable_with: "Saving..." } %>
+    <%%= link_to "Cancel", 
+        @<%= singular_table_name %>.persisted? ? @<%= singular_table_name %> : <%= index_helper %>_path, 
+        class: "btn btn-outline flex-1 sm:flex-none sm:w-auto" %>
+  </div>
+<%% end %>

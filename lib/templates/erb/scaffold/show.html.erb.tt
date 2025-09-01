@@ -1,0 +1,85 @@
+<div class="container mx-auto px-4 py-8">
+  <!-- Flash messages with DaisyUI alerts -->
+  <%% flash.each do |type, message| %>
+    <div class="alert <%%= type == 'notice' ? 'alert-success' : 'alert-error' %> mb-4">
+      <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+      <span><%%= message %></span>
+    </div>
+  <%% end %>
+
+  <!-- Breadcrumbs navigation -->
+  <div class="breadcrumbs text-sm mb-6">
+    <ul>
+      <li><%%= link_to "Home", root_path, class: "link link-hover" %></li>
+      <li><%%= link_to "<%= human_name.pluralize %>", <%= index_helper %>_path, class: "link link-hover" %></li>
+      <li class="text-base-content/70"><%= human_name %></li>
+    </ul>
+  </div>
+
+  <!-- Main content card -->
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+      <!-- Header with title and action buttons -->
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h1 class="card-title text-3xl font-bold"><%= human_name %></h1>
+        <div class="flex gap-2">
+          <%%= link_to "Edit", edit_<%= singular_route_name %>_path(@<%= singular_table_name %>), class: "btn btn-secondary" %>
+          <%%= link_to "Delete", <%= singular_route_name %>_path(@<%= singular_table_name %>), method: :delete,
+              class: "btn btn-error",
+              data: { 
+                confirm: "Are you sure you want to delete this <%= human_name.downcase %>?"
+              } %>
+          <%%= link_to "Back", <%= index_helper %>_path, class: "btn btn-outline" %>
+        </div>
+      </div>
+
+      <!-- Content grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<% attributes.reject(&:password_digest?).each do |attribute| -%>
+        <!-- <%= attribute.human_name %> field -->
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text font-semibold"><%= attribute.human_name %></span>
+          </label>
+          <div class="bg-base-200 rounded-lg p-3 min-h-[3rem] flex items-center">
+<% if attribute.reference? -%>
+            <%%= link_to @<%= singular_table_name %>.<%= attribute.name %>, @<%= singular_table_name %>.<%= attribute.name %>, class: "link link-primary" if @<%= singular_table_name %>.<%= attribute.name %> %>
+<% elsif attribute.type == :boolean -%>
+            <div class="badge <%= "<%%= @#{singular_table_name}.#{attribute.name} ? 'badge-success' : 'badge-error' %>" %> badge-lg">
+              <%%= @<%= singular_table_name %>.<%= attribute.name %> ? 'Yes' : 'No' %>
+            </div>
+<% elsif attribute.type == :text -%>
+            <div class="whitespace-pre-wrap"><%%= @<%= singular_table_name %>.<%= attribute.name %> %></div>
+<% elsif attribute.type == :datetime -%>
+            <%%= @<%= singular_table_name %>.<%= attribute.name %>&.strftime("%B %d, %Y at %I:%M %p") %>
+<% elsif attribute.type == :date -%>
+            <%%= @<%= singular_table_name %>.<%= attribute.name %>&.strftime("%B %d, %Y") %>
+<% elsif attribute.type == :decimal || attribute.type == :float -%>
+            <%%= number_with_precision(@<%= singular_table_name %>.<%= attribute.name %>, precision: 2) if @<%= singular_table_name %>.<%= attribute.name %> %>
+<% elsif attribute.type == :integer -%>
+            <%%= number_with_delimiter(@<%= singular_table_name %>.<%= attribute.name %>) if @<%= singular_table_name %>.<%= attribute.name %> %>
+<% else -%>
+            <%%= @<%= singular_table_name %>.<%= attribute.name %> %>
+<% end -%>
+          </div>
+        </div>
+
+<% end -%>
+      </div>
+
+      <!-- Metadata section -->
+      <div class="divider mt-8"></div>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-base-content/70">
+        <div>
+          <span class="font-semibold">Created:</span>
+          <%%= @<%= singular_table_name %>.created_at.strftime("%B %d, %Y at %I:%M %p") %>
+        </div>
+        <div>
+          <span class="font-semibold">Last updated:</span>
+          <%%= @<%= singular_table_name %>.updated_at.strftime("%B %d, %Y at %I:%M %p") %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

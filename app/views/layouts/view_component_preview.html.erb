@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="<%= params[:theme] || 'light' %>">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Component Preview - <%= Rails.application.class.module_parent_name %></title>
+    <meta name="description" content="Component library and design system documentation">
+    
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    
+    <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+    
+    <style>
+      /* Lookbook-specific styles */
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        margin: 0;
+        padding: 1rem;
+        background: oklch(var(--b1));
+        color: oklch(var(--bc));
+      }
+      
+      .preview-container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      
+      .preview-header {
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid oklch(var(--bc) / 0.1);
+      }
+      
+      .preview-content {
+        display: grid;
+        gap: 2rem;
+      }
+      
+      .component-example {
+        padding: 2rem;
+        border: 1px solid oklch(var(--bc) / 0.1);
+        border-radius: 0.5rem;
+        background: oklch(var(--b1));
+      }
+      
+      .example-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: oklch(var(--bc));
+      }
+      
+      .theme-switcher {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 1000;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Theme switcher for development -->
+    <div class="theme-switcher">
+      <div class="dropdown dropdown-end">
+        <div tabindex="0" role="button" class="btn btn-ghost btn-sm">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+          </svg>
+          Theme
+        </div>
+        <ul tabindex="0" class="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52 max-h-80 overflow-y-auto">
+          <% %w[light dark cupcake bumblebee emerald corporate synthwave retro cyberpunk valentine halloween garden forest aqua lofi pastel fantasy wireframe black luxury dracula cmyk autumn business acid lemonade night coffee winter dim nord sunset].each do |theme| %>
+            <li>
+              <a href="?theme=<%= theme %>" class="<%= 'active' if (params[:theme] || 'light') == theme %>">
+                <%= theme.titleize %>
+              </a>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+
+    <div class="preview-container">
+      <%= yield %>
+    </div>
+
+    <!-- Initialize Stimulus controllers for interactive components -->
+    <script>
+      // Any component-specific initialization can go here
+      document.addEventListener('DOMContentLoaded', function() {
+        console.log('Lookbook preview loaded with theme:', document.documentElement.dataset.theme);
+      });
+    </script>
+  </body>
+</html>

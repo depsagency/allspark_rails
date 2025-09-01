@@ -1,0 +1,152 @@
+<div class="<%= container_classes %>" data-controller="data-table">
+  <% if has_search? %>
+    <div class="mb-4">
+      <%= form_with url: request.url, method: :get, local: true, 
+                    id: search_form_id,
+                    class: "form-control",
+                    data: { 
+                      turbo_frame: defined?(turbo_frame_id) ? turbo_frame_id : nil,
+                      data_table_target: "searchForm"
+                    } do |form| %>
+        <div class="input-group">
+          <%= form.text_field :search, 
+                              value: search_value,
+                              placeholder: search_placeholder,
+                              class: "input input-bordered flex-1",
+                              data: { 
+                                action: "input->data-table#search",
+                                data_table_target: "searchInput"
+                              } %>
+          <%= form.submit "Search", 
+                          class: "btn btn-primary",
+                          data: { data_table_target: "searchButton" } %>
+          <% if search_value.present? %>
+            <%= link_to "Clear", 
+                        request.path, 
+                        class: "btn btn-ghost",
+                        data: { turbo_frame: defined?(turbo_frame_id) ? turbo_frame_id : nil } %>
+          <% end %>
+        </div>
+        
+        <!-- Preserve other parameters -->
+        <% params.except(:search, :page, :controller, :action).each do |key, value| %>
+          <%= form.hidden_field key, value: value %>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if loading %>
+    <div class="skeleton-loader">
+      <table class="<%= table_classes %>">
+        <% if has_header? %>
+          <thead>
+            <tr>
+              <% columns.each do |column| %>
+                <th class="<%= column_header_classes(column) %>">
+                  <div class="skeleton h-4 w-20"></div>
+                </th>
+              <% end %>
+              <% if has_actions? %>
+                <th class="w-32">
+                  <div class="skeleton h-4 w-16"></div>
+                </th>
+              <% end %>
+            </tr>
+          </thead>
+        <% end %>
+        <tbody>
+          <% loading_row_count.times do %>
+            <tr>
+              <% columns.each do |column| %>
+                <td class="<%= cell_classes(column) %>">
+                  <div class="skeleton h-4 w-full"></div>
+                </td>
+              <% end %>
+              <% if has_actions? %>
+                <td>
+                  <div class="skeleton h-8 w-20"></div>
+                </td>
+              <% end %>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% elsif has_data? %>
+    <table class="<%= table_classes %>">
+      <% if has_header? %>
+        <thead>
+          <tr>
+            <% columns.each do |column| %>
+              <th class="<%= column_header_classes(column) %>">
+                <% if column_sortable?(column[:key]) %>
+                  <%= link_to sort_url(column[:key]), 
+                              class: "flex items-center gap-1 hover:text-primary",
+                              data: { turbo_frame: defined?(turbo_frame_id) ? turbo_frame_id : nil } do %>
+                    <%= column[:label] %>
+                    <span class="text-xs opacity-60">
+                      <%= sort_icon(column[:key]) %>
+                    </span>
+                  <% end %>
+                <% else %>
+                  <%= column[:label] %>
+                <% end %>
+              </th>
+            <% end %>
+            <% if has_actions? %>
+              <th class="w-32">Actions</th>
+            <% end %>
+          </tr>
+        </thead>
+      <% end %>
+      
+      <tbody>
+        <% table_data.each do |record| %>
+          <tr class="hover">
+            <% columns.each do |column| %>
+              <td class="<%= cell_classes(column) %>">
+                <%= format_cell_value(cell_value(record, column), column) %>
+              </td>
+            <% end %>
+            <% if has_actions? %>
+              <td>
+                <div class="flex gap-1">
+                  <%= @action_column_block.call(record) %>
+                </div>
+              </td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    
+    <% if paginated? && table_data.respond_to?(:total_pages) %>
+      <div class="mt-4 flex justify-center">
+        <%= paginate table_data, 
+                     theme: 'daisyui',
+                     params: params.except(:controller, :action).permit! %>
+      </div>
+    <% end %>
+  <% else %>
+    <div class="text-center py-12">
+      <% if @empty_state_block %>
+        <%= @empty_state_block.call %>
+      <% else %>
+        <div class="text-base-content/60">
+          <svg class="w-16 h-16 mx-auto mb-4 text-base-content/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          <p class="text-lg font-medium mb-2"><%= empty_message %></p>
+          <% if has_search? && search_value.present? %>
+            <p class="text-sm">Try adjusting your search criteria</p>
+            <%= link_to "Clear search", 
+                        request.path, 
+                        class: "btn btn-sm btn-ghost mt-2",
+                        data: { turbo_frame: defined?(turbo_frame_id) ? turbo_frame_id : nil } %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>

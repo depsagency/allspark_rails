@@ -1,0 +1,30 @@
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+  <div class="mb-8">
+    <%= link_to "← Back to Configurations", mcp_configurations_path, class: "link link-primary" %>
+  </div>
+  
+  <h1 class="text-3xl font-bold mb-8">Edit MCP Configuration</h1>
+  
+  <% if @configuration.metadata && @configuration.metadata['template_key'] %>
+    <div class="alert alert-info mb-6">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <div>
+        <span>Created from template: <strong><%= @configuration.metadata['template_key'].humanize %></strong></span>
+      </div>
+    </div>
+  <% end %>
+  
+  <% if @configuration.test_connection %>
+    <div class="mb-6">
+      <h3 class="text-lg font-semibold mb-2">Last Connection Test</h3>
+      <% test_result = @configuration.test_connection %>
+      <div class="alert <%= test_result[:success] ? 'alert-success' : 'alert-error' %>">
+        <span><%= test_result[:message] %></span>
+      </div>
+    </div>
+  <% end %>
+  
+  <%= render 'form', configuration: @configuration %>
+</div>

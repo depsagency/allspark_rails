@@ -1,0 +1,126 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl font-bold">Workflow Executions</h1>
+      <p class="text-base-content/70 mt-1">
+        For: <%= @workflow.name %> • Team: <%= @team.name %>
+      </p>
+    </div>
+    
+    <div class="flex gap-2">
+      <% if @workflow.status == 'active' %>
+        <%= button_to execute_agents_team_workflow_path(@team, @workflow), 
+            method: :post,
+            class: "btn btn-primary",
+            form: { class: "inline" } do %>
+          ▶️ Run Workflow
+        <% end %>
+      <% end %>
+      <%= link_to "Back to Workflow", agents_team_workflow_path(@team, @workflow), 
+          class: "btn btn-ghost" %>
+    </div>
+  </div>
+
+  <% if @executions.any? %>
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body p-0">
+        <div class="overflow-x-auto">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Execution ID</th>
+                <th>Started</th>
+                <th>Duration</th>
+                <th>Progress</th>
+                <th>Status</th>
+                <th>Started By</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @executions.each do |execution| %>
+                <tr class="hover">
+                  <td>
+                    <div class="font-mono text-sm">#<%= execution.id.last(8) %></div>
+                  </td>
+                  <td>
+                    <div>
+                      <%= execution.created_at.strftime("%b %d, %Y") %>
+                      <div class="text-sm opacity-70">
+                        <%= execution.created_at.strftime("%I:%M %p") %>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <% if execution.elapsed_time %>
+                      <%= distance_of_time_in_words(execution.elapsed_time) %>
+                    <% elsif execution.running? %>
+                      <div class="flex items-center gap-2">
+                        <div class="loading loading-spinner loading-xs"></div>
+                        Running...
+                      </div>
+                    <% else %>
+                      —
+                    <% end %>
+                  </td>
+                  <td>
+                    <div class="flex items-center gap-2">
+                      <progress class="progress progress-primary w-20" 
+                               value="<%= execution.progress_percentage %>" 
+                               max="100"></progress>
+                      <span class="text-sm"><%= execution.progress_percentage %>%</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="badge badge-<%= execution.completed? ? 'success' : execution.failed? ? 'error' : execution.cancelled? ? 'ghost' : execution.running? ? 'warning' : 'info' %>">
+                      <%= execution.status %>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="text-sm"><%= execution.user.email %></div>
+                  </td>
+                  <td>
+                    <div class="flex justify-end gap-2">
+                      <%= link_to "View", agents_team_workflow_execution_path(@team, @workflow, execution), 
+                          class: "btn btn-ghost btn-sm" %>
+                      <% if execution.running? %>
+                        <%= link_to "Cancel", cancel_agents_team_workflow_execution_path(@team, @workflow, execution), 
+                            method: :post,
+                            data: { turbo_method: :post },
+                            class: "btn btn-error btn-sm" %>
+                      <% end %>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    
+    <%= paginate @executions %>
+  <% else %>
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body text-center py-16">
+        <div class="text-6xl mb-4">📊</div>
+        <h2 class="text-2xl font-semibold mb-2">No executions yet</h2>
+        <p class="text-base-content/70 mb-6">
+          This workflow hasn't been run yet. Start your first execution to see results here.
+        </p>
+        <% if @workflow.status == 'active' %>
+          <%= button_to execute_agents_team_workflow_path(@team, @workflow), 
+              method: :post,
+              class: "btn btn-primary",
+              form: { class: "inline" } do %>
+            ▶️ Run Workflow Now
+          <% end %>
+        <% else %>
+          <p class="text-sm text-warning">
+            This workflow is in <%= @workflow.status %> status and cannot be executed.
+          </p>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

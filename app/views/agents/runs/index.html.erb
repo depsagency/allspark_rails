@@ -1,0 +1,158 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl font-bold">Agent Runs</h1>
+      <% if @assistant %>
+        <p class="text-base-content/70 mt-2">
+          Showing runs for: <span class="font-semibold"><%= @assistant.name %></span>
+        </p>
+      <% end %>
+    </div>
+    
+    <div class="flex gap-2">
+      <% if @assistant %>
+        <%= link_to "View Assistant", agents_assistant_path(@assistant), class: "btn btn-ghost" %>
+      <% end %>
+      <%= link_to "← Back to Monitoring", agents_monitoring_index_path, class: "btn btn-ghost" %>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="card bg-base-100 shadow-xl mb-6">
+    <div class="card-body">
+      <div class="flex flex-wrap gap-4 items-end">
+        <%= form_with url: agents_runs_path, method: :get, class: "flex flex-wrap gap-4 items-end" do |f| %>
+          <%= hidden_field_tag :assistant_id, params[:assistant_id] if params[:assistant_id] %>
+          
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">Status</span>
+            </label>
+            <%= select_tag :status, 
+                options_for_select([
+                  ['All Statuses', ''],
+                  ['Pending', 'pending'],
+                  ['Running', 'running'],
+                  ['Completed', 'completed'],
+                  ['Failed', 'failed'],
+                  ['Cancelled', 'cancelled']
+                ], params[:status]),
+                class: "select select-bordered select-sm" %>
+          </div>
+          
+          <%= f.submit "Filter", class: "btn btn-primary btn-sm" %>
+          <%= link_to "Clear", agents_runs_path(assistant_id: params[:assistant_id]), class: "btn btn-ghost btn-sm" %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Runs Table -->
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+      <% if @runs.any? %>
+        <div class="overflow-x-auto">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Run ID</th>
+                <th>Assistant</th>
+                <th>Status</th>
+                <th>Duration</th>
+                <th>Messages</th>
+                <th>Tools Used</th>
+                <th>Started</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @runs.each do |run| %>
+                <tr class="hover">
+                  <td>
+                    <span class="font-mono text-xs"><%= run.run_id[0..15] %>...</span>
+                  </td>
+                  <td><%= run.assistant.name %></td>
+                  <td>
+                    <div class="badge badge-<%= run.completed? ? 'success' : run.failed? ? 'error' : run.cancelled? ? 'ghost' : 'warning' %> badge-sm">
+                      <%= run.status %>
+                    </div>
+                  </td>
+                  <td>
+                    <% if run.duration_seconds %>
+                      <%= run.duration_seconds.round(2) %>s
+                    <% else %>
+                      -
+                    <% end %>
+                  </td>
+                  <td>
+                    <%= run.messages.count %>
+                  </td>
+                  <td>
+                    <% if run.tools_called&.any? %>
+                      <div class="flex gap-1">
+                        <% run.tools_called.uniq.first(3).each do |tool| %>
+                          <div class="badge badge-ghost badge-xs"><%= tool %></div>
+                        <% end %>
+                        <% if run.tools_called.uniq.size > 3 %>
+                          <div class="badge badge-ghost badge-xs">+<%= run.tools_called.uniq.size - 3 %></div>
+                        <% end %>
+                      </div>
+                    <% else %>
+                      <span class="opacity-50">None</span>
+                    <% end %>
+                  </td>
+                  <td>
+                    <div class="text-sm">
+                      <%= time_ago_in_words(run.created_at) %> ago
+                      <div class="text-xs opacity-50">
+                        <%= run.created_at.strftime("%Y-%m-%d %H:%M") %>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <%= link_to "View Details", agents_run_path(run), class: "btn btn-ghost btn-xs" %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <% if @total_count > @per_page %>
+          <div class="flex justify-center mt-6">
+            <div class="join">
+              <% if @page > 1 %>
+                <%= link_to "«", agents_runs_path(assistant_id: params[:assistant_id], status: params[:status], page: @page - 1), 
+                    class: "join-item btn btn-sm" %>
+              <% else %>
+                <button class="join-item btn btn-sm btn-disabled">«</button>
+              <% end %>
+              
+              <button class="join-item btn btn-sm">Page <%= @page %></button>
+              
+              <% if @runs.size == @per_page %>
+                <%= link_to "»", agents_runs_path(assistant_id: params[:assistant_id], status: params[:status], page: @page + 1), 
+                    class: "join-item btn btn-sm" %>
+              <% else %>
+                <button class="join-item btn btn-sm btn-disabled">»</button>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="text-center py-12">
+          <div class="text-6xl mb-4">📋</div>
+          <p class="text-xl font-semibold">No runs found</p>
+          <p class="text-sm opacity-70 mt-2">
+            <% if params[:status].present? || @assistant %>
+              Try adjusting your filters to see more results.
+            <% else %>
+              Agent runs will appear here when assistants process requests.
+            <% end %>
+          </p>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

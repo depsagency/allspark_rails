@@ -1,0 +1,392 @@
+<% content_for :title, "MCP Analytics Dashboard" %>
+
+<div class="container mx-auto px-4 py-8 max-w-7xl">
+  <!-- Page Header -->
+  <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
+    <div>
+      <h1 class="text-3xl font-bold mb-2">MCP Analytics Dashboard</h1>
+      <p class="text-base-content/70">
+        Monitor MCP server performance, usage, and health metrics
+      </p>
+    </div>
+    
+    <div class="mt-4 lg:mt-0 flex gap-2">
+      <div class="dropdown dropdown-end">
+        <div tabindex="0" role="button" class="btn btn-outline">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+          </svg>
+          Time Range: <%= params[:timeframe]&.humanize || 'Last 7 Days' %>
+          <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+          </svg>
+        </div>
+        <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-[1] w-52 p-2 shadow-xl border">
+          <li><%= link_to "Last 24 Hours", analytics_admin_mcp_servers_path(timeframe: 'last_24_hours') %></li>
+          <li><%= link_to "Last 7 Days", analytics_admin_mcp_servers_path(timeframe: 'last_7_days') %></li>
+          <li><%= link_to "Last 30 Days", analytics_admin_mcp_servers_path(timeframe: 'last_30_days') %></li>
+          <li><%= link_to "Last 90 Days", analytics_admin_mcp_servers_path(timeframe: 'last_90_days') %></li>
+        </ul>
+      </div>
+      
+      <%= link_to analytics_admin_mcp_servers_path(format: :json), 
+          class: "btn btn-primary",
+          data: { action: "click->analytics#exportData" } do %>
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        Export Data
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Overview Stats -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="stats shadow">
+      <div class="stat">
+        <div class="stat-figure text-primary">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path>
+          </svg>
+        </div>
+        <div class="stat-title">Total Servers</div>
+        <div class="stat-value text-primary"><%= @analytics[:overview][:total_servers] %></div>
+        <div class="stat-desc">
+          <span class="text-success"><%= @analytics[:overview][:active_servers] %> active</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="stats shadow">
+      <div class="stat">
+        <div class="stat-figure text-secondary">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+          </svg>
+        </div>
+        <div class="stat-title">Total Executions</div>
+        <div class="stat-value text-secondary"><%= number_with_delimiter(@analytics[:overview][:total_executions]) %></div>
+        <div class="stat-desc">
+          <% success_rate = @analytics[:overview][:success_rate] %>
+          <span class="<%= success_rate >= 95 ? 'text-success' : success_rate >= 80 ? 'text-warning' : 'text-error' %>">
+            <%= success_rate %>% success rate
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="stats shadow">
+      <div class="stat">
+        <div class="stat-figure text-accent">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <div class="stat-title">Avg Response Time</div>
+        <div class="stat-value text-accent"><%= @analytics[:overview][:avg_response_time] %>ms</div>
+        <div class="stat-desc">
+          <% p95 = @analytics[:overview][:p95_response_time] %>
+          P95: <%= p95 %>ms
+        </div>
+      </div>
+    </div>
+    
+    <div class="stats shadow">
+      <div class="stat">
+        <div class="stat-figure text-info">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+          </svg>
+        </div>
+        <div class="stat-title">Tools Available</div>
+        <div class="stat-value text-info"><%= @analytics[:overview][:total_tools] %></div>
+        <div class="stat-desc">
+          <%= @analytics[:overview][:most_used_tool] %> most used
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Usage Trends Chart -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title mb-4">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+          </svg>
+          Usage Trends
+        </h2>
+        
+        <div class="h-64 relative" data-controller="chart" data-chart-type-value="line">
+          <canvas data-chart-target="canvas"></canvas>
+          <script type="application/json" data-chart-target="data">
+            {
+              "labels": <%= raw @analytics[:usage_trends][:labels].to_json %>,
+              "datasets": [
+                {
+                  "label": "Successful Executions",
+                  "data": <%= raw @analytics[:usage_trends][:successful].to_json %>,
+                  "borderColor": "rgb(34, 197, 94)",
+                  "backgroundColor": "rgba(34, 197, 94, 0.1)",
+                  "tension": 0.1
+                },
+                {
+                  "label": "Failed Executions",
+                  "data": <%= raw @analytics[:usage_trends][:failed].to_json %>,
+                  "borderColor": "rgb(239, 68, 68)",
+                  "backgroundColor": "rgba(239, 68, 68, 0.1)",
+                  "tension": 0.1
+                }
+              ]
+            }
+          </script>
+        </div>
+      </div>
+    </div>
+
+    <!-- Response Time Distribution -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title mb-4">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+          </svg>
+          Response Time Distribution
+        </h2>
+        
+        <div class="h-64 relative" data-controller="chart" data-chart-type-value="bar">
+          <canvas data-chart-target="canvas"></canvas>
+          <script type="application/json" data-chart-target="data">
+            {
+              "labels": <%= raw @analytics[:response_time_distribution][:labels].to_json %>,
+              "datasets": [
+                {
+                  "label": "Executions",
+                  "data": <%= raw @analytics[:response_time_distribution][:data].to_json %>,
+                  "backgroundColor": [
+                    "rgba(34, 197, 94, 0.8)",
+                    "rgba(59, 130, 246, 0.8)",
+                    "rgba(245, 158, 11, 0.8)",
+                    "rgba(239, 68, 68, 0.8)",
+                    "rgba(139, 69, 19, 0.8)"
+                  ]
+                }
+              ]
+            }
+          </script>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detailed Tables -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <!-- Top Performing Servers -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title mb-4">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+          </svg>
+          Top Performing Servers
+        </h2>
+        
+        <div class="overflow-x-auto">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Server</th>
+                <th>Executions</th>
+                <th>Success Rate</th>
+                <th>Avg Response</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @analytics[:top_servers].each do |server_data| %>
+                <tr>
+                  <td>
+                    <div class="flex items-center gap-3">
+                      <div class="avatar placeholder">
+                        <div class="bg-neutral text-neutral-content rounded-full w-8">
+                          <span class="text-xs"><%= server_data[:name].first.upcase %></span>
+                        </div>
+                      </div>
+                      <div>
+                        <div class="font-bold text-sm"><%= server_data[:name] %></div>
+                        <div class="text-xs opacity-50"><%= server_data[:endpoint] %></div>
+                      </div>
+                    </div>
+                  </td>
+                  <td><%= number_with_delimiter(server_data[:executions]) %></td>
+                  <td>
+                    <% success_rate = server_data[:success_rate] %>
+                    <div class="badge <%= success_rate >= 95 ? 'badge-success' : success_rate >= 80 ? 'badge-warning' : 'badge-error' %>">
+                      <%= success_rate %>%
+                    </div>
+                  </td>
+                  <td><%= server_data[:avg_response_time] %>ms</td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Most Used Tools -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <h2 class="card-title mb-4">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+          </svg>
+          Most Used Tools
+        </h2>
+        
+        <div class="space-y-3">
+          <% @analytics[:popular_tools].each_with_index do |tool_data, index| %>
+            <div class="flex items-center justify-between p-3 bg-base-200 rounded-lg">
+              <div class="flex items-center gap-3">
+                <div class="badge badge-primary"><%= index + 1 %></div>
+                <div>
+                  <div class="font-semibold text-sm"><%= tool_data[:name] %></div>
+                  <div class="text-xs opacity-70"><%= tool_data[:server_name] %></div>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="font-bold"><%= number_with_delimiter(tool_data[:usage_count]) %></div>
+                <div class="text-xs opacity-70">executions</div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Health Status Overview -->
+  <div class="card bg-base-100 shadow-xl mb-8">
+    <div class="card-body">
+      <h2 class="card-title mb-4">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        Server Health Status
+      </h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="stats shadow">
+          <div class="stat">
+            <div class="stat-title">Healthy Servers</div>
+            <div class="stat-value text-success"><%= @analytics[:health][:healthy] %></div>
+            <div class="stat-desc">Response time < 1000ms</div>
+          </div>
+        </div>
+        
+        <div class="stats shadow">
+          <div class="stat">
+            <div class="stat-title">Warning Servers</div>
+            <div class="stat-value text-warning"><%= @analytics[:health][:warning] %></div>
+            <div class="stat-desc">Response time 1000-5000ms</div>
+          </div>
+        </div>
+        
+        <div class="stats shadow">
+          <div class="stat">
+            <div class="stat-title">Critical Servers</div>
+            <div class="stat-value text-error"><%= @analytics[:health][:critical] %></div>
+            <div class="stat-desc">Response time > 5000ms or failing</div>
+          </div>
+        </div>
+      </div>
+      
+      <% if @analytics[:unhealthy_servers].any? %>
+        <div class="mt-6">
+          <h3 class="text-lg font-semibold mb-3">Servers Requiring Attention</h3>
+          <div class="space-y-2">
+            <% @analytics[:unhealthy_servers].each do |server| %>
+              <div class="alert alert-<%= server[:status] == 'error' ? 'error' : 'warning' %>">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+                <div>
+                  <h3 class="font-bold"><%= server[:name] %></h3>
+                  <div class="text-sm"><%= server[:issue] %></div>
+                </div>
+                <div class="flex-none">
+                  <%= link_to "Investigate", admin_mcp_server_path(server[:id]), class: "btn btn-sm" %>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Recent Activity -->
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+      <h2 class="card-title mb-4">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        Recent Activity
+        <div class="badge badge-neutral"><%= @analytics[:recent_activity].count %></div>
+      </h2>
+      
+      <div class="overflow-x-auto">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Server</th>
+              <th>Tool</th>
+              <th>User</th>
+              <th>Status</th>
+              <th>Response Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @analytics[:recent_activity].each do |activity| %>
+              <tr>
+                <td class="text-xs">
+                  <%= time_ago_in_words(activity[:timestamp]) %> ago
+                </td>
+                <td>
+                  <div class="text-sm font-medium"><%= activity[:server_name] %></div>
+                </td>
+                <td>
+                  <code class="text-xs"><%= activity[:tool_name] %></code>
+                </td>
+                <td>
+                  <div class="text-sm"><%= activity[:user_email] %></div>
+                </td>
+                <td>
+                  <div class="badge <%= activity[:status] == 'successful' ? 'badge-success' : 'badge-error' %>">
+                    <%= activity[:status] %>
+                  </div>
+                </td>
+                <td><%= activity[:response_time] %>ms</td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart.js Integration -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Auto-refresh data every 30 seconds
+  setInterval(function() {
+    if (document.visibilityState === 'visible') {
+      location.reload();
+    }
+  }, 30000);
+});
+</script>

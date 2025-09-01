@@ -1,0 +1,18 @@
+{
+  "type": "function",
+  "function": {
+    "name": "mcp_tool",
+    "description": "Executes tools from MCP (Model Context Protocol) servers",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "args": {
+          "type": "object",
+          "description": "Arguments to pass to the MCP tool",
+          "additionalProperties": true
+        }
+      },
+      "required": []
+    }
+  }
+}

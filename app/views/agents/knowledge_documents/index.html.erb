@@ -1,0 +1,425 @@
+<div class="container mx-auto px-4 py-8">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl font-bold">Knowledge Base</h1>
+      <% if @assistant %>
+        <p class="text-base-content/70 mt-2">Documents for: <span class="font-semibold"><%= @assistant.name %></span></p>
+      <% end %>
+    </div>
+    
+    <div class="flex gap-2">
+      <%= link_to "Upload Document", new_agents_knowledge_document_path(assistant_id: params[:assistant_id]), 
+          class: "btn btn-primary" %>
+      <%= link_to "Test Search", agents_knowledge_search_index_path, class: "btn btn-outline" %>
+    </div>
+  </div>
+
+  <!-- Stats Section -->
+  <div class="stats shadow w-full mb-6">
+      <div class="stat">
+        <div class="stat-figure text-primary">
+          <span class="text-3xl">📄</span>
+        </div>
+        <div class="stat-title">Total Documents</div>
+        <div class="stat-value text-primary"><%= @total_documents %></div>
+        <div class="stat-desc">In knowledge base</div>
+      </div>
+      
+      <div class="stat">
+        <div class="stat-figure text-secondary">
+          <span class="text-3xl">🧩</span>
+        </div>
+        <div class="stat-title">Total Chunks</div>
+        <div class="stat-value text-secondary"><%= number_with_delimiter(@total_chunks) %></div>
+        <div class="stat-desc">Searchable segments</div>
+      </div>
+      
+      <div class="stat">
+        <div class="stat-figure text-info">
+          <span class="text-3xl">📚</span>
+        </div>
+        <div class="stat-title">Document Types</div>
+        <div class="stat-value text-info"><%= @documents_by_type.keys.compact.count %></div>
+        <div class="stat-desc">
+          <% @documents_by_type.each do |type, count| %>
+            <%= type || 'General' %>: <%= count %><br>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+  <!-- Main Card with Search/Filters and Table -->
+  <% if @knowledge_documents.any? %>
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <!-- Filters Section -->
+        <div class="pb-4">
+          <%= form_with url: agents_knowledge_documents_path, method: :get, local: true do |f| %>
+            <%= hidden_field_tag :assistant_id, params[:assistant_id] if params[:assistant_id] %>
+            
+            <!-- Filters Row -->
+            <div class="flex flex-wrap gap-4 items-end">
+              <!-- Tags Filter -->
+              <% if @available_tags&.any? %>
+                <div class="form-control">
+                  <%= f.label :tags, "Tags", class: "label" %>
+                  <div class="dropdown dropdown-bottom">
+                    <label tabindex="0" class="btn btn-sm btn-outline gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z" />
+                      </svg>
+                      <%= params[:tags].present? ? "Tags (#{params[:tags].split(',').count})" : "All Tags" %>
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                      </svg>
+                    </label>
+                    <div tabindex="0" class="dropdown-content z-[1] card card-compact w-64 p-2 shadow bg-base-100 max-h-60 overflow-y-auto">
+                      <div class="card-body">
+                        <div class="form-control mb-2">
+                          <label class="label cursor-pointer">
+                            <span class="label-text text-sm">Match all tags</span>
+                            <%= check_box_tag :match_all_tags, '1', params[:match_all_tags].present?, 
+                                class: "checkbox checkbox-xs" %>
+                          </label>
+                        </div>
+                        <div class="space-y-1">
+                          <% @available_tags.each do |tag| %>
+                            <% is_selected = params[:tags]&.split(',')&.include?(tag) %>
+                            <label class="cursor-pointer flex items-center gap-2 hover:bg-base-200 p-1 rounded">
+                              <input type="checkbox" 
+                                     name="tags[]" 
+                                     value="<%= tag %>"
+                                     <%= 'checked' if is_selected %>
+                                     class="checkbox checkbox-sm">
+                              <span class="text-sm"><%= tag %></span>
+                            </label>
+                          <% end %>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+              
+              <!-- Category Filter -->
+              <% if @available_categories&.any? %>
+                <div class="form-control">
+                  <%= f.label :category, "Category", class: "label" %>
+                  <%= select_tag :category,
+                      options_for_select(
+                        [["All Categories", ""]] + @available_categories.map { |c| [c, c] },
+                        params[:category]
+                      ),
+                      class: "select select-bordered select-sm" %>
+                </div>
+              <% end %>
+              
+              <!-- Source Type Filter -->
+              <div class="form-control">
+                <%= f.label :source_type, "Type", class: "label" %>
+                <%= select_tag :source_type,
+                    options_for_select(
+                      [
+                        ["All Types", ""],
+                        ["Code", "code"],
+                        ["Documentation", "documentation"],
+                        ["General", "general"]
+                      ],
+                      params[:source_type]
+                    ),
+                    class: "select select-bordered select-sm" %>
+              </div>
+              
+              <!-- Assistant Filter -->
+              <div class="form-control">
+                <%= f.label :assistant_id, "Assistant", class: "label" %>
+                <%= select_tag :assistant_id,
+                    options_for_select(
+                      [["All Assistants", ""]] + current_user.assistants.pluck(:name, :id),
+                      params[:assistant_id]
+                    ),
+                    class: "select select-bordered select-sm" %>
+              </div>
+              
+              <!-- Visibility Filter -->
+              <div class="form-control">
+                <%= f.label :visibility, "Visibility", class: "label" %>
+                <%= select_tag :visibility,
+                    options_for_select(
+                      [
+                        ["All", ""],
+                        ["Public", "public"],
+                        ["Private", "private"],
+                        ["Team", "team"],
+                        ["Restricted", "restricted"]
+                      ],
+                      params[:visibility]
+                    ),
+                    class: "select select-bordered select-sm" %>
+              </div>
+              
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text">&nbsp;</span>
+                </label>
+                <div class="flex gap-2">
+                  <%= f.submit "Filter", class: "btn btn-primary btn-sm" %>
+                  <%= link_to "Clear", agents_knowledge_documents_path, class: "btn btn-ghost btn-sm" %>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+        
+        <!-- Divider -->
+        <div class="divider my-0"></div>
+        
+        <!-- Table -->
+        <div class="overflow-x-auto">
+          <table class="table table-zebra">
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Type</th>
+                <th>Assistant</th>
+                <th>Chunks</th>
+                <th>File</th>
+                <th>Created</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @knowledge_documents.each do |document| %>
+                <tr class="hover">
+                  <td>
+                    <%= link_to document.title, agents_knowledge_document_path(document), 
+                        class: "link link-hover font-semibold" %>
+                    <% if document.tags.any? %>
+                      <div class="flex flex-wrap gap-1 mt-1">
+                        <% document.tags.first(3).each do |tag| %>
+                          <span class="badge badge-sm badge-ghost"><%= tag %></span>
+                        <% end %>
+                        <% if document.tags.size > 3 %>
+                          <span class="badge badge-sm badge-ghost">+<%= document.tags.size - 3 %></span>
+                        <% end %>
+                      </div>
+                    <% end %>
+                  </td>
+                  <td>
+                    <% if document.source_type.present? %>
+                      <% case document.source_type %>
+                      <% when 'code' %>
+                        <div class="badge badge-info gap-2">
+                          💻 Code
+                        </div>
+                      <% when 'documentation' %>
+                        <div class="badge badge-success gap-2">
+                          📖 Docs
+                        </div>
+                      <% else %>
+                        <div class="badge badge-neutral">
+                          <%= document.source_type.humanize %>
+                        </div>
+                      <% end %>
+                    <% else %>
+                      <div class="badge badge-ghost">General</div>
+                    <% end %>
+                  </td>
+                  <td>
+                    <% if document.assistant %>
+                      <div class="badge badge-primary badge-sm"><%= document.assistant.name %></div>
+                    <% else %>
+                      <div class="badge badge-ghost badge-sm">Global</div>
+                    <% end %>
+                  </td>
+                  <td>
+                    <% if document.knowledge_chunks.any? %>
+                      <span class="text-sm font-semibold"><%= document.knowledge_chunks.count %></span>
+                    <% else %>
+                      <div class="badge badge-warning badge-sm">Processing...</div>
+                    <% end %>
+                  </td>
+                  <td>
+                    <% if document.file.attached? %>
+                      <div class="text-sm">
+                        <div class="font-mono text-xs"><%= document.file.filename %></div>
+                        <div class="text-xs opacity-60">
+                          <%= number_to_human_size(document.file.byte_size) %>
+                        </div>
+                      </div>
+                    <% else %>
+                      <span class="text-xs opacity-50">—</span>
+                    <% end %>
+                  </td>
+                  <td>
+                    <div class="text-sm opacity-70">
+                      <%= time_ago_in_words(document.created_at) %> ago
+                    </div>
+                  </td>
+                  <td>
+                    <div class="flex justify-end gap-2">
+                      <%= link_to agents_knowledge_document_path(document), 
+                          class: "btn btn-ghost btn-xs",
+                          title: "View document" do %>
+                        👁️
+                      <% end %>
+                      <%= link_to edit_agents_knowledge_document_path(document), 
+                          class: "btn btn-ghost btn-xs",
+                          title: "Edit document" do %>
+                        ✏️
+                      <% end %>
+                      <%= link_to agents_knowledge_document_path(document), 
+                          method: :delete,
+                          data: { 
+                            turbo_method: :delete,
+                            turbo_confirm: "Are you sure? This will permanently delete the document and all its chunks." 
+                          },
+                          class: "btn btn-ghost btn-xs text-error",
+                          title: "Delete document" do %>
+                        🗑️
+                      <% end %>
+                    </div>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Pagination -->
+        <% if @knowledge_documents.respond_to?(:total_pages) && @knowledge_documents.total_pages > 1 %>
+          <div class="flex justify-center mt-6">
+            <%= render 'shared/pagination', paginator: @knowledge_documents %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% else %>
+    <!-- Empty State with Search/Filters -->
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body">
+        <!-- Filters Section -->
+        <div class="pb-4">
+          <%= form_with url: agents_knowledge_documents_path, method: :get, local: true do |f| %>
+            <%= hidden_field_tag :assistant_id, params[:assistant_id] if params[:assistant_id] %>
+            
+            <!-- Filters Row -->
+            <div class="flex flex-wrap gap-4 items-end">
+              <!-- Source Type Filter -->
+              <div class="form-control">
+                <%= f.label :source_type, "Type", class: "label" %>
+                <%= select_tag :source_type,
+                    options_for_select(
+                      [
+                        ["All Types", ""],
+                        ["Code", "code"],
+                        ["Documentation", "documentation"],
+                        ["General", "general"]
+                      ],
+                      params[:source_type]
+                    ),
+                    class: "select select-bordered select-sm" %>
+              </div>
+              
+              <!-- Assistant Filter -->
+              <div class="form-control">
+                <%= f.label :assistant_id, "Assistant", class: "label" %>
+                <%= select_tag :assistant_id,
+                    options_for_select(
+                      [["All Assistants", ""]] + current_user.assistants.pluck(:name, :id),
+                      params[:assistant_id]
+                    ),
+                    class: "select select-bordered select-sm" %>
+              </div>
+              
+              <!-- Visibility Filter -->
+              <div class="form-control">
+                <%= f.label :visibility, "Visibility", class: "label" %>
+                <%= select_tag :visibility,
+                    options_for_select(
+                      [
+                        ["All", ""],
+                        ["Public", "public"],
+                        ["Private", "private"],
+                        ["Team", "team"],
+                        ["Restricted", "restricted"]
+                      ],
+                      params[:visibility]
+                    ),
+                    class: "select select-bordered select-sm" %>
+              </div>
+              
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text">&nbsp;</span>
+                </label>
+                <div class="flex gap-2">
+                  <%= f.submit "Filter", class: "btn btn-primary btn-sm" %>
+                  <%= link_to "Clear", agents_knowledge_documents_path, class: "btn btn-ghost btn-sm" %>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+        
+        <!-- Divider -->
+        <div class="divider my-0"></div>
+        
+        <!-- Empty State Content -->
+        <div class="text-center py-16">
+        <div class="text-6xl mb-4">
+          📚
+        </div>
+        <h2 class="text-2xl font-semibold mb-2">
+          No documents found
+        </h2>
+        <p class="text-base-content/70 mb-6">
+          <% if params[:tags].present? || params[:category].present? || params[:source_type].present? || params[:visibility].present? %>
+            No documents match the selected filters. Try adjusting your filters or clear them to see all documents.
+          <% else %>
+            Upload documents to build your knowledge base for RAG-powered responses.
+          <% end %>
+        </p>
+        <div class="flex gap-2 justify-center">
+          <% if params[:tags].present? || params[:category].present? || params[:source_type].present? || params[:visibility].present? %>
+            <%= link_to "Clear Filters", agents_knowledge_documents_path(assistant_id: params[:assistant_id]), 
+                class: "btn btn-primary" %>
+          <% else %>
+            <%= link_to "Upload First Document", new_agents_knowledge_document_path(assistant_id: params[:assistant_id]), 
+                class: "btn btn-primary" %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+  
+  <!-- JavaScript for Tags Handling -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Handle tag selection
+      const tagCheckboxes = document.querySelectorAll('input[name="tags[]"]');
+      const form = document.querySelector('form');
+      
+      tagCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+          // Collect all selected tags
+          const selectedTags = Array.from(tagCheckboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
+          
+          // Update hidden field with comma-separated tags
+          let tagsField = form.querySelector('input[name="tags"][type="hidden"]');
+          if (!tagsField) {
+            tagsField = document.createElement('input');
+            tagsField.type = 'hidden';
+            tagsField.name = 'tags';
+            form.appendChild(tagsField);
+          }
+          tagsField.value = selectedTags.join(',');
+        });
+      });
+    });
+  </script>
+</div>

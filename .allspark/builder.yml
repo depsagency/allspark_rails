@@ -1,0 +1,70 @@
+# AllSpark Builder Integration Configuration
+# This file defines how this template integrates with AllSpark Builder platform
+
+builder:
+  compatible: true
+  version: "1.0.0"
+  minimum_builder_version: "1.0.0"
+  
+  features:
+    auto_deploy: true           # One-click deployment from Builder
+    live_preview: true          # Real-time preview during development
+    ai_generation: true         # AI-powered code generation
+    team_collaboration: true    # Multi-user collaboration features
+    version_control: true       # Git integration
+    monitoring: true            # Built-in monitoring and logging
+    
+  creator_optimized: true       # Optimized for creators using AllSpark Builder
+  
+  detection:
+    environment_variable: "ALLSPARK_BUILDER"
+    version_variable: "ALLSPARK_BUILDER_VERSION"
+    instance_id_variable: "ALLSPARK_INSTANCE_ID"
+    
+  hooks:
+    pre_generate: ".allspark/hooks/pre_generate.sh"
+    post_generate: ".allspark/hooks/post_generate.sh"
+    pre_deploy: ".allspark/hooks/pre_deploy.sh"
+    post_deploy: ".allspark/hooks/post_deploy.sh"
+    pre_preview: ".allspark/hooks/pre_preview.sh"
+    
+  api:
+    endpoint: "https://api.allspark.build"
+    version: "v1"
+    authentication: "bearer"
+    
+  resources:
+    cpu_limit: "2"
+    memory_limit: "4Gi"
+    storage_limit: "10Gi"
+    
+  scaling:
+    min_instances: 1
+    max_instances: 10
+    auto_scale: true
+    
+  integrations:
+    github: true
+    gitlab: false
+    bitbucket: false
+    linear: true
+    slack: true
+    discord: true
+    
+  telemetry:
+    enabled: true
+    anonymous: true
+    events:
+      - template_created
+      - feature_generated
+      - deployment_success
+      - deployment_failure
+      
+  cta:
+    show_upgrade_prompts: true
+    upgrade_url: "https://creator.optimus.allspark.build"
+    messages:
+      dashboard: "🚀 Deploy this app with one click using AllSpark Builder"
+      deployment: "⚡ Simplify deployment with AllSpark Builder's one-click deploy"
+      collaboration: "👥 Enable team collaboration with AllSpark Builder"
+      after_success: "✨ Take your app to production with AllSpark Builder"

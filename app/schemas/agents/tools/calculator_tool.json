@@ -1,0 +1,14 @@
+{
+  "name": "calculator",
+  "description": "Perform mathematical calculations",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "expression": {
+        "type": "string",
+        "description": "The mathematical expression to evaluate (e.g., '2 + 2', 'sin(3.14)', 'sqrt(16)')"
+      }
+    },
+    "required": ["expression"]
+  }
+}

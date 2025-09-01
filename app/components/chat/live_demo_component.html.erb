@@ -1,0 +1,226 @@
+<div class="chat-live-demo h-[600px] flex bg-base-100 rounded-lg shadow-lg overflow-hidden border"
+     data-controller="live-chat"
+     data-live-chat-room-value="<%= room_name %>"
+     data-live-chat-user-name-value=""
+     data-live-chat-user-color-value=""
+     data-live-chat-session-id-value="">
+  
+  <!-- Thread List Sidebar -->
+  <div class="w-80 border-r flex-shrink-0 bg-base-200 flex flex-col">
+    <div class="p-4 border-b flex-shrink-0">
+      <h3 class="text-lg font-semibold">Messages</h3>
+    </div>
+    
+    <div class="flex-1 overflow-y-auto">
+      <!-- Live Chat Room (Active) -->
+      <div class="chat-thread-item p-4 hover:bg-base-300 cursor-pointer border-b bg-base-300">
+        <div class="flex items-start justify-between">
+          <div class="flex-1 min-w-0">
+            <h4 class="font-semibold text-sm truncate">Live Chat Room</h4>
+            <p class="text-sm text-base-content/70 truncate mt-1">
+              <span data-live-chat-target="lastMessage">Click to start chatting...</span>
+            </p>
+          </div>
+          <div class="flex flex-col items-end ml-2">
+            <span class="text-xs text-base-content/50" data-live-chat-target="lastMessageTime">now</span>
+            <span class="badge badge-success badge-sm mt-1" data-live-chat-target="onlineCount">
+              <span data-live-chat-target="userCount">0</span> online
+            </span>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Mock threads for visual consistency -->
+      <div class="chat-thread-item p-4 hover:bg-base-300 cursor-pointer border-b opacity-50">
+        <div class="flex items-start justify-between">
+          <div class="flex-1 min-w-0">
+            <h4 class="font-semibold text-sm truncate">General Discussion</h4>
+            <p class="text-sm text-base-content/70 truncate mt-1">Welcome to our chat!</p>
+          </div>
+          <div class="flex flex-col items-end ml-2">
+            <span class="text-xs text-base-content/50">2 hours</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="chat-thread-item p-4 hover:bg-base-300 cursor-pointer border-b opacity-50">
+        <div class="flex items-start justify-between">
+          <div class="flex-1 min-w-0">
+            <h4 class="font-semibold text-sm truncate">Team Updates</h4>
+            <p class="text-sm text-base-content/70 truncate mt-1">Project status: On track</p>
+          </div>
+          <div class="flex flex-col items-end ml-2">
+            <span class="text-xs text-base-content/50">1 day</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Main Chat Area -->
+  <div class="flex-1 flex flex-col">
+    <!-- Chat Header -->
+    <div class="p-4 border-b bg-base-100">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-lg font-semibold">Live Chat Room</h3>
+          <p class="text-sm text-base-content/70">
+            <span data-live-chat-target="userCount">0</span> participants online • Room: <%= room_name %>
+          </p>
+        </div>
+        <div class="dropdown dropdown-end">
+          <label tabindex="0" class="btn btn-ghost btn-sm btn-circle">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" />
+            </svg>
+          </label>
+          <ul tabindex="0" class="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
+            <li><a>Online Users</a></li>
+            <li>
+              <div class="max-h-48 overflow-y-auto" data-live-chat-target="usersList">
+                <!-- Users list will be populated here -->
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Messages Container -->
+    <div class="flex-1 overflow-y-auto p-4 space-y-4 relative chat-messages-container" style="max-height: 400px;" data-live-chat-target="messages">
+      <!-- Welcome message -->
+      <div class="text-center text-sm text-base-content/50 py-8">
+        <p class="text-lg mb-2">Welcome to the live chat demo!</p>
+        <p>Messages are shared with all users viewing this preview.</p>
+        <p class="mt-4">You are: <span class="font-semibold text-base-content" data-live-chat-target="welcomeUserName">Loading...</span></p>
+      </div>
+    </div>
+    
+    <!-- Typing Indicator -->
+    <div class="px-4 py-2 text-sm text-base-content/50" data-live-chat-target="typingIndicator" style="min-height: 2rem;">
+      <!-- Typing indicators will be inserted here -->
+    </div>
+    
+    <!-- Message Input -->
+    <div class="border-t p-4">
+      <form data-action="submit->live-chat#sendMessage" class="flex gap-2">
+        <input type="text" 
+               placeholder="Type a message..." 
+               class="input input-bordered flex-1"
+               data-live-chat-target="messageInput"
+               data-action="input->live-chat#handleUserTyping"
+               autocomplete="off">
+        <button type="submit" class="btn btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+          </svg>
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<style>
+  .chat-live-demo {
+    font-family: inherit;
+  }
+  
+  .chat-thread-item {
+    transition: background-color 0.2s;
+  }
+  
+  .chat-bubble {
+    max-width: 70%;
+    word-wrap: break-word;
+  }
+  
+  /* Markdown content styling with Tailwind prose */
+  .chat-bubble.prose {
+    color: inherit;
+  }
+  
+  .chat-bubble.prose p {
+    margin: 0.5em 0;
+  }
+  
+  .chat-bubble.prose p:first-child {
+    margin-top: 0;
+  }
+  
+  .chat-bubble.prose p:last-child {
+    margin-bottom: 0;
+  }
+  
+  .chat-bubble.prose code {
+    @apply bg-base-300 px-1 py-0.5 rounded text-sm;
+    color: inherit;
+  }
+  
+  .chat-bubble.prose pre {
+    @apply bg-base-300 p-2 rounded text-sm my-2;
+    color: inherit;
+  }
+  
+  .chat-bubble.prose pre code {
+    background: none;
+    padding: 0;
+  }
+  
+  .chat-bubble.prose a {
+    @apply link link-primary;
+  }
+  
+  .chat-bubble.prose ul,
+  .chat-bubble.prose ol {
+    @apply my-2;
+  }
+  
+  .chat-bubble.prose blockquote {
+    @apply border-l-4 border-base-300 pl-4 my-2 italic;
+  }
+  
+  .chat-bubble.prose strong {
+    @apply font-bold;
+  }
+  
+  .chat-bubble.prose em {
+    @apply italic;
+  }
+  
+  /* Ensure messages container has proper scrolling */
+  .chat-messages-container {
+    min-height: 0; /* Important for Firefox */
+    max-height: 400px;
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+  
+  .typing-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  
+  .typing-dot {
+    width: 8px;
+    height: 8px;
+    background-color: currentColor;
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+  }
+  
+  .typing-dot:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  
+  .typing-dot:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+</style>

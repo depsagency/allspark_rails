@@ -1,0 +1,132 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl font-bold"><%= @assistant.name %></h1>
+    </div>
+    
+    <div class="flex gap-2">
+      <%= link_to "Knowledge Base", agents_knowledge_documents_path(assistant_id: @assistant.id), 
+          class: "btn btn-primary" %>
+      <%= link_to "Edit", edit_agents_assistant_path(@assistant), class: "btn btn-ghost" %>
+      <%= link_to "All Assistants", agents_assistants_path, class: "btn btn-ghost" %>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Chat Interface -->
+    <div class="lg:col-span-2">
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body p-0">
+          <%= render Agents::AssistantChatComponent.new(
+            assistant: @assistant,
+            current_user: current_user,
+            height: "600px"
+          ) %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+      <!-- Configuration -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <h3 class="card-title text-lg">Configuration</h3>
+          
+          <div class="space-y-3">
+            <div>
+              <label class="label">
+                <span class="label-text font-semibold">Status</span>
+              </label>
+              <% if @assistant.active? %>
+                <div class="badge badge-success">Active</div>
+              <% else %>
+                <div class="badge badge-ghost">Inactive</div>
+              <% end %>
+            </div>
+            
+            <div>
+              <label class="label">
+                <span class="label-text font-semibold">Model Provider</span>
+              </label>
+              <div class="text-sm">
+                <%= @assistant.model_provider.presence || "Default" %>
+              </div>
+            </div>
+            
+            <% if @assistant.llm_model_name.present? %>
+              <div>
+                <label class="label">
+                  <span class="label-text font-semibold">Model</span>
+                </label>
+                <div class="text-sm">
+                  <%= @assistant.llm_model_name %>
+                </div>
+              </div>
+            <% end %>
+            
+            <div>
+              <label class="label">
+                <span class="label-text font-semibold">Tool Choice</span>
+              </label>
+              <div class="text-sm">
+                <%= @assistant.tool_choice %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tools -->
+      <% if @assistant.tools.any? %>
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <h3 class="card-title text-lg">Enabled Tools</h3>
+            
+            <div class="flex flex-wrap gap-2">
+              <% @assistant.tools.each do |tool| %>
+                <div class="badge badge-primary badge-lg">
+                  <%= tool['type'].humanize %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <!-- Recent Activity -->
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="card-title text-lg">Recent Conversations</h3>
+            <%= link_to "View All →", agents_runs_path(assistant_id: @assistant.id), class: "text-sm link link-primary" %>
+          </div>
+          
+          <% if @recent_runs.any? %>
+            <div class="space-y-2">
+              <% @recent_runs.each do |run| %>
+                <%= link_to agents_run_path(run), class: "block p-2 rounded hover:bg-base-200 transition-colors" do %>
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <div class="font-mono text-xs">
+                        <%= run.run_id[0..15] %>...
+                      </div>
+                      <div class="text-xs opacity-70">
+                        <%= time_ago_in_words(run.created_at) %> ago
+                      </div>
+                    </div>
+                    <div class="badge badge-<%= run.completed? ? 'success' : run.failed? ? 'error' : 'warning' %> badge-xs">
+                      <%= run.status %>
+                    </div>
+                  </div>
+                <% end %>
+              <% end %>
+            </div>
+          <% else %>
+            <p class="text-sm opacity-70">No conversations yet</p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

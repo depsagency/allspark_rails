@@ -1,0 +1,223 @@
+<% content_for :title, "User Impersonation" %>
+
+<div class="container mx-auto px-4 py-8 max-w-7xl">
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="breadcrumbs text-sm mb-4">
+      <ul>
+        <li><%= link_to "Dashboard", root_path %></li>
+        <li><%= link_to "Admin", "#" %></li>
+        <li>Impersonation</li>
+      </ul>
+    </div>
+    
+    <div class="flex justify-between items-start">
+      <div>
+        <h1 class="text-4xl font-bold mb-2">User Impersonation</h1>
+        <p class="text-gray-600">Monitor and manage user impersonation sessions</p>
+      </div>
+      
+      <div class="flex gap-2">
+        <%= link_to users_path, class: "btn btn-outline" do %>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+          </svg>
+          Manage Users
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Current Impersonation Status -->
+  <% if impersonating? %>
+    <div class="mb-6">
+      <%= render Ui::CardComponent.new(title: "🎭 Active Impersonation Session", bordered: true) do |card| %>
+        <%= card.with_body do %>
+          <div class="flex justify-between items-center">
+            <div>
+              <p class="mb-2">
+                You are currently impersonating <strong><%= current_user.display_name %></strong>
+              </p>
+              <p class="text-sm opacity-75">
+                Original user: <strong><%= current_impersonator.display_name %></strong>
+              </p>
+            </div>
+            <%= link_to stop_admin_impersonation_index_path, 
+                method: :delete, 
+                class: "btn btn-error",
+                data: { 
+                  confirm: "Are you sure you want to stop impersonating #{current_user.display_name}?",
+                  turbo_method: :delete
+                } do %>
+              Stop Impersonation
+            <% end %>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <!-- Filters -->
+  <div class="mb-6">
+    <%= render Ui::CardComponent.new(title: "Filter Audit Logs", bordered: true) do |card| %>
+      <%= card.with_body do %>
+        <%= form_with url: admin_impersonation_index_path, method: :get, local: true, class: "flex flex-wrap gap-4 items-end" do |form| %>
+          <div class="form-control">
+            <label class="label label-text">Status</label>
+            <%= form.select :status, options_for_select([
+              ['All Sessions', ''],
+              ['Active Sessions', 'active'],
+              ['Ended Sessions', 'ended']
+            ], params[:status]), {}, { class: "select select-bordered select-sm" } %>
+          </div>
+          
+          <div class="form-control">
+            <%= form.submit "Filter", class: "btn btn-primary btn-sm" %>
+          </div>
+          
+          <div class="form-control">
+            <%= link_to "Clear", admin_impersonation_index_path, class: "btn btn-outline btn-sm" %>
+          </div>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <!-- Audit Logs -->
+  <% if @audit_logs.any? %>
+    <div class="overflow-x-auto">
+      <table class="table table-zebra w-full">
+        <thead>
+          <tr>
+            <th>Impersonator</th>
+            <th>Impersonated User</th>
+            <th>Action</th>
+            <th>Reason</th>
+            <th>Started At</th>
+            <th>Duration</th>
+            <th>IP Address</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @audit_logs.each do |log| %>
+            <tr>
+              <td>
+                <div class="font-bold">
+                  <%= log.impersonator.display_name %>
+                </div>
+                <div class="text-sm opacity-50">
+                  <%= log.impersonator.email %>
+                </div>
+              </td>
+              
+              <td>
+                <div class="font-bold">
+                  <%= log.impersonated_user.display_name %>
+                </div>
+                <div class="text-sm opacity-50">
+                  <%= log.impersonated_user.email %>
+                </div>
+              </td>
+              
+              <td>
+                <%= render Ui::BadgeComponent.new(
+                  variant: log.action == 'start' ? :success : :warning,
+                  size: :sm
+                ) do %>
+                  <%= log.action.humanize %>
+                <% end %>
+              </td>
+              
+              <td>
+                <% if log.reason.present? %>
+                  <span class="text-sm"><%= log.reason %></span>
+                <% else %>
+                  <span class="text-sm text-gray-500">No reason provided</span>
+                <% end %>
+              </td>
+              
+              <td>
+                <div class="text-sm">
+                  <%= log.started_at.strftime("%m/%d/%y") %>
+                </div>
+                <div class="text-xs text-gray-500">
+                  <%= log.started_at.strftime("%H:%M:%S") %>
+                </div>
+              </td>
+              
+              <td>
+                <span class="text-sm font-mono">
+                  <%= log.duration_in_words %>
+                </span>
+              </td>
+              
+              <td>
+                <span class="text-sm font-mono">
+                  <%= log.ip_address %>
+                </span>
+              </td>
+              
+              <td>
+                <% if log.active? %>
+                  <%= render Ui::BadgeComponent.new(variant: :warning, size: :sm) do %>
+                    Active
+                  <% end %>
+                <% else %>
+                  <%= render Ui::BadgeComponent.new(variant: :ghost, size: :sm) do %>
+                    Ended
+                  <% end %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <% if @audit_logs.respond_to?(:total_pages) && @audit_logs.total_pages > 1 %>
+      <div class="mt-6 flex justify-center">
+        <div class="join">
+          <% if @audit_logs.prev_page %>
+            <%= link_to admin_impersonation_index_path(page: @audit_logs.prev_page), 
+                        class: "join-item btn btn-outline" do %>
+              &laquo; Previous
+            <% end %>
+          <% else %>
+            <button class="join-item btn btn-outline btn-disabled">&laquo; Previous</button>
+          <% end %>
+          
+          <% page_range = [[@audit_logs.current_page - 2, 1].max, [@audit_logs.current_page + 2, @audit_logs.total_pages].min] %>
+          <% (page_range[0]..page_range[1]).each do |page| %>
+            <% if page == @audit_logs.current_page %>
+              <button class="join-item btn btn-active"><%= page %></button>
+            <% else %>
+              <%= link_to admin_impersonation_index_path(page: page), 
+                          class: "join-item btn btn-outline" do %>
+                <%= page %>
+              <% end %>
+            <% end %>
+          <% end %>
+          
+          <% if @audit_logs.next_page %>
+            <%= link_to admin_impersonation_index_path(page: @audit_logs.next_page), 
+                        class: "join-item btn btn-outline" do %>
+              Next &raquo;
+            <% end %>
+          <% else %>
+            <button class="join-item btn btn-outline btn-disabled">Next &raquo;</button>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  <% else %>
+    <!-- Empty State -->
+    <div class="text-center py-12">
+      <div class="text-6xl mb-4">🎭</div>
+      <h3 class="text-2xl font-bold mb-2">No Impersonation Logs</h3>
+      <p class="text-gray-600 mb-6">No impersonation sessions have been logged yet.</p>
+      <%= link_to "Manage Users", users_path, class: "btn btn-primary" %>
+    </div>
+  <% end %>
+</div>

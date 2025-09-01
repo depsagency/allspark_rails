@@ -1,0 +1,92 @@
+<div class="h-screen flex flex-col">
+  <!-- Header -->
+  <div class="navbar bg-base-200 shadow-lg px-4">
+    <div class="flex-1">
+      <h1 class="text-xl font-bold"><%= @workflow.name %></h1>
+      <div class="ml-4">
+        <span class="badge badge-<%= @workflow.status == 'active' ? 'success' : @workflow.status == 'draft' ? 'warning' : 'ghost' %>">
+          <%= @workflow.status %>
+        </span>
+        <span class="text-sm opacity-60 ml-2">Version <%= @workflow.version %></span>
+      </div>
+    </div>
+    <div class="flex-none gap-2">
+      <%= link_to "Back", agents_team_workflow_path(@team, @workflow), class: "btn btn-ghost btn-sm" %>
+    </div>
+  </div>
+
+  <!-- Workflow Builder Mount Point -->
+  <div id="workflow-builder" 
+       class="flex-1"
+       data-workflow="<%= @workflow.flow_definition.to_json %>"
+       data-team-members="<%= @team.assistants.map { |a| { 
+         id: a.id, 
+         name: a.name, 
+         role: a.instructions&.first(50),
+         skills: a.tools.map { |t| t['type'] },
+         available: true 
+       }}.to_json %>"
+       data-workflow-id="<%= @workflow.id %>"
+       data-team-id="<%= @team.id %>"
+       data-read-only="false">
+    <div class="flex items-center justify-center h-full">
+      <div class="text-center">
+        <div class="loading loading-spinner loading-lg"></div>
+        <p class="mt-4">Loading workflow builder...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Include ReactFlow CSS -->
+<%= stylesheet_link_tag 'reactflow', media: 'all' %>
+
+<script>
+  // Listen for workflow events
+  window.addEventListener('workflow:saved', (event) => {
+    const notification = document.createElement('div');
+    notification.className = 'toast toast-top toast-end';
+    notification.innerHTML = `
+      <div class="alert alert-success">
+        <span>Workflow saved successfully!</span>
+      </div>
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 3000);
+  });
+
+  window.addEventListener('workflow:error', (event) => {
+    const notification = document.createElement('div');
+    notification.className = 'toast toast-top toast-end';
+    notification.innerHTML = `
+      <div class="alert alert-error">
+        <span>Error: ${event.detail.error}</span>
+      </div>
+    `;
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 5000);
+  });
+
+  // Mount the workflow builder when the page loads
+  function mountBuilder() {
+    if (window.mountWorkflowBuilder) {
+      console.log('Mounting workflow builder...');
+      window.mountWorkflowBuilder('workflow-builder');
+    } else {
+      console.error('Workflow builder mount function not found');
+      // Retry after a short delay if the function isn't available yet
+      setTimeout(mountBuilder, 100);
+    }
+  }
+
+  // Support both regular page loads and Turbo navigation
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', mountBuilder);
+  } else {
+    // DOM is already loaded (Turbo navigation)
+    mountBuilder();
+  }
+
+  // Also listen for Turbo load events
+  document.addEventListener('turbo:load', mountBuilder);
+</script>

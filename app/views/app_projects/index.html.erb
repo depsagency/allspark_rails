@@ -1,0 +1,160 @@
+<% content_for :title, "App Builder" %>
+
+<div class="container mx-auto px-4 py-8">
+  <!-- Hero Section - Only show when no projects -->
+  <% unless @app_projects.any? %>
+    <div class="hero min-h-[50vh] bg-gradient-to-br from-primary/10 to-secondary/10 rounded-2xl mb-8">
+      <div class="hero-content flex flex-col items-center justify-center text-center w-full">
+        <div class="max-w-2xl mx-auto">
+          <div class="mb-8">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+          </div>
+          <h1 class="text-5xl font-bold text-center mb-6">AI-Powered App Builder</h1>
+          <p class="text-center text-lg leading-relaxed mb-8">Transform your ideas into comprehensive PRDs and implementation plans using AI. Answer 10 questions and get production-ready specifications, task lists, and implementation prompts.</p>
+          
+          <div class="flex gap-4 justify-center">
+            <%= render Ui::ButtonComponent.new(variant: :primary, size: :lg, href: wizard_app_projects_path) do %>
+              Start Building Your App
+            <% end %>
+            <%= render Ui::ButtonComponent.new(variant: :outline, size: :lg, href: import_app_projects_path) do %>
+              Import Existing Project
+            <% end %>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Stats Section - Only show when there are projects -->
+  <% if @app_projects.any? %>
+    <div class="stats shadow mb-8 w-full">
+      <div class="stat">
+        <div class="stat-figure text-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <div class="stat-title">Total Projects</div>
+        <div class="stat-value"><%= @stats[:total] %></div>
+        <div class="stat-desc">Your app blueprints</div>
+      </div>
+      
+      <div class="stat">
+        <div class="stat-figure text-secondary">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"></path>
+          </svg>
+        </div>
+        <div class="stat-title">Completed</div>
+        <div class="stat-value text-secondary"><%= @stats[:completed] %></div>
+        <div class="stat-desc">Ready for development</div>
+      </div>
+      
+      <div class="stat">
+        <div class="stat-figure text-accent">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-8 h-8 stroke-current">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+          </svg>
+        </div>
+        <div class="stat-title">In Progress</div>
+        <div class="stat-value text-accent"><%= @stats[:in_progress] %></div>
+        <div class="stat-desc">Being developed</div>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Projects Grid -->
+  <% if @app_projects.any? %>
+    <div class="mb-8">
+      <div class="flex justify-between items-center mb-6">
+        <h2 class="text-3xl font-bold">Your Projects (<%= @app_projects.count %>)</h2>
+        <div class="flex gap-3">
+          <%= render Ui::ButtonComponent.new(variant: :outline, href: import_app_projects_path) do %>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+            </svg>
+            Import Project
+          <% end %>
+          <%= render Ui::ButtonComponent.new(variant: :primary, href: wizard_app_projects_path) do %>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            New Project
+          <% end %>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <% @app_projects.each do |project| %>
+          <%= render Ui::CardComponent.new(shadow: true, css_class: "h-full") do |card| %>
+            <%= card.with_body do %>
+              <div class="flex justify-between items-start mb-4">
+                <h3 class="card-title text-lg font-semibold">
+                  <%= link_to project.name, app_project_path(project), class: "hover:text-primary transition-colors" %>
+                </h3>
+                <%= render Ui::BadgeComponent.new(variant: project.status.to_sym, size: :sm) do %>
+                  <%= project.status.humanize %>
+                <% end %>
+              </div>
+              
+              <!-- Project Info -->
+              <div class="text-sm text-gray-600 mb-4">
+                <p><strong>Created:</strong> <%= project.created_at.strftime("%B %d, %Y") %></p>
+                <% if project.last_generation_at %>
+                  <p><strong>Last Generated:</strong> <%= project.last_generation_at.strftime("%B %d, %Y") %></p>
+                <% end %>
+              </div>
+              
+              <!-- Vision Preview -->
+              <% if project.vision_response.present? %>
+                <div class="text-sm mb-4">
+                  <p class="text-gray-600"><%= truncate(project.vision_response, length: 120) %></p>
+                </div>
+              <% end %>
+              
+              <!-- Card Actions -->
+              <div class="card-actions justify-end mt-4">
+                <%= render Ui::ButtonComponent.new(variant: :primary, href: app_project_path(project)) do %>
+                  View Project Details
+                <% end %>
+              </div>
+            <% end %>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- How It Works Section - Only show when no projects -->
+  <% unless @app_projects.any? %>
+    <div class="mt-16">
+      <h2 class="text-3xl font-bold text-center mb-12">How It Works</h2>
+      
+      <%= render Ui::CardComponent.new(shadow: true, css_class: "max-w-4xl mx-auto") do |card| %>
+        <%= card.with_body do %>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="text-center">
+              <div class="text-4xl mb-4">📝</div>
+              <h3 class="text-xl font-bold mb-2">1. Answer Questions</h3>
+              <p class="text-gray-600">Complete our 10-question wizard about your app idea, users, and requirements.</p>
+            </div>
+            
+            <div class="text-center">
+              <div class="text-4xl mb-4">🤖</div>
+              <h3 class="text-xl font-bold mb-2">2. AI Generation</h3>
+              <p class="text-gray-600">Our AI analyzes your responses and generates a comprehensive PRD and task list.</p>
+            </div>
+            
+            <div class="text-center">
+              <div class="text-4xl mb-4">🚀</div>
+              <h3 class="text-xl font-bold mb-2">3. Start Building</h3>
+              <p class="text-gray-600">Get AI-ready prompts and start implementing your app immediately.</p>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

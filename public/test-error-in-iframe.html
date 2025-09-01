@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test ErrorPageEnhancer in Iframe</title>
+</head>
+<body>
+    <h1>ErrorPageEnhancer Test Page</h1>
+    <p>This page simulates the DevTools receiving error messages from an iframe.</p>
+    
+    <iframe id="target-iframe" src="http://localhost:3002/test_error" width="800" height="400" style="border: 1px solid #ccc;"></iframe>
+    
+    <div id="error-output">
+        <h2>Received Messages:</h2>
+        <pre id="messages"></pre>
+    </div>
+    
+    <script>
+        // Listen for postMessage events from the iframe
+        window.addEventListener('message', function(event) {
+            console.log('Received message:', event);
+            
+            const messagesEl = document.getElementById('messages');
+            const timestamp = new Date().toISOString();
+            
+            if (event.data && event.data.type === 'rails-error') {
+                messagesEl.textContent += `[${timestamp}] Rails Error Received:\n`;
+                messagesEl.textContent += JSON.stringify(event.data, null, 2) + '\n\n';
+                
+                // Log to console as well
+                console.log('Rails error data:', event.data.data);
+            } else {
+                messagesEl.textContent += `[${timestamp}] Other message:\n`;
+                messagesEl.textContent += JSON.stringify(event.data, null, 2) + '\n\n';
+            }
+        });
+        
+        console.log('Test page loaded, listening for iframe messages...');
+    </script>
+</body>
+</html>

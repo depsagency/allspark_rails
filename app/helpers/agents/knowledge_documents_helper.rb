@@ -1,0 +1,2 @@
+module Agents::KnowledgeDocumentsHelper
+end

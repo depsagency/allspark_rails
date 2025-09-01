@@ -1,0 +1,9 @@
+# Test fixtures for knowledge_documents
+one:
+  id: h47ac10b-58cc-4372-a567-0e02b2c3d479
+  assistant: one
+  title: Test Document
+  content: This is a test document for knowledge base
+  metadata: {}
+  created_at: <%= 1.week.ago %>
+  updated_at: <%= 1.week.ago %>

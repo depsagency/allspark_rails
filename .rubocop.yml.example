@@ -1,0 +1,50 @@
+# Example RuboCop configuration
+# Copy this to .rubocop.yml and customize as needed
+
+require:
+  - rubocop-rails
+  - rubocop-performance
+  - rubocop-minitest
+
+AllCops:
+  TargetRubyVersion: 3.2
+  NewCops: enable
+  Exclude:
+    - 'bin/*'
+    - 'db/schema.rb'
+    - 'db/migrate/*'
+    - 'node_modules/**/*'
+    - 'vendor/**/*'
+    - 'tmp/**/*'
+    - 'log/**/*'
+    - 'storage/**/*'
+
+Style/Documentation:
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+
+Layout/LineLength:
+  Max: 120
+
+Metrics/BlockLength:
+  Exclude:
+    - 'config/routes.rb'
+    - 'config/environments/*'
+    - 'test/**/*'
+    - 'spec/**/*'
+    - 'db/seeds.rb'
+
+Style/ClassAndModuleChildren:
+  Enabled: false
+
+Rails/FilePath:
+  Enabled: false
+
+Rails/UnknownEnv:
+  Environments:
+    - production
+    - development
+    - test
+    - staging

@@ -1,0 +1,18 @@
+# Test fixtures for assistant_messages
+one:
+  id: f47ac10b-58cc-4372-a567-0e02b2c3d479
+  assistant: one
+  role: user
+  content: Hello, how are you?
+  run_id: run-123
+  created_at: <%= 1.week.ago %>
+  updated_at: <%= 1.week.ago %>
+
+two:
+  id: f47ac10c-58cc-4372-a567-0e02b2c3d479
+  assistant: one
+  role: assistant
+  content: I'm doing well, thank you for asking!
+  run_id: run-123
+  created_at: <%= 1.week.ago %>
+  updated_at: <%= 1.week.ago %>

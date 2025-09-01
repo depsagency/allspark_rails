@@ -1,0 +1,33 @@
+<div class="container mx-auto px-4 py-8">
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-3xl font-bold">Workflows</h1>
+      <p class="text-base-content/70 mt-1">For team: <%= @team.name %></p>
+    </div>
+    
+    <div class="flex gap-2">
+      <%= link_to "New Workflow", new_agents_team_workflow_path(@team), class: "btn btn-primary" %>
+      <%= link_to "Back to Team", agents_team_path(@team), class: "btn btn-ghost" %>
+    </div>
+  </div>
+
+  <% if @workflows.any? %>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <% @workflows.each do |workflow| %>
+        <%= render 'workflow_card', workflow: workflow %>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="card bg-base-100 shadow-xl">
+      <div class="card-body text-center py-16">
+        <div class="text-6xl mb-4">📊</div>
+        <h2 class="text-2xl font-semibold mb-2">No workflows yet</h2>
+        <p class="text-base-content/70 mb-6">
+          Create visual workflows to coordinate your team's tasks and automate complex processes.
+        </p>
+        <%= link_to "Create First Workflow", new_agents_team_workflow_path(@team), 
+            class: "btn btn-primary" %>
+      </div>
+    </div>
+  <% end %>
+</div>
